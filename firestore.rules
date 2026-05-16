@@ -1,0 +1,69 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() { return request.auth != null; }
+    function isOwner(userId) { return isSignedIn() && request.auth.uid == userId; }
+    function isValidId(id) { return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    // --- User Rules ---
+    match /users/{userId} {
+      allow read: if isSignedIn(); // Basic profile visibility
+      allow create: if isOwner(userId) 
+        && incoming().role in ['student', 'teacher']
+        && incoming().uid == userId;
+      allow update: if isOwner(userId) 
+        && incoming().uid == userId
+        && (!incoming().diff(existing()).affectedKeys().hasAny(['role'])); // Role is immutable
+    }
+
+    // --- Booking Rules ---
+    match /bookings/{bookingId} {
+      allow read: if isParticipant();
+      allow create: if isSignedIn() 
+        && incoming().studentId == request.auth.uid
+        && incoming().status == 'pending'
+        && isValidBooking(incoming());
+      allow update: if isParticipant() 
+        && (
+          // Student cancels
+          (isOwner(existing().studentId) && incoming().status == 'cancelled' && incoming().diff(existing()).affectedKeys().hasOnly(['status'])) ||
+          // Teacher confirms/rejects
+          (isOwner(existing().teacherId) && incoming().status in ['confirmed', 'rejected'] && incoming().diff(existing()).affectedKeys().hasOnly(['status']))
+        );
+
+      function isParticipant() {
+        return isSignedIn() && (request.auth.uid == resource.data.studentId || request.auth.uid == resource.data.teacherId);
+      }
+
+      function isValidBooking(data) {
+        return data.keys().hasAll(['studentId', 'teacherId', 'startTime', 'endTime', 'status'])
+          && data.studentId is string && data.teacherId is string
+          && data.startTime is string && data.endTime is string;
+      }
+    }
+
+    // --- Chat Rules ---
+    match /chats/{chatId} {
+      allow read: if isChatParticipant();
+      allow create: if isSignedIn() && (incoming().studentId == request.auth.uid || incoming().teacherId == request.auth.uid);
+      allow update: if isChatParticipant() && incoming().diff(existing()).affectedKeys().hasOnly(['lastMessage', 'updatedAt']);
+
+      function isChatParticipant() {
+        return isSignedIn() && (request.auth.uid == resource.data.studentId || request.auth.uid == resource.data.teacherId);
+      }
+
+      match /messages/{messageId} {
+        allow read: if isChatParticipant();
+        allow create: if isChatParticipant() && incoming().senderId == request.auth.uid;
+      }
+    }
+  }
+}
