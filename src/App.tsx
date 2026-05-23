@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { auth } from './lib/firebase';
+import { SUPER_ADMIN_EMAILS, ADMIN_EMAILS, ADMIN_TEACHER_MAP } from './lib/constants';
 import { motion, AnimatePresence } from 'motion/react';
 import { LandingPage } from './pages/Landing';
 import { AuthPage } from './pages/Auth';
 import { AppLayout } from './components/Layout';
-import { StudentHome, TeacherList, TeacherCheckIn } from './components/DashboardViews';
+import { StudentHome, TeacherList, TeacherCheckIn, ProfileView } from './components/DashboardViews';
 import { AdminDashboard } from './components/AdminViews';
 import { BookingCalendar } from './components/BookingCalendar';
-import { ChatInterface } from './components/ChatInterface';
+import { FeedbackInterface } from './components/ChatInterface';
 import { UserRole, UserProfile, BookingRecord, TimeSlot } from './types';
 
 type AppState = 'landing' | 'auth' | 'app';
@@ -19,8 +22,36 @@ export default function App() {
   const [activeBooking, setActiveBooking] = useState<BookingRecord | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 1200);
-    return () => clearTimeout(timer);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user && user.email) {
+        // Determine role based on email if we have persistent auth
+        let role: UserRole = 'student';
+        let assignedTeacherId: string | undefined = undefined;
+
+        if (SUPER_ADMIN_EMAILS.includes(user.email)) {
+          role = 'super-admin';
+        } else if (ADMIN_EMAILS.includes(user.email)) {
+          role = 'admin';
+          assignedTeacherId = ADMIN_TEACHER_MAP[user.email];
+        }
+
+        setUserProfile({
+          uid: user.uid,
+          email: user.email,
+          displayName: user.displayName || 'User',
+          role: role,
+          assignedTeacherId: assignedTeacherId,
+          avatarUrl: user.photoURL || undefined,
+        });
+        setState('app');
+      } else {
+        setUserProfile(null);
+        if (state === 'app') setState('landing');
+      }
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleStart = () => setState('auth');
@@ -31,9 +62,15 @@ export default function App() {
     setState('app');
   };
 
-  const handleLogout = () => {
-    setState('landing');
-    setActiveTab('home');
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setUserProfile(null);
+      setState('landing');
+      setActiveTab('home');
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
   };
 
   const renderContent = () => {
@@ -46,22 +83,7 @@ export default function App() {
         case 'bookings':
           return <AdminDashboard key={userProfile.assignedTeacherId} user={userProfile} />;
         case 'profile':
-          return (
-            <div className="px-4 pt-6 text-center">
-              <div className="w-20 h-20 rounded-full bg-brand-blue mx-auto flex items-center justify-center text-white text-2xl font-bold mb-4">
-                {userProfile.displayName[0]}
-              </div>
-              <h3 className="text-lg font-bold text-brand-text">{userProfile.displayName}</h3>
-              <p className="text-sm text-brand-text-light">{userProfile.email}</p>
-              <p className="text-xs font-bold text-brand-blue mt-1 uppercase tracking-wider">
-                {userProfile.role.replace('-', ' ')}
-                {userProfile.assignedTeacherId && ` • Assigned to ${userProfile.assignedTeacherId === 't2' ? 'Miss Osiyo' : 'Mr Sarvar'}`}
-              </p>
-              <div className="mt-8">
-                <button onClick={handleLogout} className="text-brand-red font-semibold text-sm bg-red-50 py-2 px-6 rounded-xl">Sign Out</button>
-              </div>
-            </div>
-          );
+          return <ProfileView userProfile={userProfile} handleLogout={handleLogout} />;
         default:
           return <AdminDashboard user={userProfile} />;
       }
@@ -79,16 +101,7 @@ export default function App() {
         case 'checkin':
           return <TeacherCheckIn />;
         case 'profile':
-          return (
-            <div className="px-4 pt-6 text-center">
-              <div className="w-20 h-20 rounded-full bg-brand-blue mx-auto flex items-center justify-center text-white text-2xl font-bold mb-4">
-                {userProfile.displayName[0]}
-              </div>
-              <h3 className="text-lg font-bold text-brand-text">{userProfile.displayName}</h3>
-              <p className="text-sm text-brand-text-light mb-6">Student • Stage {userProfile.stage || 'Not set'}</p>
-              <button onClick={handleLogout} className="text-brand-red font-semibold text-sm">Sign Out</button>
-            </div>
-          );
+          return <ProfileView userProfile={userProfile} handleLogout={handleLogout} />;
         default:
           return <StudentHome userProfile={userProfile} activeBooking={null} onBookSlot={() => { }} />;
       }
@@ -106,7 +119,7 @@ export default function App() {
               slotId: slot.id,
               studentId: 'me',
               studentName: userProfile.displayName,
-              studentStage: userProfile.stage || 'B2',
+              studentStage: userProfile.stage || 'Stage 1',
               teacherId: slot.teacherId,
               teacherName: slot.teacherName,
               day: slot.day,
@@ -121,23 +134,11 @@ export default function App() {
           }} />;
       case 'courses':
         return <TeacherList />;
-      case 'library':
-        return <ChatInterface />;
-      case 'books':
-        return <BookingCalendar onBookSlot={(slot) => {
-          // Direct booking logic
-        }} />;
+      case 'feedback':
+        return <FeedbackInterface />;
+
       case 'profile':
-        return (
-          <div className="px-4 pt-6 text-center">
-            <div className="w-20 h-20 rounded-full bg-brand-blue mx-auto flex items-center justify-center text-white text-2xl font-bold mb-4">
-              {userProfile.displayName[0]}
-            </div>
-            <h3 className="text-lg font-bold text-brand-text">{userProfile.displayName}</h3>
-            <p className="text-sm text-brand-text-light mb-6">Student • Stage {userProfile.stage || 'Not set'}</p>
-            <button onClick={handleLogout} className="text-brand-red font-semibold text-sm">Sign Out</button>
-          </div>
-        );
+        return <ProfileView userProfile={userProfile} handleLogout={handleLogout} />;
       default:
         return <StudentHome userProfile={userProfile} activeBooking={null} onBookSlot={() => { }} />;
     }

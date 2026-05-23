@@ -6,7 +6,7 @@ import type { BookingRecord, UserProfile } from '../types';
 
 /* ── Admin Dashboard ── */
 export const AdminDashboard = ({ user }: { user: UserProfile, key?: any }) => {
-   const [activeSubTab, setActiveSubTab] = useState<'overview' | 'bookings' | 'reports' | 'slots'>('overview');
+   const [activeSubTab, setActiveSubTab] = useState<'overview' | 'bookings' | 'reports' | 'slots' | 'feedbacks'>('overview');
    const [searchQuery, setSearchQuery] = useState('');
 
    // Mock bookings with check-in tracking
@@ -59,6 +59,7 @@ export const AdminDashboard = ({ user }: { user: UserProfile, key?: any }) => {
                { id: 'bookings', label: 'Bookings' },
                { id: 'slots', label: 'Status Board' },
                { id: 'reports', label: 'Reports' },
+               { id: 'feedbacks', label: 'Feedbacks' },
             ].map((tab) => (
                <button
                   key={tab.id}
@@ -93,6 +94,7 @@ export const AdminDashboard = ({ user }: { user: UserProfile, key?: any }) => {
 
          {activeSubTab === 'slots' && <SlotStatusBoard user={user} />}
          {activeSubTab === 'reports' && <ReportsView bookings={bookings} user={user} />}
+         {activeSubTab === 'feedbacks' && <FeedbacksView />}
          {activeSubTab === 'bookings' && (
             <div className="relative">
                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -139,9 +141,12 @@ export const AdminDashboard = ({ user }: { user: UserProfile, key?: any }) => {
                                  booking.status === 'attended' ? 'bg-green-100 text-brand-green' :
                                     booking.status === 'confirmed' ? 'bg-blue-100 text-brand-blue' :
                                        booking.status === 'cancelled' ? 'bg-red-100 text-brand-red' :
-                                          'bg-orange-100 text-brand-orange'
+                                          booking.status === 'absent' ? 'bg-red-100 text-brand-red' :
+                                             'bg-orange-100 text-brand-orange'
                               )}>
-                                 {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                                 {booking.status === 'attended' ? 'Keldi' :
+                                    booking.status === 'absent' ? 'Kemadi' :
+                                       booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                               </span>
                            </div>
                            <div className="flex items-center gap-2 text-xs text-brand-text-light mb-3">
@@ -157,12 +162,17 @@ export const AdminDashboard = ({ user }: { user: UserProfile, key?: any }) => {
                                  </AppButton>
                               )}
                               {booking.status === 'confirmed' && (
-                                 <AppButton variant="primary" className="text-xs py-1.5 px-3 bg-brand-green hover:bg-green-600" onClick={() => updateStatus(booking.id, 'attended')}>
-                                    ✓ Check-in
-                                 </AppButton>
+                                 <>
+                                    <AppButton variant="primary" className="text-xs py-1.5 px-3 bg-brand-green hover:bg-green-600" onClick={() => updateStatus(booking.id, 'attended')}>
+                                       ✓ Attended
+                                    </AppButton>
+                                    <AppButton variant="danger" className="text-xs py-1.5 px-3 border border-red-200" onClick={() => updateStatus(booking.id, 'absent')}>
+                                       ✗ Absent
+                                    </AppButton>
+                                 </>
                               )}
-                              {booking.status !== 'cancelled' && booking.status !== 'attended' && (
-                                 <AppButton variant="danger" className="text-xs py-1.5 px-3" onClick={() => updateStatus(booking.id, 'cancelled')}>
+                              {booking.status !== 'cancelled' && booking.status !== 'attended' && booking.status !== 'absent' && (
+                                 <AppButton variant="danger" className="text-xs py-1.5 px-3 ml-2" onClick={() => updateStatus(booking.id, 'cancelled')}>
                                     Cancel
                                  </AppButton>
                               )}
@@ -266,7 +276,15 @@ const ReportsView = ({ bookings, user }: { bookings: BookingRecord[], user: User
 
    const exportToExcel = () => {
       const headers = "ID,Student,Stage,Teacher,Day,Date,Time,Status,Attendance\n";
-      const rows = bookings.map(b => `${b.id},${b.studentName},${b.studentStage},${b.teacherName},${b.day},${b.dayDate},${b.startTime},${b.status},${b.checkedIn ? 'Yes' : 'No'}`).join('\n');
+      const rows = bookings.map(b => {
+         let statusCz: string = b.status;
+         if (b.status === 'attended') statusCz = 'Attended';
+         else if (b.status === 'absent') statusCz = 'Absent';
+         else if (b.status === 'confirmed') statusCz = 'Confirmed';
+         else if (b.status === 'pending') statusCz = 'Pending';
+         else if (b.status === 'cancelled') statusCz = 'Cancelled';
+         return `${b.id},${b.studentName},${b.studentStage},${b.teacherName},${b.day},${b.dayDate},${b.startTime},${statusCz},${b.checkedIn ? 'Yes' : 'No'}`;
+      }).join('\n');
       const csvContent = headers + rows;
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -346,6 +364,55 @@ const ReportsView = ({ bookings, user }: { bookings: BookingRecord[], user: User
                </div>
             </div>
          </Card>
+      </div>
+   );
+};
+
+/* ── Feedbacks View ── */
+const MOCK_FEEDBACKS = [
+   { id: '1', date: '2026-05-20', studentName: 'Alex Johnson', stage: 'Stage 4', text: 'The lesson was very interactive and helpful.' },
+   { id: '2', date: '2026-05-21', studentName: 'Elena Smith', stage: 'Stage 6', text: 'Great explanations of the grammar rules.' },
+   { id: '3', date: '2026-05-22', studentName: 'Marcus Wright', stage: 'Stage 2', text: 'Could we have more speaking exercises?' },
+];
+
+const FeedbacksView = () => {
+   const exportFeedbacks = () => {
+      const headers = "ID,Date,Student,Stage,Feedback\n";
+      const rows = MOCK_FEEDBACKS.map(f => `${f.id},${f.date},${f.studentName},${f.stage},"${f.text}"`).join('\n');
+      const csvContent = headers + rows;
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `feedbacks_export_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+   };
+
+   return (
+      <div className="space-y-4 pt-4">
+         <div className="flex justify-end">
+            <AppButton variant="outline" className="py-2 px-3 text-[10px] border-gray-200 text-brand-text h-auto gap-1" onClick={exportFeedbacks}>
+               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+               </svg>
+               Export Excel
+            </AppButton>
+         </div>
+         <div className="space-y-3">
+            {MOCK_FEEDBACKS.map(f => (
+               <Card key={f.id} className="p-4 shadow-sm border border-gray-100">
+                  <div className="flex justify-between items-start mb-2">
+                     <p className="text-sm font-bold text-brand-text">{f.studentName}</p>
+                     <span className="text-[10px] text-gray-400 font-medium">{f.date}</span>
+                  </div>
+                  <p className="text-xs text-brand-text-light mb-2">Stage: {f.stage}</p>
+                  <p className="text-sm text-brand-navy p-3 bg-blue-50/50 rounded-lg italic">"{f.text}"</p>
+               </Card>
+            ))}
+         </div>
       </div>
    );
 };

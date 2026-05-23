@@ -1,74 +1,45 @@
 import React, { useState } from 'react';
-import { Card } from './UI';
-import { cn } from '../lib/utils';
+import { Card, AppButton } from './UI';
 
-export const ChatInterface = () => {
-  const [message, setMessage] = useState('');
+export const FeedbackInterface = () => {
+  const [feedback, setFeedback] = useState('');
+  const [submitted, setSubmitted] = useState(false);
 
-  const messages = [
-    { id: 1, from: 'teacher', name: 'Mr.Elbek', text: 'Assalomu alaykum! Bugungi dars 14:30 da bo\'ladi.', time: '12:30' },
-    { id: 2, from: 'me', text: 'Rahmat ustoz! Tayyor bo\'laman.', time: '12:32' },
-    { id: 3, from: 'teacher', name: 'Mr.Elbek', text: 'Yaxshi, darsga tayyor bo\'ling. Homework tayyormi?', time: '12:35' },
-  ];
+  const handleSubmit = () => {
+    if (feedback.trim()) {
+      setSubmitted(true);
+      setFeedback('');
+    }
+  };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-200px)]">
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 pt-4 space-y-3">
-        {messages.map((msg) => (
-          <div
-            key={msg.id}
-            className={cn('flex', msg.from === 'me' ? 'justify-end' : 'justify-start')}
-          >
-            <div
-              className={cn(
-                'max-w-[80%] rounded-2xl px-4 py-3',
-                msg.from === 'me'
-                  ? 'bg-brand-blue text-white rounded-br-md'
-                  : 'bg-white text-brand-text rounded-bl-md card-shadow'
-              )}
-            >
-              {msg.from !== 'me' && (
-                <p className="text-xs font-bold text-brand-blue-mid mb-1">{msg.name}</p>
-              )}
-              <p className="text-sm">{msg.text}</p>
-              <p
-                className={cn(
-                  'text-[10px] mt-1',
-                  msg.from === 'me' ? 'text-white/60' : 'text-brand-text-light'
-                )}
-              >
-                {msg.time}
-              </p>
-            </div>
+    <div className="flex flex-col h-[calc(100vh-200px)] p-4">
+      <Card className="p-6">
+        <h3 className="text-lg font-bold text-brand-text mb-4">Lesson Feedback</h3>
+        {submitted ? (
+          <div className="text-center py-10 space-y-4">
+            <div className="w-16 h-16 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto text-2xl font-bold">✓</div>
+            <p className="text-brand-text font-bold">Thank you! Your feedback has been submitted.</p>
+            <AppButton onClick={() => setSubmitted(false)} variant="ghost" className="text-sm">Write another feedback</AppButton>
           </div>
-        ))}
-      </div>
-
-      {/* Input */}
-      <div className="p-4">
-        <div className="flex items-center gap-2 bg-white rounded-2xl card-shadow p-2">
-          <input
-            type="text"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Type a message..."
-            className="flex-1 bg-transparent border-none outline-none text-sm px-3 text-brand-text placeholder:text-gray-300"
-          />
-          <button
-            className={cn(
-              'w-10 h-10 rounded-xl flex items-center justify-center transition-all',
-              message.length > 0
-                ? 'bg-brand-blue text-white'
-                : 'bg-gray-100 text-gray-400'
-            )}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
-            </svg>
-          </button>
-        </div>
-      </div>
+        ) : (
+          <div className="space-y-4">
+            <p className="text-sm text-brand-text-light">
+              Did you enjoy today's lesson? Please leave your thoughts and suggestions about the learning process below.
+            </p>
+            <textarea
+              value={feedback}
+              onChange={(e) => setFeedback(e.target.value)}
+              placeholder="Write your feedback here..."
+              className="w-full h-40 p-4 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-brand-blue resize-none shadow-inner"
+            ></textarea>
+            <AppButton fullWidth onClick={handleSubmit} disabled={!feedback.trim()}>
+              Submit Feedback
+            </AppButton>
+          </div>
+        )}
+      </Card>
     </div>
   );
 };
+

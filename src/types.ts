@@ -44,7 +44,7 @@ export interface BookingRecord {
   fullDate: string;
   startTime: string;
   endTime: string;
-  status: 'pending' | 'confirmed' | 'attended' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'attended' | 'cancelled' | 'absent';
   createdAt: string;
   checkedIn: boolean;
 }

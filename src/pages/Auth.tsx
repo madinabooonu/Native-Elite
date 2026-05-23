@@ -1,18 +1,100 @@
 import React, { useState } from 'react';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile
+} from 'firebase/auth';
+import { auth } from '../lib/firebase';
+import { SUPER_ADMIN_EMAILS, ADMIN_EMAILS, ADMIN_TEACHER_MAP } from '../lib/constants';
 import { AppButton } from '../components/UI';
-import { UserRole } from '../types';
+import { UserRole, UserProfile } from '../types';
 
 export const AuthPage = ({
   onAuthSuccess,
 }: {
   initialMode?: 'login' | 'register';
-  onAuthSuccess: (profile: any) => void;
+  onAuthSuccess: (profile: UserProfile) => void;
 }) => {
   const [mode, setMode] = useState<'login' | 'register'>('login');
-  const [role, setRole] = useState<UserRole>('student');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [phoneNumber, setPhoneNumber] = useState(localStorage.getItem('savedPhone') || '');
   const [fullName, setFullName] = useState('');
+  const [needsRegistration, setNeedsRegistration] = useState(false);
+
+  const getProfileFromUser = (user: any): UserProfile => {
+    let role: UserRole = 'student';
+    let assignedTeacherId: string | undefined = undefined;
+
+    if (user.email && SUPER_ADMIN_EMAILS.includes(user.email)) {
+      role = 'super-admin';
+    } else if (user.email && ADMIN_EMAILS.includes(user.email)) {
+      role = 'admin';
+      assignedTeacherId = ADMIN_TEACHER_MAP[user.email];
+    }
+
+    return {
+      uid: user.uid,
+      email: user.email || '',
+      displayName: user.displayName || fullName || 'User',
+      role: role,
+      assignedTeacherId: assignedTeacherId,
+      avatarUrl: user.photoURL || undefined,
+    };
+  };
+
+
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    const cleanPhone = phoneNumber.replace(/[^0-9]/g, '');
+    if (cleanPhone.length < 9) {
+      setError("Iltimos, to'g'ri telefon raqam kiriting (kamida 9 ta raqam).");
+      setIsLoading(false);
+      return;
+    }
+
+    const pseudoEmail = `${cleanPhone}@native.edu`;
+    const defaultPassword = 'NativeAuth2026!';
+
+    if (needsRegistration) {
+      if (!fullName) {
+        setError("Please enter your full name!");
+        setIsLoading(false);
+        return;
+      }
+      try {
+        const result = await createUserWithEmailAndPassword(auth, pseudoEmail, defaultPassword);
+        await updateProfile(result.user, { displayName: fullName });
+        localStorage.setItem('savedPhone', phoneNumber);
+        onAuthSuccess(getProfileFromUser(result.user));
+      } catch (err: any) {
+        setError(err.message || 'Error occurred during registration.');
+      } finally {
+        setIsLoading(false);
+      }
+      return;
+    }
+
+    try {
+      const result = await signInWithEmailAndPassword(auth, pseudoEmail, defaultPassword);
+      localStorage.setItem('savedPhone', phoneNumber);
+      onAuthSuccess(getProfileFromUser(result.user));
+    } catch (err: any) {
+      console.error('Auth error:', err);
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+        setNeedsRegistration(true);
+        setError("Phone number not found. Please enter your name to sign up.");
+      } else {
+        setError(err.message || 'An error occurred. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-brand-bg">
@@ -27,120 +109,92 @@ export const AuthPage = ({
             <span className="text-xl font-bold tracking-tight">Native Elite</span>
           </div>
           <h1 className="text-2xl font-bold mb-1 relative z-10">
-            {mode === 'login' ? 'Welcome Back!' : 'Create Account'}
+            {needsRegistration ? "Sign Up" : "Sign In"}
           </h1>
           <p className="text-white/70 text-sm relative z-10">
-            {mode === 'login' ? 'Sign in to access your lessons.' : 'Register to start booking.'}
+            {needsRegistration ? "Enter your name to join the platform." : "Enter your phone number to access your profile."}
           </p>
         </div>
 
-        <div className="flex-1 bg-brand-bg md:bg-white px-5 pt-6 pb-8">
-          {/* Role Selector */}
-          {mode === 'register' && (
-            <div className="mb-6">
-              <p className="text-sm font-bold text-brand-text mb-3">Select your role:</p>
-              <div className="grid grid-cols-3 gap-3">
-                {([
-                  { id: 'student' as UserRole, label: 'Student', icon: '🎓' },
-                  { id: 'teacher' as UserRole, label: 'Teacher', icon: '👩‍🏫' },
-                  { id: 'admin' as UserRole, label: 'Admin', icon: '👑' },
-                ]).map((r) => (
-                  <button
-                    key={r.id}
-                    onClick={() => setRole(r.id)}
-                    className={`p-4 rounded-xl border-2 text-center transition-all ${role === r.id
-                      ? 'border-brand-blue bg-blue-50 text-brand-blue'
-                      : 'border-gray-200 bg-white text-brand-text-light hover:border-brand-blue/30'
-                      }`}
-                  >
-                    <div className="text-2xl mb-1">{r.icon}</div>
-                    <div className="text-xs font-bold">{r.label}</div>
-                  </button>
-                ))}
-              </div>
+        <div className="flex-1 bg-brand-bg md:bg-white px-6 md:px-8 py-8">
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm font-medium">
+              {error}
             </div>
           )}
 
-          {/* Form */}
-          <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); onAuthSuccess(role); }}>
-            {mode === 'register' && (
+          <form onSubmit={handleEmailAuth} className="space-y-4 mb-8">
+            {needsRegistration && (
               <div>
                 <label className="block text-sm font-bold text-brand-text mb-1.5">Full Name</label>
-                <input type="text" placeholder="Enter your full name" className="w-full bg-white border-2 border-gray-200 rounded-xl py-3 px-4 text-sm text-brand-text placeholder:text-gray-300 focus:outline-none focus:border-brand-blue transition-colors" required />
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Enter your full name"
+                  className="w-full bg-white border-2 border-gray-200 rounded-xl py-3 px-4 text-sm text-brand-text placeholder:text-gray-300 focus:outline-none focus:border-brand-blue transition-colors"
+                  required
+                />
               </div>
             )}
             <div>
-              <label className="block text-sm font-bold text-brand-text mb-1.5">Email</label>
+              <label className="block text-sm font-bold text-brand-text mb-1.5">Phone Number</label>
               <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="Enter your email"
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => { setPhoneNumber(e.target.value); setNeedsRegistration(false); setError(null); }}
+                placeholder="+998 90 123 45 67"
                 className="w-full bg-white border-2 border-gray-200 rounded-xl py-3 px-4 text-sm text-brand-text placeholder:text-gray-300 focus:outline-none focus:border-brand-blue transition-colors"
                 required
               />
             </div>
-            <div>
-              <label className="block text-sm font-bold text-brand-text mb-1.5">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
-                className="w-full bg-white border-2 border-gray-200 rounded-xl py-3 px-4 text-sm text-brand-text placeholder:text-gray-300 focus:outline-none focus:border-brand-blue transition-colors"
-                required
-              />
-            </div>
-            <AppButton fullWidth className="py-3.5 text-base rounded-2xl mt-2">
-              {mode === 'login' ? 'Sign In' : 'Create Account'}
+
+            <AppButton fullWidth disabled={isLoading} className="py-3.5 text-base rounded-2xl mt-2">
+              {isLoading ? 'Processing...' : (needsRegistration ? "Sign Up" : "Sign In")}
             </AppButton>
           </form>
 
-          {/* Google Login */}
-          <div className="mt-6">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="flex-1 h-px bg-gray-200" />
-              <span className="text-xs text-brand-text-light">or continue with</span>
-              <div className="flex-1 h-px bg-gray-200" />
-            </div>
-            <div className="grid grid-cols-1 gap-2">
+          {/* Optional fallback, but dynamic logic helps */}
+          {needsRegistration && (
+            <div className="mt-8 text-center">
               <button
-                onClick={() => onAuthSuccess({ uid: 'sa1', email: 'admin@native.edu', displayName: 'Super Admin', role: 'super-admin' })}
-                className="w-full flex items-center justify-center gap-3 bg-brand-navy text-white rounded-xl py-3 px-4 text-sm font-semibold hover:bg-brand-navy/90 transition-colors"
                 type="button"
+                onClick={() => { setNeedsRegistration(false); setError(null); }}
+                className="text-brand-blue text-sm font-semibold hover:underline"
               >
-                Sign in as Super Admin
+                Go back (enter a different number)
               </button>
+            </div>
+          )}
+
+          {(import.meta as any).env?.DEV && (
+            <div className="mt-10 pt-6 border-t border-gray-200">
+              <p className="text-xs font-bold text-gray-400 mb-3 text-center uppercase tracking-wider">Test Mode (Dev Only)</p>
               <div className="grid grid-cols-2 gap-2">
                 <button
-                  onClick={() => onAuthSuccess({ uid: 'a1', email: 'osiyo@native.edu', displayName: 'Admin Osiyo', role: 'admin', assignedTeacherId: 't2' })}
-                  className="flex flex-col items-center gap-1 bg-white border-2 border-gray-200 rounded-xl py-2 px-3 text-xs font-bold text-brand-text hover:bg-gray-50 transition-colors"
                   type="button"
+                  onClick={() => onAuthSuccess({ uid: 'test-student', email: 'student@test.com', displayName: 'Test Student', role: 'student' })}
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold py-2 px-3 rounded-lg transition-colors"
                 >
-                  <span>Ms Osiyo</span>
-                  <span className="text-[10px] font-medium text-brand-text-light opacity-60 italic">Admin Login</span>
+                  Student
                 </button>
                 <button
-                  onClick={() => onAuthSuccess({ uid: 'a2', email: 'sarvar@native.edu', displayName: 'Admin Sarvar', role: 'admin', assignedTeacherId: 't3' })}
-                  className="flex flex-col items-center gap-1 bg-white border-2 border-gray-200 rounded-xl py-2 px-3 text-xs font-bold text-brand-text hover:bg-gray-50 transition-colors"
                   type="button"
+                  onClick={() => onAuthSuccess({ uid: 'test-admin', email: ADMIN_EMAILS[0], displayName: 'Test Admin', role: 'admin', assignedTeacherId: 't2' })}
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold py-2 px-3 rounded-lg transition-colors"
                 >
-                  <span>Mr Sarvar</span>
-                  <span className="text-[10px] font-medium text-brand-text-light opacity-60 italic">Admin Login</span>
+                  Admin
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onAuthSuccess({ uid: 'test-super', email: SUPER_ADMIN_EMAILS[0], displayName: 'Test Super Admin', role: 'super-admin' })}
+                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold py-2 px-3 rounded-lg col-span-2 transition-colors"
+                >
+                  Super Admin
                 </button>
               </div>
             </div>
-          </div>
-
-          {/* Toggle */}
-          <div className="mt-8 text-center">
-            <button
-              onClick={() => setMode(mode === 'login' ? 'register' : 'login')}
-              className="text-brand-blue text-sm font-semibold"
-            >
-              {mode === 'login' ? "Don't have an account? Register" : 'Already have an account? Sign In'}
-            </button>
-          </div>
+          )}
         </div>
       </div>
     </div>

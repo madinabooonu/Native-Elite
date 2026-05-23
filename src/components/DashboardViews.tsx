@@ -23,7 +23,6 @@ export const StudentHome = ({
   const subTabs = [
     { id: 'schedule', label: 'Schedule', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg> },
     { id: 'mybookings', label: 'My Bookings', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg> },
-    { id: 'profile', label: 'Profile', icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg> },
   ];
 
   return (
@@ -39,11 +38,6 @@ export const StudentHome = ({
           {activeSubTab === 'mybookings' && (
             <motion.div key="bookings" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
               <MyBookingsView activeBooking={activeBooking} />
-            </motion.div>
-          )}
-          {activeSubTab === 'profile' && (
-            <motion.div key="profile" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <ProfileView userProfile={userProfile} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -89,9 +83,9 @@ const MyBookingsView = ({ activeBooking }: { activeBooking?: BookingRecord | nul
 };
 
 /* ── Improved Profile View ── */
-const ProfileView = ({ userProfile }: { userProfile: any }) => {
-  const [selectedStage, setSelectedStage] = useState('B2');
-  const stages = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+export const ProfileView = ({ userProfile, handleLogout }: { userProfile: any, handleLogout?: () => void }) => {
+  const [selectedStage, setSelectedStage] = useState('Stage 1');
+  const stages = ['Stage 1', 'Stage 2', 'Stage 3', 'Stage 4', 'Stage 5', 'Stage 6'];
 
   return (
     <div className="px-4 md:px-6 pt-6 space-y-6">
@@ -134,14 +128,10 @@ const ProfileView = ({ userProfile }: { userProfile: any }) => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3">
         <Card className="p-4 bg-blue-50 border-none shadow-none text-center rounded-2xl">
           <p className="text-[10px] font-bold text-brand-blue uppercase tracking-wider mb-1">Attendance</p>
           <p className="text-xl font-extrabold text-brand-text">95%</p>
-        </Card>
-        <Card className="p-4 bg-green-50 border-none shadow-none text-center rounded-2xl">
-          <p className="text-[10px] font-bold text-brand-green uppercase tracking-wider mb-1">Points</p>
-          <p className="text-xl font-extrabold text-brand-text">1,240</p>
         </Card>
       </div>
 
@@ -153,13 +143,12 @@ const ProfileView = ({ userProfile }: { userProfile: any }) => {
         </label>
         <div className="space-y-2">
           <QuickAction icon="📞" label="Contact Support" color="text-blue-500" />
-          <QuickAction icon="📄" label="Download Certificate" color="text-purple-500" />
           <QuickAction icon="⚙️" label="Account Settings" color="text-gray-500" />
         </div>
       </div>
 
       {/* Sign Out */}
-      <AppButton fullWidth variant="ghost" className="text-brand-red font-bold text-sm h-12 rounded-2xl border-2 border-red-50">
+      <AppButton fullWidth variant="ghost" onClick={handleLogout} className="text-brand-red font-bold text-sm h-12 rounded-2xl border-2 border-red-50">
         Log Out
       </AppButton>
     </div>

@@ -125,13 +125,14 @@ export const BookingCalendar = ({
   const filteredSlots = teacherSlots.filter((s) => s.day === selectedDay);
   const currentTeacher = TEACHERS.find((t) => t.id === selectedTeacher);
 
-  const isDayDisabled = (day: string): boolean => {
+  const isDayDisabled = (fullDate: string): boolean => {
     if (hasActiveBooking) return true;
-    return false;
+    const today = new Date().toISOString().split('T')[0];
+    return fullDate < today;
   };
 
-  const handleSelectDay = (day: string) => {
-    if (isDayDisabled(day)) return;
+  const handleSelectDay = (day: string, fullDate: string) => {
+    if (isDayDisabled(fullDate)) return;
     setSelectedDay(day);
     setSelectedSlot(null);
   };
@@ -200,17 +201,18 @@ export const BookingCalendar = ({
           <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
             {weekDays.map((wd) => {
               const isSelected = selectedDay === wd.day;
-              const disabled = isDayDisabled(wd.day);
+              const disabled = isDayDisabled(wd.fullDate);
               return (
                 <button
                   key={wd.day}
                   disabled={disabled}
-                  onClick={() => handleSelectDay(wd.day)}
+                  onClick={() => handleSelectDay(wd.day, wd.fullDate)}
                   className={cn(
                     'flex flex-col items-center min-w-[60px] py-3 rounded-xl border-2 transition-all',
-                    isSelected
-                      ? 'bg-brand-blue border-brand-blue text-white shadow-md'
-                      : 'border-gray-200 bg-white text-brand-text'
+                    disabled ? 'opacity-40 cursor-not-allowed bg-gray-50 border-transparent text-gray-400' :
+                      isSelected
+                        ? 'bg-brand-blue border-brand-blue text-white shadow-md'
+                        : 'border-gray-200 bg-white text-brand-text hover:border-gray-300'
                   )}
                 >
                   <span className="text-[10px] font-bold uppercase">{wd.day}</span>
