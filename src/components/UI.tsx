@@ -23,7 +23,7 @@ export const AppButton = ({
   const variants: Record<string, string> = {
     primary: 'bg-brand-blue text-white shadow-md hover:bg-brand-blue-mid',
     outline: 'border-2 border-brand-blue text-brand-blue bg-transparent hover:bg-brand-blue/5',
-    ghost: 'text-brand-text-light hover:bg-gray-100',
+    ghost: 'text-brand-text-light hover:bg-brand-navy',
     danger: 'bg-brand-red text-white hover:bg-red-700',
   };
 
@@ -47,7 +47,7 @@ export const Card = ({
   children: React.ReactNode;
   className?: string;
 } & React.HTMLAttributes<HTMLDivElement>) => (
-  <div className={cn('bg-white rounded-2xl card-shadow glass overflow-hidden', className)} {...props}>
+  <div className={cn('bg-brand-navy rounded-2xl card-shadow glass overflow-hidden', className)} {...props}>
     {children}
   </div>
 );
@@ -95,7 +95,7 @@ export const MobileHeader = ({
         {avatarUrl ? (
           <img src={avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover border-2 border-white/30" />
         ) : (
-          <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center">
+          <div className="w-9 h-9 rounded-full bg-brand-navy/20 flex items-center justify-center">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
               <circle cx="12" cy="7" r="4" />
@@ -123,7 +123,7 @@ export const BottomNav = ({
   setActiveTab: (tab: string) => void;
   tabs: { id: string; label: string; icon: React.ReactNode }[];
 }) => (
-  <nav className="fixed bottom-0 left-0 right-0 bg-white bottom-nav-shadow z-50 safe-bottom">
+  <nav className="fixed bottom-0 left-0 right-0 bg-brand-navy bottom-nav-shadow z-50 safe-bottom">
     <div className="flex items-center justify-around px-2 py-2 max-w-lg mx-auto">
       {tabs.map((tab) => (
         <button
@@ -133,7 +133,7 @@ export const BottomNav = ({
             'flex flex-col items-center gap-1 py-1.5 px-3 rounded-xl transition-all duration-200 min-w-[56px]',
             activeTab === tab.id
               ? 'text-brand-blue'
-              : 'text-gray-400 hover:text-gray-600'
+              : 'text-brand-text-light hover:text-white'
           )}
         >
           <div className={cn(
@@ -173,7 +173,7 @@ export const TabBar = ({
           'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-200',
           activeTab === tab.id
             ? 'bg-brand-blue text-white shadow-md'
-            : 'bg-white text-brand-text-light hover:bg-gray-50'
+            : 'bg-brand-navy text-brand-text-light hover:bg-gray-50'
         )}
       >
         {tab.icon}
@@ -185,7 +185,7 @@ export const TabBar = ({
 
 /* ── Info Banner ── */
 export const InfoBanner = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-  <div className={cn('flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-xl p-3 mx-5 mt-3', className)}>
+  <div className={cn('flex items-start gap-3 bg-brand-blue/10 border border-blue-100 rounded-xl p-3 mx-5 mt-3', className)}>
     <div className="w-5 h-5 rounded-full bg-brand-blue flex items-center justify-center flex-shrink-0 mt-0.5">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
         <line x1="12" y1="16" x2="12" y2="12" />

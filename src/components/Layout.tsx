@@ -74,9 +74,9 @@ export const AppLayout = ({
   };
 
   return (
-    <div className="min-h-screen bg-brand-bg">
+    <div className="min-h-screen bg-brand-navy-deep">
       {/* Desktop: centered with max-width, subtle card shadow */}
-      <div className="max-w-[480px] md:max-w-[520px] lg:max-w-[480px] mx-auto md:my-4 lg:my-6 md:rounded-3xl md:overflow-hidden md:card-shadow-lg md:border md:border-gray-200/60 relative bg-brand-bg md:bg-white">
+      <div className="max-w-[480px] md:max-w-[520px] lg:max-w-[480px] mx-auto md:my-4 lg:my-6 md:rounded-3xl md:overflow-hidden md:card-shadow-lg md:border md:border-brand-blue/30 relative bg-brand-navy-deep md:bg-brand-navy">
         <MobileHeader
           title={headerTitle || titleMap[activeTab] || 'Native Elite'}
           subtitle={headerSubtitle || subtitleMap[activeTab]}

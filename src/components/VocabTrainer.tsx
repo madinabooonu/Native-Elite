@@ -293,12 +293,12 @@ export const VocabTrainer = () => {
             <div className="min-h-screen bg-[#0a1628] text-white pb-24">
                 {/* Header */}
                 <div className="text-center pt-6 pb-4 px-4">
-                    <span className="inline-block text-[10px] font-bold tracking-[0.2em] text-emerald-400 border border-emerald-400/40 px-3 py-1 rounded-full mb-3 uppercase">
+                    <span className="inline-block text-[10px] font-bold tracking-[0.2em] text-brand-blue-light border border-brand-blue-light/40 px-3 py-1 rounded-full mb-3 uppercase">
                         Native Elite American Academy
                     </span>
                     <h1 className="text-2xl font-black">
                         <span className="text-white">Vocab</span>{' '}
-                        <span className="text-emerald-400">Trainer</span>
+                        <span className="text-brand-blue-light">Trainer</span>
                     </h1>
                     <p className="text-gray-400 text-xs mt-1">Learn → Recognize → Produce</p>
                 </div>
@@ -309,7 +309,7 @@ export const VocabTrainer = () => {
 
                     <div className="flex gap-2 mb-4">
                         <button onClick={() => setSelectedTopics(TOPICS.map(t => t.id))}
-                            className="text-xs px-3 py-1.5 rounded-full border border-emerald-400/40 text-emerald-400 hover:bg-emerald-400/10 transition-all">
+                            className="text-xs px-3 py-1.5 rounded-full border border-brand-blue-light/40 text-brand-blue-light hover:bg-brand-blue-light/10 transition-all">
                             Select All
                         </button>
                         <button onClick={() => setSelectedTopics([])}
@@ -326,12 +326,12 @@ export const VocabTrainer = () => {
                                 className={cn(
                                     'p-3 rounded-xl border text-left transition-all flex items-center justify-between',
                                     selectedTopics.includes(topic.id)
-                                        ? 'border-emerald-400/60 bg-emerald-400/5'
+                                        ? 'border-brand-blue-light/60 bg-brand-blue-light/5'
                                         : 'border-gray-700/50 bg-[#0d1f38]/60 opacity-50'
                                 )}
                             >
                                 <div>
-                                    <p className="text-emerald-400 text-sm font-semibold">{topic.name}</p>
+                                    <p className="text-brand-blue-light text-sm font-semibold">{topic.name}</p>
                                     <p className="text-gray-500 text-[10px]">{topic.words.length} words</p>
                                 </div>
                                 <span className="text-lg">{topic.emoji}</span>
@@ -340,8 +340,8 @@ export const VocabTrainer = () => {
                     </div>
 
                     <p className="text-center text-xs text-gray-500 mt-3">
-                        <span className="text-emerald-400 font-bold">{totalSelected}</span> words from{' '}
-                        <span className="text-emerald-400 font-bold">{selectedTopics.length}</span> topics
+                        <span className="text-brand-blue-light font-bold">{totalSelected}</span> words from{' '}
+                        <span className="text-brand-blue-light font-bold">{selectedTopics.length}</span> topics
                     </p>
                 </div>
 
@@ -356,8 +356,8 @@ export const VocabTrainer = () => {
                                 className={cn(
                                     'w-11 h-11 rounded-xl border text-sm font-bold transition-all',
                                     wordsPerSession === n
-                                        ? 'bg-emerald-400 text-[#0a1628] border-emerald-400 shadow-lg shadow-emerald-400/30'
-                                        : 'border-gray-600 text-gray-400 hover:border-emerald-400/40'
+                                        ? 'bg-brand-blue-light text-[#0a1628] border-brand-blue-light shadow-lg shadow-brand-blue-light/30'
+                                        : 'border-gray-600 text-gray-400 hover:border-brand-blue-light/40'
                                 )}
                             >
                                 {n}
@@ -368,8 +368,8 @@ export const VocabTrainer = () => {
                             className={cn(
                                 'px-4 h-11 rounded-xl border text-sm font-bold transition-all',
                                 wordsPerSession === 999
-                                    ? 'bg-emerald-400 text-[#0a1628] border-emerald-400 shadow-lg shadow-emerald-400/30'
-                                    : 'border-gray-600 text-gray-400 hover:border-emerald-400/40'
+                                    ? 'bg-brand-blue-light text-[#0a1628] border-brand-blue-light shadow-lg shadow-brand-blue-light/30'
+                                    : 'border-gray-600 text-gray-400 hover:border-brand-blue-light/40'
                             )}
                         >
                             All
@@ -382,7 +382,7 @@ export const VocabTrainer = () => {
                     <button
                         onClick={startTraining}
                         disabled={selectedTopics.length === 0}
-                        className="w-full py-4 rounded-2xl bg-emerald-400 text-[#0a1628] font-extrabold text-base transition-all hover:bg-emerald-300 disabled:opacity-30 disabled:cursor-not-allowed shadow-xl shadow-emerald-400/20"
+                        className="w-full py-4 rounded-2xl bg-brand-blue-light text-[#0a1628] font-extrabold text-base transition-all hover:bg-brand-blue-light disabled:opacity-30 disabled:cursor-not-allowed shadow-xl shadow-brand-blue-light/20"
                     >
                         Start Training
                     </button>
@@ -403,16 +403,16 @@ export const VocabTrainer = () => {
         return (
             <div className="min-h-screen bg-[#0a1628] text-white flex flex-col items-center justify-center px-6 pb-24">
                 <div className="text-center">
-                    <span className="inline-block text-[10px] font-bold tracking-[0.2em] text-emerald-400 border border-emerald-400/40 px-3 py-1 rounded-full mb-6 uppercase">
+                    <span className="inline-block text-[10px] font-bold tracking-[0.2em] text-brand-blue-light border border-brand-blue-light/40 px-3 py-1 rounded-full mb-6 uppercase">
                         Native Elite American Academy
                     </span>
                     <div className="text-5xl mb-4">{info.icon}</div>
-                    <h2 className="text-2xl font-black text-emerald-400 mb-3">{info.title}</h2>
+                    <h2 className="text-2xl font-black text-brand-blue-light mb-3">{info.title}</h2>
                     <p className="text-gray-400 text-sm leading-relaxed max-w-xs mx-auto mb-2">{info.desc}</p>
                     <p className="text-white font-bold text-sm">{sessionWords.length} words</p>
                     <button
                         onClick={startStage}
-                        className="mt-8 px-10 py-3.5 rounded-2xl bg-emerald-400 text-[#0a1628] font-extrabold text-base hover:bg-emerald-300 transition-all shadow-xl shadow-emerald-400/20"
+                        className="mt-8 px-10 py-3.5 rounded-2xl bg-brand-blue-light text-[#0a1628] font-extrabold text-base hover:bg-brand-blue-light transition-all shadow-xl shadow-brand-blue-light/20"
                     >
                         Let's Go
                     </button>
@@ -428,17 +428,17 @@ export const VocabTrainer = () => {
             <div className="min-h-screen bg-[#0a1628] text-white flex flex-col items-center justify-center px-6 pb-24">
                 <div className="text-center">
                     <div className="text-5xl mb-4">🏆</div>
-                    <h2 className="text-2xl font-black text-emerald-400 mb-2">Training Complete!</h2>
+                    <h2 className="text-2xl font-black text-brand-blue-light mb-2">Training Complete!</h2>
                     <p className="text-gray-400 text-sm mb-6">Here are your results</p>
 
-                    <div className="bg-[#0d1f38] rounded-2xl p-6 border border-emerald-400/20 mb-6 min-w-[260px]">
-                        <div className="text-5xl font-black text-emerald-400 mb-2">{percentage}%</div>
+                    <div className="bg-[#0d1f38] rounded-2xl p-6 border border-brand-blue-light/20 mb-6 min-w-[260px]">
+                        <div className="text-5xl font-black text-brand-blue-light mb-2">{percentage}%</div>
                         <p className="text-gray-400 text-sm">{correctCount} / {sessionWords.length} correct</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-3 mb-8">
-                        <div className="bg-emerald-400/10 border border-emerald-400/30 rounded-xl p-4">
-                            <p className="text-2xl font-bold text-emerald-400">{knownWords.size}</p>
+                        <div className="bg-brand-blue-light/10 border border-brand-blue-light/30 rounded-xl p-4">
+                            <p className="text-2xl font-bold text-brand-blue-light">{knownWords.size}</p>
                             <p className="text-xs text-gray-400">Known</p>
                         </div>
                         <div className="bg-red-400/10 border border-red-400/30 rounded-xl p-4">
@@ -449,7 +449,7 @@ export const VocabTrainer = () => {
 
                     <button
                         onClick={resetTrainer}
-                        className="w-full py-4 rounded-2xl bg-emerald-400 text-[#0a1628] font-extrabold text-base hover:bg-emerald-300 transition-all shadow-xl shadow-emerald-400/20"
+                        className="w-full py-4 rounded-2xl bg-brand-blue-light text-[#0a1628] font-extrabold text-base hover:bg-brand-blue-light transition-all shadow-xl shadow-brand-blue-light/20"
                     >
                         Train Again
                     </button>
@@ -466,12 +466,12 @@ export const VocabTrainer = () => {
         <div className="min-h-screen bg-[#0a1628] text-white pb-24">
             {/* Header */}
             <div className="text-center pt-4 pb-2 px-4">
-                <span className="inline-block text-[10px] font-bold tracking-[0.2em] text-emerald-400 border border-emerald-400/40 px-3 py-1 rounded-full mb-2 uppercase">
+                <span className="inline-block text-[10px] font-bold tracking-[0.2em] text-brand-blue-light border border-brand-blue-light/40 px-3 py-1 rounded-full mb-2 uppercase">
                     Native Elite American Academy
                 </span>
                 <h1 className="text-lg font-black">
                     <span className="text-white">Vocab</span>{' '}
-                    <span className="text-emerald-400">Trainer</span>
+                    <span className="text-brand-blue-light">Trainer</span>
                 </h1>
             </div>
 
@@ -483,7 +483,7 @@ export const VocabTrainer = () => {
                         className={cn(
                             'flex-1 py-2.5 rounded-xl text-center text-xs font-bold uppercase tracking-wider border transition-all',
                             currentStage === s
-                                ? 'bg-emerald-400/10 border-emerald-400/40 text-emerald-400'
+                                ? 'bg-brand-blue-light/10 border-brand-blue-light/40 text-brand-blue-light'
                                 : 'border-gray-700/40 text-gray-600'
                         )}
                     >
@@ -494,10 +494,10 @@ export const VocabTrainer = () => {
 
             {/* Progress */}
             <div className="flex items-center justify-between px-4 mb-4">
-                <span className="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded">{correctCount} correct</span>
+                <span className="text-xs font-bold text-brand-blue-light bg-brand-blue-light/10 px-2 py-0.5 rounded">{correctCount} correct</span>
                 <div className="flex-1 mx-3 h-1.5 bg-gray-800 rounded-full overflow-hidden">
                     <motion.div
-                        className="h-full bg-emerald-400 rounded-full"
+                        className="h-full bg-brand-blue-light rounded-full"
                         animate={{ width: `${progress}%` }}
                         transition={{ duration: 0.3 }}
                     />
@@ -518,7 +518,7 @@ export const VocabTrainer = () => {
                         <div className="flex items-center gap-2 mb-2">
                             <span className="text-gray-500 text-[10px] uppercase tracking-wider">💬 {currentWord.topic}</span>
                         </div>
-                        <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded mb-3">
+                        <span className="inline-block text-[10px] font-bold uppercase tracking-wider text-brand-blue-light bg-brand-blue-light/10 px-2 py-0.5 rounded mb-3">
                             Stage {currentStage === 'learn' ? 1 : currentStage === 'recognize' ? 2 : 3} — {currentStage}
                         </span>
 
@@ -532,19 +532,19 @@ export const VocabTrainer = () => {
                                 {!revealed ? (
                                     <button
                                         onClick={() => setRevealed(true)}
-                                        className="w-full py-4 rounded-xl border-2 border-dashed border-emerald-400/30 text-emerald-400/60 text-sm font-semibold hover:bg-emerald-400/5 transition-all"
+                                        className="w-full py-4 rounded-xl border-2 border-dashed border-brand-blue-light/30 text-brand-blue-light/60 text-sm font-semibold hover:bg-brand-blue-light/5 transition-all"
                                     >
                                         👆 Tap to reveal translation
                                     </button>
                                 ) : (
                                     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
-                                        <div className="w-full py-4 rounded-xl bg-emerald-400/10 border border-emerald-400/30 text-center mb-4">
+                                        <div className="w-full py-4 rounded-xl bg-brand-blue-light/10 border border-brand-blue-light/30 text-center mb-4">
                                             <p className="text-white font-bold text-base">{currentWord.translation}</p>
                                         </div>
                                         <div className="grid grid-cols-2 gap-3">
                                             <button
                                                 onClick={() => handleKnown(true)}
-                                                className="py-3 rounded-xl border border-emerald-400/40 text-emerald-400 font-bold text-sm hover:bg-emerald-400/10 transition-all"
+                                                className="py-3 rounded-xl border border-brand-blue-light/40 text-brand-blue-light font-bold text-sm hover:bg-brand-blue-light/10 transition-all"
                                             >
                                                 I knew it ✓
                                             </button>
@@ -578,13 +578,13 @@ export const VocabTrainer = () => {
                                                 className={cn(
                                                     'py-3 px-4 rounded-xl border text-sm font-semibold text-left transition-all',
                                                     !selectedAnswer
-                                                        ? 'border-gray-600/50 text-gray-300 hover:border-emerald-400/40 hover:bg-emerald-400/5'
+                                                        ? 'border-gray-600/50 text-gray-300 hover:border-brand-blue-light/40 hover:bg-brand-blue-light/5'
                                                         : isSelected && isCorrect
-                                                            ? 'border-emerald-400 bg-emerald-400/20 text-emerald-400'
+                                                            ? 'border-brand-blue-light bg-brand-blue-light/20 text-brand-blue-light'
                                                             : isSelected && !isCorrect
                                                                 ? 'border-red-400 bg-red-400/20 text-red-400'
                                                                 : isCorrect
-                                                                    ? 'border-emerald-400/40 bg-emerald-400/10 text-emerald-400'
+                                                                    ? 'border-brand-blue-light/40 bg-brand-blue-light/10 text-brand-blue-light'
                                                                     : 'border-gray-700/30 text-gray-600'
                                                 )}
                                             >
@@ -600,7 +600,7 @@ export const VocabTrainer = () => {
                         {currentStage === 'produce' && (
                             <>
                                 <p className="text-gray-400 text-sm mb-2">Write the English word for:</p>
-                                <div className="w-full py-4 rounded-xl bg-emerald-400/10 border border-emerald-400/30 text-center mb-4">
+                                <div className="w-full py-4 rounded-xl bg-brand-blue-light/10 border border-brand-blue-light/30 text-center mb-4">
                                     <p className="text-white font-bold text-base">{currentWord.translation}</p>
                                 </div>
                                 {!revealed ? (
@@ -611,12 +611,12 @@ export const VocabTrainer = () => {
                                             onChange={e => setUserInput(e.target.value)}
                                             onKeyDown={e => e.key === 'Enter' && userInput.trim() && handleProduceSubmit()}
                                             placeholder="Type the English word..."
-                                            className="w-full py-3 px-4 rounded-xl bg-[#0a1628] border border-gray-600/50 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-400/50 mb-3"
+                                            className="w-full py-3 px-4 rounded-xl bg-[#0a1628] border border-gray-600/50 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-brand-blue-light/50 mb-3"
                                         />
                                         <button
                                             onClick={handleProduceSubmit}
                                             disabled={!userInput.trim()}
-                                            className="w-full py-3 rounded-xl bg-emerald-400 text-[#0a1628] font-bold text-sm disabled:opacity-30 transition-all"
+                                            className="w-full py-3 rounded-xl bg-brand-blue-light text-[#0a1628] font-bold text-sm disabled:opacity-30 transition-all"
                                         >
                                             Check
                                         </button>
@@ -626,7 +626,7 @@ export const VocabTrainer = () => {
                                         <div className={cn(
                                             'w-full py-3 px-4 rounded-xl text-center mb-2 border',
                                             userInput.trim().toLowerCase() === currentWord.word.toLowerCase()
-                                                ? 'bg-emerald-400/10 border-emerald-400/30 text-emerald-400'
+                                                ? 'bg-brand-blue-light/10 border-brand-blue-light/30 text-brand-blue-light'
                                                 : 'bg-red-400/10 border-red-400/30 text-red-400'
                                         )}>
                                             <p className="font-bold text-sm">

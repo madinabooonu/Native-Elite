@@ -56,7 +56,7 @@ const BarChart = ({ data, labels, color, maxVal, suffix = '' }: {
                                 <motion.div
                                     initial={{ opacity: 0, y: 5 }}
                                     animate={{ opacity: 1, y: 0 }}
-                                    className="absolute -top-7 bg-white text-[#0a1628] text-[10px] font-bold px-1.5 py-0.5 rounded shadow-lg z-10 whitespace-nowrap"
+                                    className="absolute -top-7 bg-brand-navy text-[#0a1628] text-[10px] font-bold px-1.5 py-0.5 rounded shadow-lg z-10 whitespace-nowrap"
                                 >
                                     {val}{suffix}
                                 </motion.div>
@@ -134,7 +134,7 @@ const LineChart = ({ data, labels, color, maxVal, suffix = '' }: {
             </svg>
             {hoveredIdx !== null && (
                 <div
-                    className="absolute bg-white text-[#0a1628] text-[10px] font-bold px-1.5 py-0.5 rounded shadow-lg z-10"
+                    className="absolute bg-brand-navy text-[#0a1628] text-[10px] font-bold px-1.5 py-0.5 rounded shadow-lg z-10"
                     style={{
                         left: `${(points[hoveredIdx].x / width) * 100}%`,
                         top: `${(points[hoveredIdx].y / height) * 100 - 15}%`,
@@ -164,7 +164,7 @@ const StatCard = ({ label, value, change, icon, color }: {
     <div className={cn('p-4 rounded-xl border', color)}>
         <div className="flex items-center justify-between mb-2">
             <span className="text-lg">{icon}</span>
-            <span className="text-[10px] font-bold text-emerald-400">
+            <span className="text-[10px] font-bold text-brand-blue-light">
                 {change}
             </span>
         </div>
@@ -205,7 +205,7 @@ export const ProgressChart = () => {
                         className={cn(
                             'flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all',
                             timeRange === range
-                                ? 'bg-emerald-400/10 border-emerald-400/40 text-emerald-400'
+                                ? 'bg-brand-blue-light/10 border-brand-blue-light/40 text-brand-blue-light'
                                 : 'border-gray-700/40 text-gray-600 hover:border-gray-600'
                         )}
                     >
@@ -222,7 +222,7 @@ export const ProgressChart = () => {
                 />
                 <StatCard
                     icon="📚" label="Words Learned" value={String(totalVocab)}
-                    change={`+${timeRange === 'weekly' ? 28 : 205} words`} color="bg-[#0d1f38] border-emerald-400/20"
+                    change={`+${timeRange === 'weekly' ? 28 : 205} words`} color="bg-[#0d1f38] border-brand-blue-light/20"
                 />
                 <StatCard
                     icon="📝" label="Mock Test" value={latestMock}
@@ -262,12 +262,12 @@ export const ProgressChart = () => {
                             <p className="text-sm font-bold text-white">Vocabulary Growth</p>
                             <p className="text-[10px] text-gray-500">Words learned over time</p>
                         </div>
-                        <span className="text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded">📚 {totalVocab}</span>
+                        <span className="text-xs font-bold text-brand-blue-light bg-brand-blue-light/10 px-2 py-0.5 rounded">📚 {totalVocab}</span>
                     </div>
                     <BarChart
                         data={data.vocabulary}
                         labels={labels}
-                        color="bg-emerald-400"
+                        color="bg-brand-blue-light"
                         maxVal={Math.max(...data.vocabulary) * 1.2}
                         suffix=" words"
                     />

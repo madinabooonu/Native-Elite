@@ -3,8 +3,8 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 
-  --color-brand-navy: #001845;
-  --color-brand-navy-deep: #001233;
+  --color-brand-navy: #0E173C;
+  --color-brand-navy-deep: #050A24;
   --color-brand-blue: #0353A4;
   --color-brand-blue-mid: #0466C8;
   --color-brand-blue-light: #7BB8F5;
@@ -12,10 +12,10 @@
   --color-brand-green: #2DC653;
   --color-brand-red: #E63946;
   --color-brand-orange: #FB8500;
-  --color-brand-card: rgba(255, 255, 255, 0.85);
-  --color-brand-bg: #F8FAFC;
-  --color-brand-text: #0F172A;
-  --color-brand-text-light: #64748B;
+  --color-brand-card: rgba(14, 23, 60, 0.85);
+  --color-brand-bg: var(--color-brand-navy-deep);
+  --color-brand-text: #FFFFFF;
+  --color-brand-text-light: #94A3B8;
 }
 
 .glass {

@@ -96,7 +96,7 @@ export const AdminDashboard = ({
             onClick={() => setActiveSubTab(tab.id as any)}
             className={cn(
               'px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap',
-              activeSubTab === tab.id ? 'bg-brand-blue text-white shadow-md' : 'bg-white text-brand-text-light border border-gray-200'
+              activeSubTab === tab.id ? 'bg-brand-blue text-white shadow-md' : 'bg-brand-navy text-brand-text-light border border-brand-blue/30'
             )}
           >
             {tab.label}
@@ -116,7 +116,7 @@ export const AdminDashboard = ({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search bookings..."
-              className="w-full bg-white border-2 border-gray-200 rounded-xl py-2.5 pl-9 pr-4 text-sm text-brand-text placeholder:text-gray-300 focus:outline-none focus:border-brand-blue transition-all"
+              className="w-full bg-brand-navy border-2 border-brand-blue/30 rounded-xl py-2.5 pl-9 pr-4 text-sm text-white placeholder:text-gray-300 focus:outline-none focus:border-brand-blue transition-all"
             />
           </div>
         </>
@@ -135,7 +135,7 @@ export const AdminDashboard = ({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search bookings..."
-            className="w-full bg-white border-2 border-gray-200 rounded-xl py-2.5 pl-9 pr-4 text-sm text-brand-text placeholder:text-gray-300 focus:outline-none focus:border-brand-blue transition-all"
+            className="w-full bg-brand-navy border-2 border-brand-blue/30 rounded-xl py-2.5 pl-9 pr-4 text-sm text-white placeholder:text-gray-300 focus:outline-none focus:border-brand-blue transition-all"
           />
         </div>
       )}
@@ -143,7 +143,7 @@ export const AdminDashboard = ({
       {/* Bookings List */}
       {(activeSubTab === 'overview' || activeSubTab === 'bookings') && (
         <div className="space-y-3">
-          <h3 className="text-sm font-bold text-brand-text italic">
+          <h3 className="text-sm font-bold text-white italic">
             {activeSubTab === 'overview' ? 'Recent Bookings' : 'All Bookings'}
           </h3>
           <AnimatePresence>
@@ -165,7 +165,7 @@ export const AdminDashboard = ({
                           {booking.studentName.split(' ').map((n) => n[0]).join('')}
                         </div>
                         <div>
-                          <p className="text-sm font-bold text-brand-text">{booking.studentName}</p>
+                          <p className="text-sm font-bold text-white">{booking.studentName}</p>
                           <p className="text-xs text-brand-text-light">Stage: {booking.studentStage} • {booking.teacherName}</p>
                         </div>
                       </div>
@@ -250,7 +250,7 @@ const SlotStatusBoard = ({ user }: { user: UserProfile }) => {
             onClick={() => setSelectedTeacher(t.id)}
             className={cn(
               'px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all',
-              selectedTeacher === t.id ? 'bg-brand-blue text-white shadow-sm' : 'bg-gray-100 text-brand-text-light'
+              selectedTeacher === t.id ? 'bg-brand-blue text-white shadow-sm' : 'bg-brand-navy text-brand-text-light'
             )}
           >
             {t.name}
@@ -260,10 +260,10 @@ const SlotStatusBoard = ({ user }: { user: UserProfile }) => {
 
       <Card className="p-4 overflow-x-auto hide-scrollbar">
         <div className="min-w-[500px]">
-          <div className="grid grid-cols-[80px_1fr] border-b border-gray-100 pb-2">
+          <div className="grid grid-cols-[80px_1fr] border-b border-brand-blue/30 pb-2">
             <div className="text-[10px] font-bold text-gray-400 uppercase">Time</div>
             <div className="grid grid-cols-7 gap-1">
-              {days.map(d => <div key={d} className="text-[10px] font-bold text-brand-text text-center">{d}</div>)}
+              {days.map(d => <div key={d} className="text-[10px] font-bold text-white text-center">{d}</div>)}
             </div>
           </div>
           <div className="space-y-1 mt-2">
@@ -278,7 +278,7 @@ const SlotStatusBoard = ({ user }: { user: UserProfile }) => {
                         key={d}
                         className={cn(
                           'h-6 rounded-md border-2 transition-colors',
-                          isBooked ? 'bg-brand-blue/10 border-brand-blue/30' : 'bg-gray-50 border-gray-100'
+                          isBooked ? 'bg-brand-blue/10 border-brand-blue/30' : 'bg-gray-50 border-brand-blue/30'
                         )}
                       />
                     );
@@ -291,7 +291,7 @@ const SlotStatusBoard = ({ user }: { user: UserProfile }) => {
       </Card>
       <div className="flex items-center gap-4 px-2">
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm bg-gray-50 border border-gray-200" />
+          <div className="w-3 h-3 rounded-sm bg-gray-50 border border-brand-blue/30" />
           <span className="text-[10px] text-brand-text-light">Available</span>
         </div>
         <div className="flex items-center gap-1.5">
@@ -340,7 +340,7 @@ const ReportsView = ({ bookings, user }: { bookings: BookingRecord[], user: User
               onClick={() => setReportType(type as any)}
               className={cn(
                 'px-3 py-1.5 rounded-lg text-[10px] font-bold capitalize transition-all',
-                reportType === type ? 'bg-brand-navy text-white shadow-sm' : 'bg-white text-brand-text-light border border-gray-100'
+                reportType === type ? 'bg-brand-navy text-white shadow-sm' : 'bg-brand-navy text-brand-text-light border border-brand-blue/30'
               )}
             >
               {type}
@@ -349,7 +349,7 @@ const ReportsView = ({ bookings, user }: { bookings: BookingRecord[], user: User
         </div>
         <AppButton
           variant="outline"
-          className="py-2 px-3 text-[10px] border-gray-200 text-brand-text h-auto gap-1"
+          className="py-2 px-3 text-[10px] border-brand-blue/30 text-white h-auto gap-1"
           onClick={exportToExcel}
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -360,7 +360,7 @@ const ReportsView = ({ bookings, user }: { bookings: BookingRecord[], user: User
       </div>
 
       <Card className="p-5 space-y-4">
-        <h4 className="text-xs font-bold text-brand-text flex items-center gap-2">
+        <h4 className="text-xs font-bold text-white flex items-center gap-2">
           <span className="w-1.5 h-4 bg-brand-blue rounded-full" />
           {reportType.charAt(0).toUpperCase() + reportType.slice(1)} Attendance Summary
         </h4>
@@ -372,10 +372,10 @@ const ReportsView = ({ bookings, user }: { bookings: BookingRecord[], user: User
           ].filter(t => user.role === 'super-admin' || t.id === user.assignedTeacherId).map(teacher => (
             <div key={teacher.name} className="space-y-1.5">
               <div className="flex justify-between items-center text-[10px]">
-                <span className="font-bold text-brand-text">{teacher.name}</span>
+                <span className="font-bold text-white">{teacher.name}</span>
                 <span className="text-brand-text-light">{teacher.count} Students</span>
               </div>
-              <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+              <div className="h-2 w-full bg-brand-navy rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${(teacher.count / 50) * 100}%` }}
@@ -386,7 +386,7 @@ const ReportsView = ({ bookings, user }: { bookings: BookingRecord[], user: User
           ))}
         </div>
 
-        <div className="pt-2 border-t border-gray-100 grid grid-cols-2 gap-4">
+        <div className="pt-2 border-t border-brand-blue/30 grid grid-cols-2 gap-4">
           <div>
             <p className="text-[10px] text-brand-text-light mb-1">Top Student</p>
             <p className="text-xs font-bold text-brand-navy">Dilshod K. (12 visits)</p>
@@ -427,7 +427,7 @@ const FeedbacksView = () => {
   return (
     <div className="space-y-4 pt-4">
       <div className="flex justify-end">
-        <AppButton variant="outline" className="py-2 px-3 text-[10px] border-gray-200 text-brand-text h-auto gap-1" onClick={exportFeedbacks}>
+        <AppButton variant="outline" className="py-2 px-3 text-[10px] border-brand-blue/30 text-white h-auto gap-1" onClick={exportFeedbacks}>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
           </svg>
@@ -436,13 +436,13 @@ const FeedbacksView = () => {
       </div>
       <div className="space-y-3">
         {MOCK_FEEDBACKS.map(f => (
-          <Card key={f.id} className="p-4 shadow-sm border border-gray-100">
+          <Card key={f.id} className="p-4 shadow-sm border border-brand-blue/30">
             <div className="flex justify-between items-start mb-2">
-              <p className="text-sm font-bold text-brand-text">{f.studentName}</p>
+              <p className="text-sm font-bold text-white">{f.studentName}</p>
               <span className="text-[10px] text-gray-400 font-medium">{f.date}</span>
             </div>
             <p className="text-xs text-brand-text-light mb-2">Stage: {f.stage}</p>
-            <p className="text-sm text-brand-navy p-3 bg-blue-50/50 rounded-lg italic">"{f.text}"</p>
+            <p className="text-sm text-brand-navy p-3 bg-brand-blue/10/50 rounded-lg italic">"{f.text}"</p>
           </Card>
         ))}
       </div>

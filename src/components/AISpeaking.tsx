@@ -234,12 +234,12 @@ export const AISpeaking = () => {
             <div className="min-h-screen bg-[#0a1628] text-white pb-24">
                 {/* Header */}
                 <div className="text-center pt-6 pb-4 px-4">
-                    <span className="inline-block text-[10px] font-bold tracking-[0.2em] text-emerald-400 border border-emerald-400/40 px-3 py-1 rounded-full mb-3 uppercase">
+                    <span className="inline-block text-[10px] font-bold tracking-[0.2em] text-brand-blue-light border border-brand-blue-light/40 px-3 py-1 rounded-full mb-3 uppercase">
                         AI Powered
                     </span>
                     <h1 className="text-2xl font-black">
                         <span className="text-white">IELTS</span>{' '}
-                        <span className="text-emerald-400">Speaking</span>
+                        <span className="text-brand-blue-light">Speaking</span>
                     </h1>
                     <p className="text-gray-400 text-xs mt-1">Practice with AI examiner</p>
                 </div>
@@ -253,7 +253,7 @@ export const AISpeaking = () => {
                             className={cn(
                                 'flex-1 py-2.5 rounded-xl text-xs font-bold uppercase tracking-wider border transition-all',
                                 selectedPart === part
-                                    ? 'bg-emerald-400/10 border-emerald-400/40 text-emerald-400'
+                                    ? 'bg-brand-blue-light/10 border-brand-blue-light/40 text-brand-blue-light'
                                     : 'border-gray-700/40 text-gray-600 hover:border-gray-600'
                             )}
                         >
@@ -264,7 +264,7 @@ export const AISpeaking = () => {
 
                 {/* Part Description */}
                 <div className="px-4 mb-4">
-                    <div className="bg-[#0d1f38] rounded-xl p-3 border border-emerald-400/10">
+                    <div className="bg-[#0d1f38] rounded-xl p-3 border border-brand-blue-light/10">
                         <p className="text-xs text-gray-400 leading-relaxed">
                             {selectedPart === 'part1' && '🎤 Part 1: Introduction & Interview — Answer short questions about familiar topics (4-5 min)'}
                             {selectedPart === 'part2' && '📝 Part 2: Long Turn — Speak for 1-2 minutes on a given topic with preparation time'}
@@ -280,7 +280,7 @@ export const AISpeaking = () => {
                             key={topic.id}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => startTopic(topic.id)}
-                            className="w-full p-4 rounded-xl bg-[#0d1f38] border border-gray-700/30 flex items-center gap-3 text-left hover:border-emerald-400/30 transition-all"
+                            className="w-full p-4 rounded-xl bg-[#0d1f38] border border-gray-700/30 flex items-center gap-3 text-left hover:border-brand-blue-light/30 transition-all"
                         >
                             <span className="text-2xl">{topic.icon}</span>
                             <div>
@@ -310,12 +310,12 @@ export const AISpeaking = () => {
                             <path d="M15 18l-6-6 6-6" />
                         </svg>
                     </button>
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-[#0a1628] font-bold text-sm">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-brand-blue-light to-teal-500 flex items-center justify-center text-[#0a1628] font-bold text-sm">
                         AI
                     </div>
                     <div className="flex-1">
                         <p className="text-sm font-bold text-white">AI Examiner — {currentTopic?.title}</p>
-                        <p className="text-[10px] text-emerald-400">● IELTS Speaking {currentTopic?.part.replace('part', 'Part ')}</p>
+                        <p className="text-[10px] text-brand-blue-light">● IELTS Speaking {currentTopic?.part.replace('part', 'Part ')}</p>
                     </div>
                 </div>
             </div>
@@ -332,7 +332,7 @@ export const AISpeaking = () => {
                             <div className={cn(
                                 'max-w-[85%] rounded-2xl px-4 py-3',
                                 msg.role === 'user'
-                                    ? 'bg-emerald-400 text-[#0a1628]'
+                                    ? 'bg-brand-blue-light text-[#0a1628]'
                                     : 'bg-[#0d1f38] border border-gray-700/40 text-white'
                             )}>
                                 <p className="text-sm leading-relaxed">{msg.text}</p>
@@ -348,7 +348,7 @@ export const AISpeaking = () => {
                             >
                                 <button
                                     onClick={() => setShowFeedback(showFeedback?.band === msg.feedback?.band ? null : msg.feedback!)}
-                                    className="text-[10px] text-emerald-400 font-bold mb-1 flex items-center gap-1"
+                                    className="text-[10px] text-brand-blue-light font-bold mb-1 flex items-center gap-1"
                                 >
                                     📊 Band {msg.feedback.band} — tap for details
                                     <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -360,13 +360,13 @@ export const AISpeaking = () => {
                                     <motion.div
                                         initial={{ opacity: 0, y: -5 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        className="bg-[#0d1f38] rounded-xl p-3 border border-emerald-400/20"
+                                        className="bg-[#0d1f38] rounded-xl p-3 border border-brand-blue-light/20"
                                     >
                                         {/* Score Bars */}
                                         <div className="space-y-2 mb-3">
                                             {[
                                                 { label: 'Grammar', score: msg.feedback.grammar, color: 'bg-purple-400' },
-                                                { label: 'Vocabulary', score: msg.feedback.vocabulary, color: 'bg-emerald-400' },
+                                                { label: 'Vocabulary', score: msg.feedback.vocabulary, color: 'bg-brand-blue-light' },
                                                 { label: 'Fluency', score: msg.feedback.fluency, color: 'bg-amber-400' },
                                                 { label: 'Pronunciation', score: msg.feedback.pronunciation, color: 'bg-blue-400' },
                                             ].map(item => (
@@ -388,9 +388,9 @@ export const AISpeaking = () => {
                                         </div>
 
                                         {/* Overall Band */}
-                                        <div className="text-center py-2 bg-emerald-400/10 rounded-lg mb-3">
+                                        <div className="text-center py-2 bg-brand-blue-light/10 rounded-lg mb-3">
                                             <p className="text-[10px] text-gray-400">Overall Band</p>
-                                            <p className="text-xl font-black text-emerald-400">{msg.feedback.band}</p>
+                                            <p className="text-xl font-black text-brand-blue-light">{msg.feedback.band}</p>
                                         </div>
 
                                         {/* Suggestions */}
@@ -398,7 +398,7 @@ export const AISpeaking = () => {
                                             <p className="text-[10px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider">Suggestions</p>
                                             {msg.feedback.suggestions.map((s, i) => (
                                                 <p key={i} className="text-[11px] text-gray-300 mb-1 flex items-start gap-1.5">
-                                                    <span className="text-emerald-400 mt-0.5">•</span> {s}
+                                                    <span className="text-brand-blue-light mt-0.5">•</span> {s}
                                                 </p>
                                             ))}
                                         </div>
@@ -417,9 +417,9 @@ export const AISpeaking = () => {
                         className="flex justify-start"
                     >
                         <div className="bg-[#0d1f38] border border-gray-700/40 rounded-2xl px-4 py-3 flex gap-1">
-                            <span className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                            <span className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                            <span className="w-2 h-2 bg-emerald-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                            <span className="w-2 h-2 bg-brand-blue-light rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                            <span className="w-2 h-2 bg-brand-blue-light rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <span className="w-2 h-2 bg-brand-blue-light rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                         </div>
                     </motion.div>
                 )}
@@ -439,13 +439,13 @@ export const AISpeaking = () => {
                         onChange={e => setInputText(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && sendResponse()}
                         placeholder="Type your speaking response..."
-                        className="flex-1 py-2.5 px-4 rounded-xl bg-[#0a1628] border border-gray-700/40 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-400/40"
+                        className="flex-1 py-2.5 px-4 rounded-xl bg-[#0a1628] border border-gray-700/40 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-brand-blue-light/40"
                         disabled={isAiTyping}
                     />
                     <button
                         onClick={sendResponse}
                         disabled={!inputText.trim() || isAiTyping}
-                        className="w-10 h-10 rounded-xl bg-emerald-400 flex items-center justify-center text-[#0a1628] hover:bg-emerald-300 transition-all flex-shrink-0 disabled:opacity-30"
+                        className="w-10 h-10 rounded-xl bg-brand-blue-light flex items-center justify-center text-[#0a1628] hover:bg-brand-blue-light transition-all flex-shrink-0 disabled:opacity-30"
                     >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />

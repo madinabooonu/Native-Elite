@@ -67,7 +67,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
       </div>
 
       {/* Card */}
-      <div className="w-full max-w-[380px] bg-white rounded-[28px] shadow-2xl shadow-black/30 overflow-hidden relative z-10">
+      <div className="w-full max-w-[380px] bg-brand-navy rounded-[28px] shadow-2xl shadow-black/30 overflow-hidden relative z-10">
         {/* Header */}
         <div className="pt-10 pb-6 px-8 text-center">
           <h1 className="text-2xl font-extrabold text-brand-navy">Welcome!</h1>
@@ -86,7 +86,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
           <button
             onClick={handleGoogleLogin}
             disabled={isLoading}
-            className="w-full py-4 rounded-2xl bg-white border-2 border-gray-200 text-gray-700 font-semibold text-[15px] hover:bg-gray-50 hover:shadow-lg hover:border-gray-300 flex items-center justify-center gap-3 transition-all active:scale-[0.97] disabled:opacity-50 shadow-sm"
+            className="w-full py-4 rounded-2xl bg-brand-navy border-2 border-brand-blue/30 text-gray-700 font-semibold text-[15px] hover:bg-gray-50 hover:shadow-lg hover:border-gray-300 flex items-center justify-center gap-3 transition-all active:scale-[0.97] disabled:opacity-50 shadow-sm"
           >
             <svg viewBox="0 0 24 24" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />

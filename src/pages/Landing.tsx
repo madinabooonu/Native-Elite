@@ -4,12 +4,12 @@ import { AppButton } from '../components/UI';
 
 export const LandingPage = ({ onGetStarted }: { onGetStarted: () => void }) => {
   return (
-    <div className="min-h-screen bg-brand-bg">
-      <div className="max-w-[480px] md:max-w-[520px] lg:max-w-[480px] mx-auto md:my-6 md:rounded-3xl md:overflow-hidden md:card-shadow-lg md:border md:border-gray-200/60 relative">
+    <div className="min-h-screen bg-brand-navy-deep">
+      <div className="max-w-[480px] md:max-w-[520px] lg:max-w-[480px] mx-auto md:my-6 md:rounded-3xl md:overflow-hidden md:card-shadow-lg md:border md:border-brand-blue/30 relative">
         {/* Header */}
         <div className="status-gradient text-white px-6 pt-14 md:pt-12 pb-16 relative overflow-hidden md:rounded-t-3xl">
-          <div className="absolute top-0 right-0 w-60 h-60 bg-white/5 rounded-full -mr-20 -mt-20 blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-40 h-40 bg-white/5 rounded-full -ml-10 -mb-10 blur-3xl" />
+          <div className="absolute top-0 right-0 w-60 h-60 bg-brand-navy/5 rounded-full -mr-20 -mt-20 blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-40 h-40 bg-brand-navy/5 rounded-full -ml-10 -mb-10 blur-3xl" />
 
           <div className="flex items-center gap-2 mb-10 relative z-10">
             <svg width="36" height="36" viewBox="0 0 100 100" fill="none">
@@ -48,13 +48,13 @@ export const LandingPage = ({ onGetStarted }: { onGetStarted: () => void }) => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 + i * 0.15 }}
-              className="bg-white rounded-2xl card-shadow p-4 flex items-center gap-4"
+              className="bg-brand-navy rounded-2xl card-shadow p-4 flex items-center gap-4"
             >
-              <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center text-xl flex-shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-brand-blue/10 flex items-center justify-center text-xl flex-shrink-0">
                 {feat.icon}
               </div>
               <div>
-                <h3 className="text-sm font-bold text-brand-text">{feat.title}</h3>
+                <h3 className="text-sm font-bold text-white">{feat.title}</h3>
                 <p className="text-xs text-brand-text-light mt-0.5">{feat.desc}</p>
               </div>
             </motion.div>

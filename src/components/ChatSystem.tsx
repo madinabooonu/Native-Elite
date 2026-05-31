@@ -26,7 +26,7 @@ interface ChatContact {
 const CONTACTS: ChatContact[] = [
     { id: 'c1', name: 'Ms. Osiyo', role: 'teacher', avatarColor: 'from-purple-500 to-violet-600', lastMessage: 'Great job on your essay! 👏', lastTime: '2 min', unread: 2, online: true },
     { id: 'c2', name: 'Mr. Sarvar', role: 'teacher', avatarColor: 'from-orange-500 to-amber-600', lastMessage: 'Don\'t forget tomorrow\'s class', lastTime: '15 min', unread: 0, online: true },
-    { id: 'c3', name: 'Admin Support', role: 'admin', avatarColor: 'from-emerald-500 to-teal-600', lastMessage: 'Your payment has been confirmed', lastTime: '1h', unread: 1, online: false },
+    { id: 'c3', name: 'Admin Support', role: 'admin', avatarColor: 'from-brand-blue-mid to-teal-600', lastMessage: 'Your payment has been confirmed', lastTime: '1h', unread: 1, online: false },
     { id: 'c4', name: 'Ali Karimov', role: 'student', avatarColor: 'from-blue-500 to-cyan-600', lastMessage: 'Can you share your notes?', lastTime: '3h', unread: 0, online: false },
 ];
 
@@ -126,7 +126,7 @@ export const ChatSystem = () => {
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                             placeholder="Search conversations..."
-                            className="w-full py-2.5 pl-10 pr-4 rounded-xl bg-[#0d1f38] border border-gray-700/40 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-400/40"
+                            className="w-full py-2.5 pl-10 pr-4 rounded-xl bg-[#0d1f38] border border-gray-700/40 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-brand-blue-light/40"
                         />
                     </div>
                 </div>
@@ -138,14 +138,14 @@ export const ChatSystem = () => {
                             key={contact.id}
                             whileTap={{ scale: 0.98 }}
                             onClick={() => setActiveChat(contact.id)}
-                            className="w-full p-3 rounded-xl bg-[#0d1f38] border border-gray-700/30 flex items-center gap-3 text-left hover:border-emerald-400/20 transition-all"
+                            className="w-full p-3 rounded-xl bg-[#0d1f38] border border-gray-700/30 flex items-center gap-3 text-left hover:border-brand-blue-light/20 transition-all"
                         >
                             <div className="relative flex-shrink-0">
                                 <div className={cn('w-12 h-12 rounded-full bg-gradient-to-br flex items-center justify-center text-white font-bold text-sm', contact.avatarColor)}>
                                     {contact.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
                                 </div>
                                 {contact.online && (
-                                    <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-[#0d1f38]" />
+                                    <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-brand-blue-light rounded-full border-2 border-[#0d1f38]" />
                                 )}
                             </div>
                             <div className="flex-1 min-w-0">
@@ -156,7 +156,7 @@ export const ChatSystem = () => {
                                 <div className="flex items-center justify-between mt-0.5">
                                     <p className="text-xs text-gray-400 truncate">{contact.lastMessage}</p>
                                     {contact.unread > 0 && (
-                                        <span className="ml-2 w-5 h-5 bg-emerald-400 rounded-full flex items-center justify-center text-[10px] font-bold text-[#0a1628] flex-shrink-0">
+                                        <span className="ml-2 w-5 h-5 bg-brand-blue-light rounded-full flex items-center justify-center text-[10px] font-bold text-[#0a1628] flex-shrink-0">
                                             {contact.unread}
                                         </span>
                                     )}
@@ -164,7 +164,7 @@ export const ChatSystem = () => {
                                 <span className={cn(
                                     'text-[9px] font-bold uppercase tracking-wider mt-1 inline-block px-1.5 py-0.5 rounded',
                                     contact.role === 'teacher' ? 'bg-purple-400/10 text-purple-400' :
-                                        contact.role === 'admin' ? 'bg-emerald-400/10 text-emerald-400' :
+                                        contact.role === 'admin' ? 'bg-brand-blue-light/10 text-brand-blue-light' :
                                             'bg-blue-400/10 text-blue-400'
                                 )}>
                                     {contact.role}
@@ -194,7 +194,7 @@ export const ChatSystem = () => {
                 </div>
                 <div className="flex-1">
                     <p className="text-sm font-bold text-white">{activeContact?.name}</p>
-                    <p className="text-[10px] text-emerald-400">{activeContact?.online ? '● Online' : '○ Offline'}</p>
+                    <p className="text-[10px] text-brand-blue-light">{activeContact?.online ? '● Online' : '○ Offline'}</p>
                 </div>
             </div>
 
@@ -210,7 +210,7 @@ export const ChatSystem = () => {
                         <div className={cn(
                             'max-w-[80%] rounded-2xl px-4 py-2.5',
                             msg.sender === 'me'
-                                ? 'bg-emerald-400 text-[#0a1628]'
+                                ? 'bg-brand-blue-light text-[#0a1628]'
                                 : 'bg-[#0d1f38] border border-gray-700/40 text-white'
                         )}>
                             {msg.type === 'text' && <p className="text-sm leading-relaxed">{msg.text}</p>}
@@ -218,7 +218,7 @@ export const ChatSystem = () => {
                                 <div className="flex items-center gap-2">
                                     <div className={cn(
                                         'w-8 h-8 rounded-lg flex items-center justify-center text-sm',
-                                        msg.sender === 'me' ? 'bg-[#0a1628]/20' : 'bg-emerald-400/10'
+                                        msg.sender === 'me' ? 'bg-[#0a1628]/20' : 'bg-brand-blue-light/10'
                                     )}>
                                         📎
                                     </div>
@@ -244,7 +244,7 @@ export const ChatSystem = () => {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={sendFile}
-                        className="w-10 h-10 rounded-xl bg-[#0a1628] border border-gray-700/40 flex items-center justify-center text-gray-400 hover:text-emerald-400 hover:border-emerald-400/40 transition-all flex-shrink-0"
+                        className="w-10 h-10 rounded-xl bg-[#0a1628] border border-gray-700/40 flex items-center justify-center text-gray-400 hover:text-brand-blue-light hover:border-brand-blue-light/40 transition-all flex-shrink-0"
                     >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
@@ -256,11 +256,11 @@ export const ChatSystem = () => {
                         onChange={e => setInputText(e.target.value)}
                         onKeyDown={e => e.key === 'Enter' && sendMessage()}
                         placeholder="Type a message..."
-                        className="flex-1 py-2.5 px-4 rounded-xl bg-[#0a1628] border border-gray-700/40 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-emerald-400/40"
+                        className="flex-1 py-2.5 px-4 rounded-xl bg-[#0a1628] border border-gray-700/40 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-brand-blue-light/40"
                     />
                     <button
                         onClick={sendMessage}
-                        className="w-10 h-10 rounded-xl bg-emerald-400 flex items-center justify-center text-[#0a1628] hover:bg-emerald-300 transition-all flex-shrink-0"
+                        className="w-10 h-10 rounded-xl bg-brand-blue-light flex items-center justify-center text-[#0a1628] hover:bg-brand-blue-light transition-all flex-shrink-0"
                     >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                             <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />

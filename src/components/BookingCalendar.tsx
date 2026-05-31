@@ -182,7 +182,7 @@ export const BookingCalendar = ({
 
       {/* ── Step 1: Teacher Selection ── */}
       <div className={cn("px-4 md:px-6 pt-4 md:pt-6", hasActiveBooking && "opacity-50 pointer-events-none")}>
-        <h3 className="text-sm font-bold text-brand-text mb-3 flex items-center gap-2">
+        <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
           <span className="w-6 h-6 rounded-full bg-brand-blue text-white text-xs flex items-center justify-center font-bold">1</span>
           Select Teacher
         </h3>
@@ -200,8 +200,8 @@ export const BookingCalendar = ({
                 className={cn(
                   'teacher-card relative p-4 md:p-5 rounded-2xl border-2 text-left',
                   isSelected
-                    ? `${teacher.borderColor} bg-white shadow-lg`
-                    : 'border-gray-200 bg-white hover:border-gray-300'
+                    ? `${teacher.borderColor} bg-brand-navy shadow-lg`
+                    : 'border-brand-blue/30 bg-brand-navy hover:border-gray-300'
                 )}
               >
                 <div className={cn(
@@ -210,7 +210,7 @@ export const BookingCalendar = ({
                 )}>
                   {teacher.avatar}
                 </div>
-                <h4 className={cn('text-sm font-bold', isSelected ? teacher.textColor : 'text-brand-text')}>{teacher.name}</h4>
+                <h4 className={cn('text-sm font-bold', isSelected ? teacher.textColor : 'text-white')}>{teacher.name}</h4>
                 <p className="text-[10px] text-brand-text-light">{teacher.role}</p>
               </motion.button>
             );
@@ -221,7 +221,7 @@ export const BookingCalendar = ({
       {/* ── Step 2: Day Selection ── */}
       {selectedTeacher && (
         <div className="px-4 md:px-6 mt-6">
-          <h3 className="text-sm font-bold text-brand-text mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-brand-blue text-white text-xs flex items-center justify-center font-bold">2</span>
             Select Day
           </h3>
@@ -236,10 +236,10 @@ export const BookingCalendar = ({
                   onClick={() => handleSelectDay(wd.day, wd.fullDate)}
                   className={cn(
                     'flex flex-col items-center min-w-[60px] py-3 rounded-xl border-2 transition-all',
-                    disabled ? 'opacity-40 cursor-not-allowed bg-gray-50 border-transparent text-gray-400' :
+                    disabled ? 'opacity-40 cursor-not-allowed bg-gray-50 border-transparent text-brand-text-light hover:text-white' :
                       isSelected
                         ? 'bg-brand-blue border-brand-blue text-white shadow-md'
-                        : 'border-gray-200 bg-white text-brand-text hover:border-gray-300'
+                        : 'border-brand-blue/30 bg-brand-navy text-white hover:border-gray-300'
                   )}
                 >
                   <span className="text-[10px] font-bold uppercase">{wd.day}</span>
@@ -254,7 +254,7 @@ export const BookingCalendar = ({
       {/* ── Step 3: Slots ── */}
       {selectedTeacher && (
         <div className="flex-1 overflow-y-auto px-4 md:px-6 mt-4 pb-12">
-          <h3 className="text-sm font-bold text-brand-text mb-3 flex items-center gap-2">
+          <h3 className="text-sm font-bold text-white mb-3 flex items-center gap-2">
             <span className="w-6 h-6 rounded-full bg-brand-blue text-white text-xs flex items-center justify-center font-bold">3</span>
             Available Slots
           </h3>
@@ -269,17 +269,17 @@ export const BookingCalendar = ({
                   <div
                     key={slot.id}
                     className={cn(
-                      'bg-white rounded-2xl p-4 flex items-center justify-between border-2 cursor-pointer transition-all',
-                      disabled ? 'opacity-50 cursor-not-allowed border-gray-100' : 'border-transparent hover:border-brand-blue/20 card-shadow'
+                      'bg-brand-navy rounded-2xl p-4 flex items-center justify-between border-2 cursor-pointer transition-all',
+                      disabled ? 'opacity-50 cursor-not-allowed border-brand-blue/30' : 'border-transparent hover:border-brand-blue/20 card-shadow'
                     )}
                     onClick={() => !disabled && handleSelectSlot(slot)}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-brand-blue">
+                      <div className="w-10 h-10 rounded-xl bg-brand-blue/10 flex items-center justify-center text-brand-blue">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-brand-text">{slot.startTime} - {slot.endTime}</p>
+                        <p className="text-sm font-bold text-white">{slot.startTime} - {slot.endTime}</p>
                         <p className="text-[11px] text-brand-text-light">{slot.teacherName}</p>
                       </div>
                     </div>
@@ -335,7 +335,7 @@ const BookingFormModal = ({ slot, teacher, onClose, onConfirm }: any) => {
     <motion.div className="fixed inset-0 z-[100] flex items-end md:items-center md:justify-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <div className="absolute inset-0 bg-navy-900/60 backdrop-blur-sm" onClick={onClose} />
       <motion.div
-        className="relative w-full md:w-[460px] bg-white rounded-t-[32px] md:rounded-[40px] overflow-hidden flex flex-col shadow-2xl"
+        className="relative w-full md:w-[460px] bg-brand-navy rounded-t-[32px] md:rounded-[40px] overflow-hidden flex flex-col shadow-2xl"
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
@@ -350,13 +350,13 @@ const BookingFormModal = ({ slot, teacher, onClose, onConfirm }: any) => {
         {/* Form Body - Overlapping the header slightly */}
         <div className="px-6 pb-8 -mt-12 relative z-10 space-y-6">
           {/* Summary Card */}
-          <div className="bg-white rounded-[24px] p-5 shadow-xl shadow-blue-900/5 border border-blue-50 flex items-center gap-5">
-            <div className="w-16 h-16 rounded-full bg-blue-50 border-4 border-white flex items-center justify-center text-brand-blue shadow-inner">
+          <div className="bg-brand-navy rounded-[24px] p-5 shadow-xl shadow-blue-900/5 border border-blue-50 flex items-center gap-5">
+            <div className="w-16 h-16 rounded-full bg-brand-blue/10 border-4 border-white flex items-center justify-center text-brand-blue shadow-inner">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
             </div>
             <div className="flex-1">
-              <h4 className="text-base font-bold text-brand-text mb-0.5">{slot.day === 'Mon' ? 'Monday' : slot.day === 'Tue' ? 'Tuesday' : slot.day === 'Wed' ? 'Wednesday' : slot.day === 'Thu' ? 'Thursday' : slot.day === 'Fri' ? 'Friday' : slot.day === 'Sat' ? 'Saturday' : 'Sunday'}</h4>
-              <p className="text-sm font-bold text-brand-text mb-1">{slot.startTime} - {slot.endTime}</p>
+              <h4 className="text-base font-bold text-white mb-0.5">{slot.day === 'Mon' ? 'Monday' : slot.day === 'Tue' ? 'Tuesday' : slot.day === 'Wed' ? 'Wednesday' : slot.day === 'Thu' ? 'Thursday' : slot.day === 'Fri' ? 'Friday' : slot.day === 'Sat' ? 'Saturday' : 'Sunday'}</h4>
+              <p className="text-sm font-bold text-white mb-1">{slot.startTime} - {slot.endTime}</p>
               <div className="flex items-center justify-between">
                 <p className="text-xs text-brand-blue font-semibold">Teacher: {slot.teacherName}</p>
                 <span className="text-[10px] bg-green-50 text-green-600 px-2 py-0.5 rounded-full font-bold">Available</span>
@@ -413,7 +413,7 @@ const BookingFormModal = ({ slot, teacher, onClose, onConfirm }: any) => {
 
                 <button
                   onClick={onClose}
-                  className="w-full h-14 rounded-2xl bg-white border-2 border-blue-100 text-blue-900 font-bold flex items-center justify-center gap-3 active:bg-gray-50 transition-all"
+                  className="w-full h-14 rounded-2xl bg-brand-navy border-2 border-blue-100 text-blue-900 font-bold flex items-center justify-center gap-3 active:bg-gray-50 transition-all"
                 >
                   <div className="w-6 h-6 rounded-full border-2 border-blue-200 flex items-center justify-center text-blue-400">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
@@ -431,9 +431,9 @@ const BookingFormModal = ({ slot, teacher, onClose, onConfirm }: any) => {
 
 const FormField = ({ label, icon, value, onChange, placeholder }: any) => (
   <div className="space-y-1.5">
-    <label className="block text-sm font-bold text-brand-text">{label}</label>
+    <label className="block text-sm font-bold text-white">{label}</label>
     <div className="relative group">
-      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-brand-blue transition-colors">
+      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-text-light hover:text-white group-focus-within:text-brand-blue transition-colors">
         {icon}
       </div>
       <input
@@ -441,7 +441,7 @@ const FormField = ({ label, icon, value, onChange, placeholder }: any) => (
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full border-2 border-gray-100 rounded-2xl py-3.5 pl-12 pr-4 bg-gray-50/30 focus:outline-none focus:border-brand-blue focus:bg-white transition-all text-sm font-medium"
+        className="w-full border-2 border-brand-blue/30 rounded-2xl py-3.5 pl-12 pr-4 bg-gray-50/30 focus:outline-none focus:border-brand-blue focus:bg-brand-navy transition-all text-sm font-medium"
       />
     </div>
   </div>
