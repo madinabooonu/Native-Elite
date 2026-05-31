@@ -24,6 +24,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [isLoading, setIsLoading] = useState(true);
   const [activeBooking, setActiveBooking] = useState<BookingRecord | null>(null);
+  const [allBookings, setAllBookings] = useState<BookingRecord[]>([]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -72,9 +73,37 @@ export default function App() {
       setUserProfile(null);
       setState('landing');
       setActiveTab('home');
+      setActiveBooking(null);
+      setAllBookings([]);
     } catch (err) {
       console.error('Logout error:', err);
     }
+  };
+
+  const handleBookSlot = (slot: TimeSlot) => {
+    if (!userProfile) return;
+
+    const newBooking: BookingRecord = {
+      id: Math.random().toString(36).substr(2, 9),
+      slotId: slot.id,
+      studentId: userProfile.uid,
+      studentName: userProfile.displayName,
+      studentStage: userProfile.stage || 'Stage 1',
+      teacherId: slot.teacherId,
+      teacherName: slot.teacherName,
+      day: slot.day,
+      dayDate: slot.dayDate,
+      fullDate: slot.fullDate,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      status: 'pending',
+      checkedIn: false,
+      createdAt: new Date().toISOString(),
+    };
+
+    // Add to all bookings and set as active
+    setAllBookings(prev => [newBooking, ...prev]);
+    setActiveBooking(newBooking);
   };
 
   const renderContent = () => {
@@ -85,11 +114,11 @@ export default function App() {
       switch (activeTab) {
         case 'home':
         case 'bookings':
-          return <AdminDashboard key={userProfile.assignedTeacherId} user={userProfile} />;
+          return <AdminDashboard key={userProfile.assignedTeacherId} user={userProfile} allBookings={allBookings} setAllBookings={setAllBookings} />;
         case 'profile':
           return <ProfileView userProfile={userProfile} handleLogout={handleLogout} />;
         default:
-          return <AdminDashboard user={userProfile} />;
+          return <AdminDashboard user={userProfile} allBookings={allBookings} setAllBookings={setAllBookings} />;
       }
     }
 
@@ -99,7 +128,7 @@ export default function App() {
         case 'home':
           return <StudentHome userProfile={userProfile} activeBooking={null} onBookSlot={() => { }} />;
         case 'schedule':
-          return <BookingCalendar onBookSlot={() => { }} />;
+          return <BookingCalendar onBookSlot={handleBookSlot} activeBooking={activeBooking} />;
         case 'students':
           return <TeacherList />;
         case 'checkin':
@@ -117,25 +146,8 @@ export default function App() {
         return <StudentHome
           userProfile={userProfile}
           activeBooking={activeBooking}
-          onBookSlot={(slot) => {
-            setActiveBooking({
-              id: Math.random().toString(36).substr(2, 9),
-              slotId: slot.id,
-              studentId: 'me',
-              studentName: userProfile.displayName,
-              studentStage: userProfile.stage || 'Stage 1',
-              teacherId: slot.teacherId,
-              teacherName: slot.teacherName,
-              day: slot.day,
-              dayDate: slot.dayDate,
-              fullDate: slot.fullDate,
-              startTime: slot.startTime,
-              endTime: slot.endTime,
-              status: 'pending',
-              checkedIn: false,
-              createdAt: new Date().toISOString(),
-            });
-          }} />;
+          onBookSlot={handleBookSlot}
+        />;
       case 'vocab':
         return <VocabTrainer />;
       case 'chat':
@@ -144,10 +156,14 @@ export default function App() {
         return <ProgressChart />;
       case 'speaking':
         return <AISpeaking />;
+      case 'courses':
+        return <TeacherList />;
+      case 'feedback':
+        return <FeedbackInterface />;
       case 'profile':
         return <ProfileView userProfile={userProfile} handleLogout={handleLogout} />;
       default:
-        return <StudentHome userProfile={userProfile} activeBooking={null} onBookSlot={() => { }} />;
+        return <StudentHome userProfile={userProfile} activeBooking={activeBooking} onBookSlot={handleBookSlot} />;
     }
   };
 

@@ -50,58 +50,78 @@ function getCurrentWeekDays() {
   });
 }
 
-/* ── Mock slot data by teacher ── */
-const MOCK_SLOTS: Record<string, TimeSlot[]> = {
-  t2: [
-    ...['Mon', 'Wed', 'Fri'].flatMap(day => [
-      '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'
-    ].map((time, i, arr) => ({
-      id: `t2-${day}-${time}`,
-      teacherId: 't2',
-      teacherName: 'Miss Osiyo',
-      day: day as any,
-      dayDate: 'May',
-      fullDate: '',
-      startTime: time,
-      endTime: arr[i + 1] || (parseInt(time.split(':')[0]) + (time.split(':')[1] === '30' ? 1 : 0)).toString() + ':' + (time.split(':')[1] === '30' ? '00' : '30'),
-      maxStudents: 2,
-      bookedStudents: 0,
-      status: 'available' as const
-    }))),
-    ...['Tue', 'Thu', 'Sat'].flatMap(day => [
-      '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'
-    ].map((time, i, arr) => ({
-      id: `t2-${day}-${time}`,
-      teacherId: 't2',
-      teacherName: 'Miss Osiyo',
-      day: day as any,
-      dayDate: 'May',
-      fullDate: '',
-      startTime: time,
-      endTime: arr[i + 1] || '20:00',
-      maxStudents: 2,
-      bookedStudents: 0,
-      status: 'available' as const
-    })))
-  ],
-  t3: [
-    ...['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].flatMap(day => [
-      '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'
-    ].map((time, i, arr) => ({
-      id: `t3-${day}-${time}`,
-      teacherId: 't3',
-      teacherName: 'Mr Sarvar',
-      day: day as any,
-      dayDate: 'May',
-      fullDate: '',
-      startTime: time,
-      endTime: arr[i + 1] || '20:00',
-      maxStudents: 2,
-      bookedStudents: 0,
-      status: 'available' as const
-    })))
-  ]
-};
+/* ── Helper: Generate slots with proper fullDate ── */
+function generateSlotsForTeacher(teacherId: string, weekDays: any[]) {
+  const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const times = ['14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'];
+  
+  const slots: TimeSlot[] = [];
+  
+  if (teacherId === 't2') {
+    // Miss Osiyo: Mon, Wed, Fri (14:00-19:30), Tue, Thu, Sat (12:00-19:30)
+    ['Mon', 'Wed', 'Fri'].forEach(dayName => {
+      const dayObj = weekDays.find(d => d.day === dayName);
+      times.forEach((time, i) => {
+        slots.push({
+          id: `t2-${dayName}-${time}`,
+          teacherId: 't2',
+          teacherName: 'Miss Osiyo',
+          day: dayName,
+          dayDate: `${dayObj?.month} ${dayObj?.date}`,
+          fullDate: dayObj?.fullDate || '',
+          startTime: time,
+          endTime: times[i + 1] || '20:00',
+          maxStudents: 2,
+          bookedStudents: 0,
+          status: 'available' as const
+        });
+      });
+    });
+    
+    // Tue, Thu, Sat with extended hours
+    ['Tue', 'Thu', 'Sat'].forEach(dayName => {
+      const dayObj = weekDays.find(d => d.day === dayName);
+      const extendedTimes = ['12:00', '12:30', '13:00', '13:30', ...times];
+      extendedTimes.forEach((time, i) => {
+        slots.push({
+          id: `t2-${dayName}-${time}`,
+          teacherId: 't2',
+          teacherName: 'Miss Osiyo',
+          day: dayName,
+          dayDate: `${dayObj?.month} ${dayObj?.date}`,
+          fullDate: dayObj?.fullDate || '',
+          startTime: time,
+          endTime: extendedTimes[i + 1] || '20:00',
+          maxStudents: 2,
+          bookedStudents: 0,
+          status: 'available' as const
+        });
+      });
+    });
+  } else if (teacherId === 't3') {
+    // Mr Sarvar: All days 14:00-19:30
+    dayNames.forEach(dayName => {
+      const dayObj = weekDays.find(d => d.day === dayName);
+      times.forEach((time, i) => {
+        slots.push({
+          id: `t3-${dayName}-${time}`,
+          teacherId: 't3',
+          teacherName: 'Mr Sarvar',
+          day: dayName,
+          dayDate: `${dayObj?.month} ${dayObj?.date}`,
+          fullDate: dayObj?.fullDate || '',
+          startTime: time,
+          endTime: times[i + 1] || '20:00',
+          maxStudents: 2,
+          bookedStudents: 0,
+          status: 'available' as const
+        });
+      });
+    });
+  }
+  
+  return slots;
+}
 
 export const BookingCalendar = ({
   onBookSlot,
@@ -121,7 +141,14 @@ export const BookingCalendar = ({
 
   const hasActiveBooking = !!activeBooking && (activeBooking.status === 'pending' || activeBooking.status === 'confirmed');
 
-  const teacherSlots = selectedTeacher ? MOCK_SLOTS[selectedTeacher] || [] : [];
+  // Generate slots dynamically with proper dates
+  const allTeacherSlots = useMemo(() => {
+    const t2Slots = generateSlotsForTeacher('t2', weekDays);
+    const t3Slots = generateSlotsForTeacher('t3', weekDays);
+    return { t2: t2Slots, t3: t3Slots };
+  }, [weekDays]);
+
+  const teacherSlots = selectedTeacher ? allTeacherSlots[selectedTeacher as 't2' | 't3'] || [] : [];
   const filteredSlots = teacherSlots.filter((s) => s.day === selectedDay);
   const currentTeacher = TEACHERS.find((t) => t.id === selectedTeacher);
 
@@ -328,7 +355,7 @@ const BookingFormModal = ({ slot, teacher, onClose, onConfirm }: any) => {
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
             </div>
             <div className="flex-1">
-              <h4 className="text-base font-bold text-brand-text mb-0.5">{slot.day === 'Mon' ? 'Monday' : slot.day === 'Tue' ? 'Tuesday' : slot.day === 'Wed' ? 'Wednesday' : slot.day === 'Thu' ? 'Thursday' : slot.day === 'Fri' ? 'Friday' : slot.day === 'Sat' ? 'Saturday' : 'Sunday'}, {slot.dayDate || 'May 5'}</h4>
+              <h4 className="text-base font-bold text-brand-text mb-0.5">{slot.day === 'Mon' ? 'Monday' : slot.day === 'Tue' ? 'Tuesday' : slot.day === 'Wed' ? 'Wednesday' : slot.day === 'Thu' ? 'Thursday' : slot.day === 'Fri' ? 'Friday' : slot.day === 'Sat' ? 'Saturday' : 'Sunday'}</h4>
               <p className="text-sm font-bold text-brand-text mb-1">{slot.startTime} - {slot.endTime}</p>
               <div className="flex items-center justify-between">
                 <p className="text-xs text-brand-blue font-semibold">Teacher: {slot.teacherName}</p>
