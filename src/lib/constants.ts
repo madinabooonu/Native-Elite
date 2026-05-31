@@ -3,7 +3,7 @@ export const SUPER_ADMIN_EMAILS = [
 ];
 
 export const ADMIN_EMAILS = [
-    '@osiyoalijonova60@gmail.com',
+    'osiyo@native.edu',
     'sarvar@native.edu',
     'madinabonuqoraboyeva1@gmail.com',
 ];

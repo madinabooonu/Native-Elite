@@ -10,6 +10,10 @@ import { StudentHome, TeacherList, TeacherCheckIn, ProfileView } from './compone
 import { AdminDashboard } from './components/AdminViews';
 import { BookingCalendar } from './components/BookingCalendar';
 import { FeedbackInterface } from './components/ChatInterface';
+import { VocabTrainer } from './components/VocabTrainer';
+import { ChatSystem } from './components/ChatSystem';
+import { ProgressChart } from './components/ProgressChart';
+import { AISpeaking } from './components/AISpeaking';
 import { UserRole, UserProfile, BookingRecord, TimeSlot } from './types';
 
 type AppState = 'landing' | 'auth' | 'app';
@@ -132,11 +136,14 @@ export default function App() {
               createdAt: new Date().toISOString(),
             });
           }} />;
-      case 'courses':
-        return <TeacherList />;
-      case 'feedback':
-        return <FeedbackInterface />;
-
+      case 'vocab':
+        return <VocabTrainer />;
+      case 'chat':
+        return <ChatSystem />;
+      case 'progress':
+        return <ProgressChart />;
+      case 'speaking':
+        return <AISpeaking />;
       case 'profile':
         return <ProfileView userProfile={userProfile} handleLogout={handleLogout} />;
       default:

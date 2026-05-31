@@ -40,8 +40,10 @@ export const AppLayout = ({
   /* ── Tab configs by role ── */
   const studentTabs = [
     { id: 'home', label: 'Home', icon: homeIcon },
-    { id: 'courses', label: 'Courses', icon: coursesIcon },
-    { id: 'feedback', label: 'Feedback', icon: feedbackIcon },
+    { id: 'vocab', label: 'Vocab', icon: booksIcon },
+    { id: 'speaking', label: 'AI Speak', icon: checkIcon },
+    { id: 'chat', label: 'Chat', icon: feedbackIcon },
+    { id: 'progress', label: 'Progress', icon: coursesIcon },
     { id: 'profile', label: 'Profile', icon: profileIcon },
   ];
   const teacherTabs = [
@@ -65,6 +67,7 @@ export const AppLayout = ({
     courses: 'Courses', feedback: 'Lesson Feedback', books: 'Books', profile: 'Profile',
     schedule: 'My Schedule', students: 'My Students', checkin: 'Attendance Check-in',
     bookings: 'All Bookings', teachers: 'Manage Teachers', slots: 'Manage Slots',
+    vocab: 'Vocab Trainer', chat: 'Messages', progress: 'My Progress', speaking: 'AI Speaking'
   };
   const subtitleMap: Record<string, string> = {
     home: role === 'admin' ? 'Manage the platform' : role === 'teacher' ? 'View your schedule' : 'Book your support lesson easily.',
