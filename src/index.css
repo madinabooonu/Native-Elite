@@ -3,8 +3,6 @@
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
 
-  --color-brand-navy: #0E173C;
-  --color-brand-navy-deep: #050A24;
   --color-brand-blue: #0353A4;
   --color-brand-blue-mid: #0466C8;
   --color-brand-blue-light: #7BB8F5;
@@ -12,10 +10,28 @@
   --color-brand-green: #2DC653;
   --color-brand-red: #E63946;
   --color-brand-orange: #FB8500;
-  --color-brand-card: rgba(14, 23, 60, 0.85);
-  --color-brand-bg: var(--color-brand-navy-deep);
-  --color-brand-text: #FFFFFF;
-  --color-brand-text-light: #94A3B8;
+
+  --color-brand-bg: var(--theme-bg);
+  --color-brand-card: var(--theme-card);
+  --color-brand-text: var(--theme-text);
+  --color-brand-text-muted: var(--theme-text-muted);
+  --color-brand-border: var(--theme-border);
+}
+
+:root {
+  --theme-bg: #F8FAFC;
+  --theme-card: #FFFFFF;
+  --theme-text: #0F172A;
+  --theme-text-muted: #64748B;
+  --theme-border: #E2E8F0;
+}
+
+:root.dark {
+  --theme-bg: #050A24;
+  --theme-card: #0E173C;
+  --theme-text: #FFFFFF;
+  --theme-text-muted: #94A3B8;
+  --theme-border: rgba(123, 184, 245, 0.3);
 }
 
 .glass {
