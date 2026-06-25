@@ -29,7 +29,7 @@ const getConversationId = (uid1: string, uid2: string) =>
   [uid1, uid2].sort().join('_');
 
 // Client-side image compression utility to speed up image uploading
-const compressImage = (file: File | Blob, maxWidth = 1080, maxHeight = 1080, quality = 0.75): Promise<Blob> => {
+const compressImage = (file: File | Blob, maxWidth = 640, maxHeight = 640, quality = 0.6): Promise<Blob> => {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);

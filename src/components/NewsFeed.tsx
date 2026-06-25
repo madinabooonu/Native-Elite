@@ -12,7 +12,7 @@ import type { Post, PostComment, UserProfile } from '../types';
    NEWS FEED – Instagram/FB-like
 ═══════════════════════════════════ */
 // Client-side image compression utility to speed up image uploading
-const compressImage = (file: File | Blob, maxWidth = 1080, maxHeight = 1080, quality = 0.75): Promise<Blob> => {
+const compressImage = (file: File | Blob, maxWidth = 640, maxHeight = 640, quality = 0.6): Promise<Blob> => {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.readAsDataURL(file);
@@ -570,7 +570,7 @@ const CreatePostModal = ({
     // Scale down the captured webcam image if it's too large
     let width = video.videoWidth || 640;
     let height = video.videoHeight || 480;
-    const maxDimension = 1080;
+    const maxDimension = 640;
     if (width > maxDimension || height > maxDimension) {
       if (width > height) {
         height = Math.round((height * maxDimension) / width);
@@ -594,7 +594,7 @@ const CreatePostModal = ({
           stopCamera();
           uploadFileAsync(file);
         }
-      }, 'image/jpeg', 0.75);
+      }, 'image/jpeg', 0.6);
     }
   };
 
