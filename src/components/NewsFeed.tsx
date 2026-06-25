@@ -387,6 +387,54 @@ const PostCard = ({
   );
 };
 
+// Client-side image compression utility to speed up image uploading
+const compressImage = (file: File | Blob, maxWidth = 1080, maxHeight = 1080, quality = 0.75): Promise<Blob> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            resolve(blob || file);
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      img.onerror = () => resolve(file);
+    };
+    reader.onerror = () => resolve(file);
+  });
+};
+
 /* ─── Create Post Modal ─── */
 const CreatePostModal = ({
   userProfile,
@@ -423,13 +471,22 @@ const CreatePostModal = ({
     };
   }, [cameraStream]);
 
-  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setImageFile(file);
-    const reader = new FileReader();
-    reader.onload = () => setImagePreview(reader.result as string);
-    reader.readAsDataURL(file);
+    try {
+      const compressedBlob = await compressImage(file);
+      const compressedFile = new File([compressedBlob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' });
+      setImageFile(compressedFile);
+      setImagePreview(URL.createObjectURL(compressedBlob));
+    } catch (err) {
+      console.error("Error compressing image:", err);
+      // Fallback
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onload = () => setImagePreview(reader.result as string);
+      reader.readAsDataURL(file);
+    }
   };
 
   // Start in-app webcam stream
@@ -470,8 +527,23 @@ const CreatePostModal = ({
     if (!videoRef.current) return;
     const video = videoRef.current;
     const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
+    
+    // Scale down the captured webcam image if it's too large
+    let width = video.videoWidth || 640;
+    let height = video.videoHeight || 480;
+    const maxDimension = 1080;
+    if (width > maxDimension || height > maxDimension) {
+      if (width > height) {
+        height = Math.round((height * maxDimension) / width);
+        width = maxDimension;
+      } else {
+        width = Math.round((width * maxDimension) / height);
+        height = maxDimension;
+      }
+    }
+
+    canvas.width = width;
+    canvas.height = height;
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -482,7 +554,7 @@ const CreatePostModal = ({
           setImagePreview(URL.createObjectURL(file));
           stopCamera();
         }
-      }, 'image/jpeg', 0.95);
+      }, 'image/jpeg', 0.75);
     }
   };
 

@@ -28,6 +28,54 @@ interface ChatMessage {
 const getConversationId = (uid1: string, uid2: string) =>
   [uid1, uid2].sort().join('_');
 
+// Client-side image compression utility to speed up image uploading
+const compressImage = (file: File | Blob, maxWidth = 1080, maxHeight = 1080, quality = 0.75): Promise<Blob> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            resolve(blob || file);
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      img.onerror = () => resolve(file);
+    };
+    reader.onerror = () => resolve(file);
+  });
+};
+
 interface ChatSystemProps {
   userProfile: UserProfile;
 }
@@ -43,6 +91,19 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ userProfile }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const unsubRef = useRef<(() => void) | null>(null);
+
+  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const compressedBlob = await compressImage(file);
+      const compressedFile = new File([compressedBlob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' });
+      setImageFile(compressedFile);
+    } catch (err) {
+      console.error("Error compressing chat image:", err);
+      setImageFile(file);
+    }
+  };
 
   // Load all users (contacts)
   useEffect(() => {
@@ -251,7 +312,7 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ userProfile }) => {
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
           </button>
-          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => setImageFile(e.target.files?.[0] || null)} />
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
 
           <div className="flex-1 flex items-end bg-[var(--theme-bg)] rounded-2xl border border-[var(--theme-border)] px-3 py-2">
             <textarea
