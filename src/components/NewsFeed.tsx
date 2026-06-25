@@ -19,6 +19,11 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ userProfile }) => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [preloadedFile, setPreloadedFile] = useState<File | null>(null);
+  const [preloadedPreview, setPreloadedPreview] = useState<string | null>(null);
+
+  const mainFileRef = useRef<HTMLInputElement>(null);
+  const mainCameraRef = useRef<HTMLInputElement>(null);
 
   // Subscribe to posts in real-time
   useEffect(() => {
@@ -28,15 +33,8 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ userProfile }) => {
         const raw = d.data();
         return {
           id: d.id,
-          authorId: raw.authorId,
-          authorName: raw.authorName,
-          authorAvatar: raw.authorAvatar,
-          authorRole: raw.authorRole,
-          caption: raw.caption,
-          imageUrl: raw.imageUrl,
-          likes: raw.likes || [],
-          comments: raw.comments || [],
-          createdAt: raw.createdAt instanceof Timestamp
+          ...raw,
+          createdAt: raw.createdAt && typeof raw.createdAt.toDate === 'function'
             ? raw.createdAt.toDate().toISOString()
             : raw.createdAt || new Date().toISOString(),
         } as Post;
@@ -78,22 +76,53 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ userProfile }) => {
     return d.toLocaleDateString('uz-UZ', { month: 'short', day: 'numeric' });
   };
 
+  const handleMainImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPreloadedFile(file);
+    const reader = new FileReader();
+    reader.onload = () => {
+      setPreloadedPreview(reader.result as string);
+      setShowCreate(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div className="pb-24">
-      {/* Create Post Button */}
+      {/* Create Post Action Box */}
       <div className="px-4 pt-4 pb-2">
-        <button
-          onClick={() => setShowCreate(true)}
-          className="w-full flex items-center gap-3 bg-[var(--theme-card)] border border-[var(--theme-border)] rounded-2xl px-4 py-3 hover:border-blue-500/40 transition-all"
-        >
-          <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-            {userProfile.displayName[0].toUpperCase()}
+        <div className="bg-[var(--theme-card)] border border-[var(--theme-border)] rounded-2xl p-4 space-y-3.5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+              {userProfile.displayName[0].toUpperCase()}
+            </div>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="flex-1 text-left text-[var(--theme-text-muted)] text-sm py-2 hover:text-[var(--theme-text)] transition-colors"
+            >
+              Dars jarayonidan nimalar ulashmoqchisiz?
+            </button>
           </div>
-          <span className="text-[var(--theme-text-muted)] text-sm">Dars jarayonidan rasm ulashing...</span>
-          <div className="ml-auto flex items-center gap-2">
-            <span className="text-xs text-blue-500 font-semibold">📷 Post</span>
+          
+          <div className="flex gap-2.5 pt-2 border-t border-[var(--theme-border)]/40">
+            <button
+              onClick={() => mainCameraRef.current?.click()}
+              className="flex-1 py-2.5 bg-blue-600/10 hover:bg-blue-600/15 text-blue-500 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              📷 Rasmga Olish
+            </button>
+            <button
+              onClick={() => mainFileRef.current?.click()}
+              className="flex-1 py-2.5 border border-[var(--theme-border)] hover:bg-[var(--theme-bg)] text-[var(--theme-text)] rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              🖼️ Galereya
+            </button>
           </div>
-        </button>
+
+          <input ref={mainFileRef} type="file" accept="image/*" className="hidden" onChange={handleMainImageSelect} />
+          <input ref={mainCameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleMainImageSelect} />
+        </div>
       </div>
 
       {/* Loading */}
@@ -150,7 +179,13 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ userProfile }) => {
         {showCreate && (
           <CreatePostModal
             userProfile={userProfile}
-            onClose={() => setShowCreate(false)}
+            preloadedFile={preloadedFile}
+            preloadedPreview={preloadedPreview}
+            onClose={() => {
+              setShowCreate(false);
+              setPreloadedFile(null);
+              setPreloadedPreview(null);
+            }}
           />
         )}
       </AnimatePresence>
@@ -351,14 +386,18 @@ const PostCard = ({
 /* ─── Create Post Modal ─── */
 const CreatePostModal = ({
   userProfile,
+  preloadedFile = null,
+  preloadedPreview = null,
   onClose,
 }: {
   userProfile: UserProfile;
+  preloadedFile?: File | null;
+  preloadedPreview?: string | null;
   onClose: () => void;
 }) => {
   const [caption, setCaption] = useState('');
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(preloadedFile);
+  const [imagePreview, setImagePreview] = useState<string | null>(preloadedPreview);
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -418,7 +457,7 @@ const CreatePostModal = ({
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-        className="bg-[var(--theme-card)] rounded-t-3xl w-full max-w-[480px] overflow-hidden"
+        className="bg-[var(--theme-card)] rounded-t-3xl w-full max-w-[480px] max-h-[92vh] overflow-y-auto flex flex-col hide-scrollbar"
       >
         {/* Handle */}
         <div className="flex justify-center pt-3 pb-1">
