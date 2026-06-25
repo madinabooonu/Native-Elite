@@ -21,9 +21,9 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ userProfile }) => {
   const [showCreate, setShowCreate] = useState(false);
   const [preloadedFile, setPreloadedFile] = useState<File | null>(null);
   const [preloadedPreview, setPreloadedPreview] = useState<string | null>(null);
+  const [preloadCamera, setPreloadCamera] = useState(false);
 
   const mainFileRef = useRef<HTMLInputElement>(null);
-  const mainCameraRef = useRef<HTMLInputElement>(null);
 
   // Subscribe to posts in real-time
   useEffect(() => {
@@ -107,7 +107,10 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ userProfile }) => {
           
           <div className="flex gap-2.5 pt-2 border-t border-[var(--theme-border)]/40">
             <button
-              onClick={() => mainCameraRef.current?.click()}
+              onClick={() => {
+                setPreloadCamera(true);
+                setShowCreate(true);
+              }}
               className="flex-1 py-2.5 bg-blue-600/10 hover:bg-blue-600/15 text-blue-500 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
               📷 Rasmga Olish
@@ -121,7 +124,6 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ userProfile }) => {
           </div>
 
           <input ref={mainFileRef} type="file" accept="image/*" className="hidden" onChange={handleMainImageSelect} />
-          <input ref={mainCameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleMainImageSelect} />
         </div>
       </div>
 
@@ -181,10 +183,12 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ userProfile }) => {
             userProfile={userProfile}
             preloadedFile={preloadedFile}
             preloadedPreview={preloadedPreview}
+            preloadCamera={preloadCamera}
             onClose={() => {
               setShowCreate(false);
               setPreloadedFile(null);
               setPreloadedPreview(null);
+              setPreloadCamera(false);
             }}
           />
         )}
@@ -388,11 +392,13 @@ const CreatePostModal = ({
   userProfile,
   preloadedFile = null,
   preloadedPreview = null,
+  preloadCamera = false,
   onClose,
 }: {
   userProfile: UserProfile;
   preloadedFile?: File | null;
   preloadedPreview?: string | null;
+  preloadCamera?: boolean;
   onClose: () => void;
 }) => {
   const [caption, setCaption] = useState('');
@@ -400,8 +406,22 @@ const CreatePostModal = ({
   const [imagePreview, setImagePreview] = useState<string | null>(preloadedPreview);
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+
+  // In-app live camera viewfinder states
+  const [isCameraActive, setIsCameraActive] = useState(false);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const cameraRef = useRef<HTMLInputElement>(null);
+  const nativeCameraRef = useRef<HTMLInputElement>(null);
+
+  // Cleanup camera stream on unmount
+  useEffect(() => {
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [cameraStream]);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -410,6 +430,60 @@ const CreatePostModal = ({
     const reader = new FileReader();
     reader.onload = () => setImagePreview(reader.result as string);
     reader.readAsDataURL(file);
+  };
+
+  // Start in-app webcam stream
+  const startCamera = async () => {
+    try {
+      setIsCameraActive(true);
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' }
+      });
+      setCameraStream(stream);
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      console.error('Camera access error:', err);
+      alert('Kameraga ruxsat berilmadi yoki kamera topilmadi.');
+      setIsCameraActive(false);
+    }
+  };
+
+  useEffect(() => {
+    if (preloadCamera) {
+      startCamera();
+    }
+  }, [preloadCamera]);
+
+  // Stop in-app webcam stream
+  const stopCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setIsCameraActive(false);
+  };
+
+  // Snap photo from in-app webcam stream
+  const capturePhoto = () => {
+    if (!videoRef.current) return;
+    const video = videoRef.current;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const file = new File([blob], `snap_${Date.now()}.jpg`, { type: 'image/jpeg' });
+          setImageFile(file);
+          setImagePreview(URL.createObjectURL(file));
+          stopCamera();
+        }
+      }, 'image/jpeg', 0.95);
+    }
   };
 
   const handleSubmit = async () => {
@@ -498,19 +572,49 @@ const CreatePostModal = ({
         />
 
         {/* Direct Image URL input */}
-        <div className="px-5 mb-4">
-          <label className="text-[10px] font-bold text-[var(--theme-text-muted)] uppercase tracking-wider block mb-1">Rasm URL manzili (ixtiyoriy)</label>
-          <input
-            type="text"
-            value={imageUrlInput}
-            onChange={(e) => setImageUrlInput(e.target.value)}
-            placeholder="Internetdan to'g'ridan-to'g'ri rasm linkini joylang (masalan: https://...)"
-            className="w-full px-3 py-2 bg-[var(--theme-bg)] border border-[var(--theme-border)] rounded-xl text-[var(--theme-text)] text-xs outline-none focus:border-blue-500 transition-colors"
-          />
-        </div>
+        {!isCameraActive && (
+          <div className="px-5 mb-4">
+            <label className="text-[10px] font-bold text-[var(--theme-text-muted)] uppercase tracking-wider block mb-1">Rasm URL manzili (ixtiyoriy)</label>
+            <input
+              type="text"
+              value={imageUrlInput}
+              onChange={(e) => setImageUrlInput(e.target.value)}
+              placeholder="Internetdan to'g'ridan-to'g'ri rasm linkini joylang (masalan: https://...)"
+              className="w-full px-3 py-2 bg-[var(--theme-bg)] border border-[var(--theme-border)] rounded-xl text-[var(--theme-text)] text-xs outline-none focus:border-blue-500 transition-colors"
+            />
+          </div>
+        )}
+
+        {/* In-app Web Camera Viewfinder */}
+        {isCameraActive && (
+          <div className="relative mx-5 mb-4 rounded-2xl overflow-hidden border border-[var(--theme-border)] bg-black aspect-video flex items-center justify-center shadow-lg">
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-3">
+              <button
+                type="button"
+                onClick={capturePhoto}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs shadow-md cursor-pointer transition-all active:scale-95"
+              >
+                📸 Rasmga Tushirish
+              </button>
+              <button
+                type="button"
+                onClick={stopCamera}
+                className="px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white rounded-xl font-bold text-xs shadow-md cursor-pointer transition-all active:scale-95"
+              >
+                Yopish
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Image preview */}
-        {(imagePreview || imageUrlInput.trim()) && (
+        {!isCameraActive && (imagePreview || imageUrlInput.trim()) && (
           <div className="relative mx-5 mb-4 rounded-2xl overflow-hidden border border-[var(--theme-border)]">
             <img src={imagePreview || imageUrlInput.trim()} alt="Post preview" className="w-full max-h-48 object-cover rounded-2xl" />
             <button
@@ -523,24 +627,31 @@ const CreatePostModal = ({
         )}
 
         {/* Image source action buttons */}
-        <div className="px-5 py-4 border-t border-[var(--theme-border)] flex gap-3">
+        <div className="px-5 py-4 border-t border-[var(--theme-border)] flex flex-wrap gap-2.5">
           <button
             type="button"
-            onClick={() => cameraRef.current?.click()}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs cursor-pointer transition-all active:scale-95"
+            onClick={isCameraActive ? stopCamera : startCamera}
+            className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs cursor-pointer transition-all active:scale-95 text-center whitespace-nowrap min-w-[120px]"
           >
-            📷 Rasmga Olish
+            {isCameraActive ? '📷 Kamerani O'chirish' : '📷 Sayt kamerasini yoqish'}
+          </button>
+          <button
+            type="button"
+            onClick={() => nativeCameraRef.current?.click()}
+            className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-xs cursor-pointer transition-all active:scale-95 text-center whitespace-nowrap min-w-[120px]"
+          >
+            📸 Telefon kamerasi
           </button>
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
-            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 border border-[var(--theme-border)] hover:bg-[var(--theme-bg)] text-[var(--theme-text)] rounded-xl font-bold text-xs cursor-pointer transition-all active:scale-95"
+            className="flex-1 py-2.5 border border-[var(--theme-border)] hover:bg-[var(--theme-bg)] text-[var(--theme-text)] rounded-xl font-bold text-xs cursor-pointer transition-all active:scale-95 text-center whitespace-nowrap min-w-[120px]"
           >
             🖼️ Galereyadan Tanlash
           </button>
 
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
-          <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImageSelect} />
+          <input ref={nativeCameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImageSelect} />
         </div>
 
         {/* Safe bottom area */}
