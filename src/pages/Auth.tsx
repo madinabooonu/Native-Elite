@@ -15,19 +15,69 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  // Seed super admin if it doesn't exist
-  const seedSuperAdmin = async () => {
-    const ref = doc(db, 'users', 'superadmin');
-    await setDoc(ref, {
-      uid: 'superadmin',
-      username: 'superadmin',
-      displayName: 'Super Admin',
-      role: 'super-admin',
-      password: 'Admin@123',
-      createdAt: serverTimestamp(),
-      isOnline: false,
-      score: 0,
-    }, { merge: true });
+  // Seed super admin and test users
+  const seedTestUsers = async () => {
+    const usersToSeed = [
+      {
+        uid: 'superadmin',
+        username: 'superadmin',
+        displayName: 'Super Admin',
+        role: 'super-admin',
+        password: 'Admin@123',
+      },
+      {
+        uid: 'admin1',
+        username: 'admin1',
+        displayName: 'John Admin',
+        role: 'admin',
+        password: 'Admin@123',
+      },
+      {
+        uid: 'teacher1',
+        username: 'teacher1',
+        displayName: 'Sarah Teacher',
+        role: 'teacher',
+        password: 'Teacher@123',
+      },
+      {
+        uid: 'teacher2',
+        username: 'teacher2',
+        displayName: 'Michael Teacher',
+        role: 'teacher',
+        password: 'Teacher@123',
+      },
+      {
+        uid: 'student1',
+        username: 'student1',
+        displayName: 'Alex Student',
+        role: 'student',
+        password: 'Student@123',
+        stage: 'stage2',
+        score: 85,
+        totalScore: 100,
+        attendanceCount: 12,
+      },
+      {
+        uid: 'student2',
+        username: 'student2',
+        displayName: 'Emily Student',
+        role: 'student',
+        password: 'Student@123',
+        stage: 'stage3',
+        score: 92,
+        totalScore: 100,
+        attendanceCount: 15,
+      }
+    ];
+
+    for (const u of usersToSeed) {
+      const ref = doc(db, 'users', u.uid);
+      await setDoc(ref, {
+        ...u,
+        createdAt: serverTimestamp(),
+        isOnline: false,
+      }, { merge: true });
+    }
   };
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -40,8 +90,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
     setError(null);
 
     try {
-      // Ensure super admin exists
-      await seedSuperAdmin();
+      // Ensure test users exist
+      await seedTestUsers();
 
       // Query Firestore users collection by username
       const usersRef = collection(db, 'users');
