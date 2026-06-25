@@ -145,7 +145,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
       onAuthSuccess(profile);
     } catch (err: any) {
       console.error('Login error:', err);
-      setError('Xatolik yuz berdi. Internetni tekshiring.');
+      setError(`Xatolik yuz berdi: ${err.code || ''} - ${err.message || err}`);
     } finally {
       setIsLoading(false);
     }
