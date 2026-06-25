@@ -580,6 +580,36 @@ export const AISpeaking = () => {
                         </motion.button>
                     ))}
                 </div>
+
+                {/* ── Practice Speaking (Sesame.com) ── */}
+                <div className="px-4 mt-6 mb-4">
+                  <div className="relative overflow-hidden rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-900/30 to-purple-900/20 p-5">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl" />
+                    <div className="relative">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-2xl">🎙️</span>
+                        <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">Live Practice</span>
+                      </div>
+                      <h3 className="text-base font-bold text-white mb-1">Sesame AI bilan mashq qiling</h3>
+                      <p className="text-xs text-gray-400 mb-4 leading-relaxed">
+                        Real AI examiner bilan jonli suhbat. Sesame.com saytida real-time ovozli speaking practice qiling.
+                      </p>
+                      <a
+                        href="https://app.sesame.com"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500 text-white text-sm font-bold rounded-xl hover:bg-blue-400 transition-all active:scale-[0.97]"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                          <polyline points="15 3 21 3 21 9"/>
+                          <line x1="10" y1="14" x2="21" y2="3"/>
+                        </svg>
+                        Sesame.com'ni ochish
+                      </a>
+                    </div>
+                  </div>
+                </div>
             </div>
         );
     }

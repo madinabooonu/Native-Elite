@@ -1,6 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
+import { STAGES } from '../lib/constants';
+
+/* ═══════════════════════════════════════════
+   STAGE → TOPIC MAPPING
+   ═══════════════════════════════════════════ */
+const STAGE_TOPIC_MAP: Record<string, string[]> = {
+  'stage1': ['all-about-me', 'daily-routine', 'small-talk', 'people-in-my-life'],
+  'stage2': ['food-restaurants', 'money-spending', 'job-studies'],
+  'stage3': ['education-career', 'future-plans', 'challenges'],
+  'stage4': ['job-studies', 'future-plans'],
+  'stage5': ['challenges', 'education-career', 'money-spending'],
+  'stage6': ['all-about-me', 'daily-routine', 'small-talk', 'people-in-my-life', 'food-restaurants', 'money-spending', 'job-studies', 'education-career', 'future-plans', 'challenges'],
+};
 
 /* ═══════════════════════════════════════════
    VOCABULARY DATA
@@ -175,10 +188,74 @@ const TOPICS: Topic[] = [
 type TrainingStage = 'setup' | 'stage-intro' | 'learn' | 'recognize' | 'produce' | 'results';
 
 /* ═══════════════════════════════════════════
-   VOCAB TRAINER COMPONENT
+   VOCAB TRAINER – Stage Selector (outer)
    ═══════════════════════════════════════════ */
 export const VocabTrainer = () => {
-    const [selectedTopics, setSelectedTopics] = useState<string[]>(TOPICS.map(t => t.id));
+  const [selectedStageId, setSelectedStageId] = useState<string | null>(null);
+
+  if (selectedStageId) {
+    return (
+      <VocabTrainerCore
+        filteredTopicIds={STAGE_TOPIC_MAP[selectedStageId] || TOPICS.map(t => t.id)}
+        stageLabel={STAGES.find(s => s.id === selectedStageId)?.name || ''}
+        onBack={() => setSelectedStageId(null)}
+      />
+    );
+  }
+
+  return (
+    <div className="min-h-screen pb-24" style={{ background: 'var(--theme-bg)' }}>
+      <div className="text-center pt-6 pb-4 px-4">
+        <span className="inline-block text-[10px] font-bold tracking-[0.2em] text-blue-400 border border-blue-400/40 px-3 py-1 rounded-full mb-3 uppercase">
+          Native Elite
+        </span>
+        <h1 className="text-2xl font-black text-[var(--theme-text)]">
+          Vocabulary <span className="text-blue-400">Stages</span>
+        </h1>
+        <p className="text-[var(--theme-text-muted)] text-xs mt-1">Bosqichni tanlang va so'z o'rganing</p>
+      </div>
+
+      <div className="px-4 grid grid-cols-2 gap-3 mt-2">
+        {STAGES.map((stage, idx) => (
+          <motion.button
+            key={stage.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.08 }}
+            onClick={() => setSelectedStageId(stage.id)}
+            className="stage-card rounded-2xl p-4 text-left"
+          >
+            <div className="text-3xl mb-3">{stage.emoji}</div>
+            <div
+              className="text-xs font-bold px-2 py-0.5 rounded-full inline-block mb-2"
+              style={{ background: stage.color + '20', color: stage.color }}
+            >
+              {stage.label}
+            </div>
+            <h3 className="text-sm font-bold text-[var(--theme-text)] leading-tight">{stage.name}</h3>
+            <p className="text-xs text-[var(--theme-text-muted)] mt-1">
+              {(STAGE_TOPIC_MAP[stage.id] || []).length} mavzu
+            </p>
+            <div className="mt-3 flex items-center gap-1 text-blue-400">
+              <span className="text-xs font-semibold">Boshlash</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+          </motion.button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════
+   VOCAB TRAINER CORE (inner – actual trainer)
+   ═══════════════════════════════════════════ */
+const VocabTrainerCore = ({ filteredTopicIds, stageLabel, onBack }: {
+  filteredTopicIds: string[];
+  stageLabel: string;
+  onBack: () => void;
+}) => {
+    const [selectedTopics, setSelectedTopics] = useState<string[]>(filteredTopicIds);
     const [wordsPerSession, setWordsPerSession] = useState(10);
     const [stage, setStage] = useState<TrainingStage>('setup');
     const [currentStage, setCurrentStage] = useState<'learn' | 'recognize' | 'produce'>('learn');
@@ -290,17 +367,21 @@ export const VocabTrainer = () => {
     /* ── SETUP SCREEN ── */
     if (stage === 'setup') {
         return (
-            <div className="min-h-screen bg-[#0a1628] text-white pb-24">
+            <div className="min-h-screen pb-24" style={{ background: 'var(--theme-bg)', color: 'var(--theme-text)' }}>
                 {/* Header */}
                 <div className="text-center pt-6 pb-4 px-4">
-                    <span className="inline-block text-[10px] font-bold tracking-[0.2em] text-brand-blue-light border border-brand-blue-light/40 px-3 py-1 rounded-full mb-3 uppercase">
-                        Native Elite American Academy
+                    <button onClick={onBack} className="flex items-center gap-1 text-blue-400 text-sm font-semibold mb-4 mx-auto">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                      Bosqichlar
+                    </button>
+                    <span className="inline-block text-[10px] font-bold tracking-[0.2em] text-blue-400 border border-blue-400/40 px-3 py-1 rounded-full mb-3 uppercase">
+                        {stageLabel}
                     </span>
                     <h1 className="text-2xl font-black">
-                        <span className="text-white">Vocab</span>{' '}
-                        <span className="text-brand-blue-light">Trainer</span>
+                        <span style={{color:'var(--theme-text)'}}>Vocab</span>{' '}
+                        <span className="text-blue-400">Trainer</span>
                     </h1>
-                    <p className="text-gray-400 text-xs mt-1">Learn → Recognize → Produce</p>
+                    <p style={{color:'var(--theme-text-muted)'}} className="text-xs mt-1">Learn → Recognize → Produce</p>
                 </div>
 
                 {/* Topic Selection */}

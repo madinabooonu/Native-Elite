@@ -1,300 +1,299 @@
 import 'package:flutter/material.dart';
-import 'dart:math';
+import 'package:provider/provider.dart';
+import '../models/app_provider.dart';
 
-class ProgressChartView extends StatefulWidget {
-  const ProgressChartView({super.key});
-
-  @override
-  State<ProgressChartView> createState() => _ProgressChartViewState();
-}
-
-class _ProgressChartViewState extends State<ProgressChartView> {
-  String timeRange = 'weekly';
-
-  final weeklyData = {
-    'speaking': [5.5, 6.0, 5.5, 6.5, 6.0, 7.0, 6.5],
-    'vocabulary': [12.0, 18.0, 15.0, 22.0, 20.0, 25.0, 28.0],
-    'mockTest': [5.0, 5.5, 6.0, 5.5, 6.5, 6.0, 6.5],
-    'attendance': [1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 0.0],
-  };
-  final monthlyData = {
-    'speaking': [5.0, 5.5, 5.5, 6.0, 6.0, 6.5, 6.5, 7.0, 6.5, 7.0, 7.0, 7.5],
-    'vocabulary': [40.0, 55.0, 68.0, 82.0, 95.0, 110.0, 125.0, 140.0, 155.0, 170.0, 188.0, 205.0],
-    'mockTest': [5.0, 5.0, 5.5, 5.5, 6.0, 6.0, 6.0, 6.5, 6.5, 6.5, 7.0, 7.0],
-    'attendance': [8.0, 10.0, 9.0, 11.0, 10.0, 12.0, 11.0, 12.0, 10.0, 11.0, 12.0, 11.0],
-  };
-  final weekLabels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  final monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+// ─────────────────────────────────────────────────────────
+// PROGRESS CHART
+// ─────────────────────────────────────────────────────────
+class ProgressChart extends StatelessWidget {
+  const ProgressChart({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final data = timeRange == 'weekly' ? weeklyData : monthlyData;
-    final labels = timeRange == 'weekly' ? weekLabels : monthLabels;
+    final user = context.watch<AppProvider>().currentUser;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF060D3A) : const Color(0xFFF0F4FF);
+    final cardColor = isDark ? const Color(0xFF0E173C) : Colors.white;
+    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final subtitleColor =
+        isDark ? const Color(0xFF94A3B8) : Colors.grey.shade600;
 
-    final avgSpeaking = (data['speaking']!.reduce((a, b) => a + b) / data['speaking']!.length).toStringAsFixed(1);
-    final totalVocab = data['vocabulary']!.last.toInt();
-    final latestMock = data['mockTest']!.last.toStringAsFixed(1);
-    final attendanceRate = timeRange == 'weekly'
-        ? (data['attendance']!.where((a) => a > 0).length / data['attendance']!.length * 100).round()
-        : (data['attendance']!.reduce((a, b) => a + b) / (data['attendance']!.length * 12) * 100).round();
+    final skills = [
+      {'label': 'Listening', 'score': 72, 'color': const Color(0xFF4169E1)},
+      {'label': 'Reading', 'score': 68, 'color': const Color(0xFF22C55E)},
+      {'label': 'Writing', 'score': 58, 'color': const Color(0xFFF59E0B)},
+      {'label': 'Speaking', 'score': 75, 'color': const Color(0xFFEC4899)},
+    ];
+
+    final weeklyActivity = [40, 65, 30, 80, 55, 90, 45];
+    final days = ['Du', 'Se', 'Ch', 'Pa', 'Ju', 'Sh', 'Ya'];
 
     return Scaffold(
-      backgroundColor: const Color(0xFF050A24),
+      backgroundColor: bgColor,
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 100),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
-                  Text('My Progress', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white)),
-                  SizedBox(height: 2),
-                  Text('Track your learning journey', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            // ── Overall Score Card ──
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF0D1B6E), Color(0xFF4169E1)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF4169E1).withValues(alpha: 0.3),
+                    blurRadius: 20,
+                    offset: const Offset(0, 8),
+                  ),
                 ],
               ),
-            ),
-
-            // Time toggle
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
               child: Row(
-                children: ['weekly', 'monthly'].map((range) {
-                  final isSelected = timeRange == range;
-                  return Expanded(
-                    child: GestureDetector(
-                      onTap: () => setState(() => timeRange = range),
-                      child: Container(
-                        margin: const EdgeInsets.only(right: 8),
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFF7BB8F5).withAlpha(25) : Colors.transparent,
-                          border: Border.all(color: isSelected ? const Color(0xFF7BB8F5).withAlpha(100) : Colors.white.withAlpha(20)),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(range.toUpperCase(), style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1, color: isSelected ? const Color(0xFF7BB8F5) : Colors.grey)),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-
-            // Stats Grid
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 1.6,
                 children: [
-                  _statCard('🎤', 'Speaking Avg', avgSpeaking, '↑ Band $avgSpeaking', const Color(0xFFA855F7)),
-                  _statCard('📚', 'Words Learned', '$totalVocab', '+${timeRange == 'weekly' ? 28 : 205} words', const Color(0xFF7BB8F5)),
-                  _statCard('📝', 'Mock Test', latestMock, 'Band $latestMock', const Color(0xFFFBBF24)),
-                  _statCard('✅', 'Attendance', '$attendanceRate%', attendanceRate >= 80 ? 'Excellent' : 'Good', const Color(0xFF60A5FA)),
+                  // Big score ring
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('6.5',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w900)),
+                          Text('IELTS',
+                              style: TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 10)),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 20),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Taxminiy Ball',
+                          style: TextStyle(
+                              color: Colors.white70, fontSize: 13)),
+                      const SizedBox(height: 4),
+                      Text(user?.displayName ?? 'Student',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 4),
+                      const Text('🎯 Maqsad: 7.0',
+                          style: TextStyle(
+                              color: Color(0xFF7BB8F5), fontSize: 13)),
+                    ],
+                  ),
                 ],
               ),
             ),
+            const SizedBox(height: 20),
 
-            const SizedBox(height: 24),
-            _chartSection('Speaking Progress', 'IELTS Band Score', '🎤 Band $avgSpeaking', const Color(0xFFA855F7), data['speaking']!, labels, 9),
-            const SizedBox(height: 16),
-            _barChartSection('Vocabulary Growth', 'Words learned', '📚 $totalVocab', const Color(0xFF7BB8F5), data['vocabulary']!, labels),
-            const SizedBox(height: 16),
-            _chartSection('Mock Test Results', 'Overall band scores', '📝 Band $latestMock', const Color(0xFFFBBF24), data['mockTest']!, labels, 9),
-            const SizedBox(height: 16),
-            _barChartSection('Attendance', timeRange == 'weekly' ? 'Classes this week' : 'Monthly attendance', '✅ $attendanceRate%', const Color(0xFF60A5FA), data['attendance']!, labels),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _statCard(String icon, String label, String value, String change, Color color) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0E173C),
-        border: Border.all(color: color.withAlpha(50)),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(icon, style: const TextStyle(fontSize: 18)),
-              Text(change, style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: color)),
-            ],
-          ),
-          const Spacer(),
-          Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: Colors.white)),
-          Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
-        ],
-      ),
-    );
-  }
-
-  Widget _chartSection(String title, String subtitle, String badge, Color color, List<double> data, List<String> labels, double maxVal) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0E173C),
-          border: Border.all(color: Colors.white.withAlpha(15)),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
-                  Text(subtitle, style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                ]),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: color.withAlpha(25), borderRadius: BorderRadius.circular(6)),
-                  child: Text(badge, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 120,
-              child: CustomPaint(
-                size: const Size(double.infinity, 120),
-                painter: _LineChartPainter(data: data, color: color, maxVal: maxVal),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: labels.map((l) => Expanded(child: Text(l, style: const TextStyle(fontSize: 9, color: Colors.grey), textAlign: TextAlign.center))).toList(),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _barChartSection(String title, String subtitle, String badge, Color color, List<double> data, List<String> labels) {
-    final maxVal = data.reduce(max) * 1.2;
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFF0E173C),
-          border: Border.all(color: Colors.white.withAlpha(15)),
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white)),
-                  Text(subtitle, style: const TextStyle(fontSize: 10, color: Colors.grey)),
-                ]),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: color.withAlpha(25), borderRadius: BorderRadius.circular(6)),
-                  child: Text(badge, style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 100,
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: data.map((val) {
-                  final h = (val / maxVal) * 100;
-                  return Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 2),
-                      child: Container(
-                        height: h.clamp(3, 100),
-                        decoration: BoxDecoration(color: color, borderRadius: const BorderRadius.vertical(top: Radius.circular(4))),
+            // ── Skills ──
+            Text("Ko'nikmalar",
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: textColor)),
+            const SizedBox(height: 12),
+            ...skills.map((skill) {
+              final score = skill['score'] as int;
+              final color = skill['color'] as Color;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(14)),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: 10,
+                              height: 10,
+                              decoration: BoxDecoration(
+                                  color: color, shape: BoxShape.circle),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(skill['label'] as String,
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    color: textColor)),
+                          ],
+                        ),
+                        Text('$score / 100',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: color)),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(4),
+                      child: LinearProgressIndicator(
+                        value: score / 100,
+                        backgroundColor: color.withValues(alpha: 0.1),
+                        valueColor: AlwaysStoppedAnimation<Color>(color),
+                        minHeight: 8,
                       ),
                     ),
-                  );
-                }).toList(),
+                  ],
+                ),
+              );
+            }),
+            const SizedBox(height: 20),
+
+            // ── Weekly Activity ──
+            Text("Haftalik Faollik",
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: textColor)),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                  color: cardColor, borderRadius: BorderRadius.circular(16)),
+              child: Column(
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: weeklyActivity.asMap().entries.map((e) {
+                      final idx = e.key;
+                      final val = e.value;
+                      final isToday = idx == 5;
+                      return Expanded(
+                        child: Padding(
+                          padding:
+                              const EdgeInsets.symmetric(horizontal: 4),
+                          child: Column(
+                            children: [
+                              if (isToday)
+                                const Text('Today',
+                                    style: TextStyle(
+                                        fontSize: 8,
+                                        color: Color(0xFF4169E1),
+                                        fontWeight: FontWeight.w700)),
+                              const SizedBox(height: 4),
+                              AnimatedContainer(
+                                duration: const Duration(milliseconds: 500),
+                                height: val.toDouble(),
+                                decoration: BoxDecoration(
+                                  color: isToday
+                                      ? const Color(0xFF4169E1)
+                                      : const Color(0xFF4169E1)
+                                          .withValues(alpha: 0.3),
+                                  borderRadius: BorderRadius.circular(6),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(days[idx],
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: subtitleColor,
+                                      fontWeight: isToday
+                                          ? FontWeight.w700
+                                          : FontWeight.normal)),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: labels.map((l) => Expanded(child: Text(l, style: const TextStyle(fontSize: 9, color: Colors.grey), textAlign: TextAlign.center))).toList(),
-            ),
+            const SizedBox(height: 20),
+
+            // ── Scores ──
+            Text("Baholar",
+                style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: textColor)),
+            const SizedBox(height: 12),
+            ...[ 
+              {'subject': 'Speaking Practice', 'score': 85, 'date': '2026-06-20'},
+              {'subject': 'Vocabulary Test', 'score': 72, 'date': '2026-06-18'},
+              {'subject': 'Writing Task 2', 'score': 68, 'date': '2026-06-15'},
+            ].map((s) => Container(
+              margin: const EdgeInsets.only(bottom: 10),
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                  color: cardColor,
+                  borderRadius: BorderRadius.circular(14)),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: _scoreColor(s['score'] as int).withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Center(
+                      child: Text(
+                        '${s['score']}',
+                        style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 16,
+                            color: _scoreColor(s['score'] as int)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(s['subject'] as String,
+                            style: TextStyle(
+                                fontWeight: FontWeight.w600, color: textColor)),
+                        Text(s['date'] as String,
+                            style:
+                                TextStyle(fontSize: 11, color: subtitleColor)),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    '${s['score']}/100',
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: _scoreColor(s['score'] as int)),
+                  ),
+                ],
+              ),
+            )),
+            const SizedBox(height: 80),
           ],
         ),
       ),
     );
   }
-}
 
-class _LineChartPainter extends CustomPainter {
-  final List<double> data;
-  final Color color;
-  final double maxVal;
-
-  _LineChartPainter({required this.data, required this.color, required this.maxVal});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (data.isEmpty) return;
-    final paint = Paint()..color = color..strokeWidth = 2.5..style = PaintingStyle.stroke..strokeCap = StrokeCap.round;
-    final fillPaint = Paint()..shader = LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [color.withAlpha(80), color.withAlpha(5)],
-    ).createShader(Rect.fromLTWH(0, 0, size.width, size.height));
-
-    final path = Path();
-    final fillPath = Path();
-    
-    for (var i = 0; i < data.length; i++) {
-      final x = (i / (data.length - 1)) * size.width;
-      final y = size.height - (data[i] / maxVal) * size.height;
-      if (i == 0) {
-        path.moveTo(x, y);
-        fillPath.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-        fillPath.lineTo(x, y);
-      }
-    }
-
-    // Fill area
-    fillPath.lineTo(size.width, size.height);
-    fillPath.lineTo(0, size.height);
-    fillPath.close();
-    canvas.drawPath(fillPath, fillPaint);
-    canvas.drawPath(path, paint);
-
-    // Dots
-    final dotPaint = Paint()..color = color..style = PaintingStyle.fill;
-    final borderPaint = Paint()..color = const Color(0xFF050A24)..strokeWidth = 2..style = PaintingStyle.stroke;
-    for (var i = 0; i < data.length; i++) {
-      final x = (i / (data.length - 1)) * size.width;
-      final y = size.height - (data[i] / maxVal) * size.height;
-      canvas.drawCircle(Offset(x, y), 4, dotPaint);
-      canvas.drawCircle(Offset(x, y), 4, borderPaint);
-    }
+  Color _scoreColor(int s) {
+    if (s >= 80) return const Color(0xFF22C55E);
+    if (s >= 60) return const Color(0xFFF59E0B);
+    return Colors.red;
   }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }

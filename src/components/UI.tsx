@@ -59,12 +59,18 @@ export const MobileHeader = ({
   rightContent,
   onBack,
   avatarUrl,
+  onThemeToggle,
+  isDark,
+  userProfile,
 }: {
   title: string;
   subtitle?: string;
   rightContent?: React.ReactNode;
   onBack?: () => void;
   avatarUrl?: string;
+  onThemeToggle?: () => void;
+  isDark?: boolean;
+  userProfile?: any;
 }) => (
   <div className="status-gradient text-white px-5 pt-12 pb-6 safe-top">
     <div className="flex items-center justify-between mb-4">
@@ -83,23 +89,52 @@ export const MobileHeader = ({
           <span className="text-lg font-bold tracking-tight">Native Elite</span>
         </div>
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {rightContent}
+        {/* Theme Toggle */}
+        {onThemeToggle && (
+          <button
+            onClick={onThemeToggle}
+            className="relative p-2 bg-white/10 rounded-xl hover:bg-white/20 transition-colors"
+            title={isDark ? 'Light mode' : 'Dark mode'}
+          >
+            {isDark ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="5"/>
+                <line x1="12" y1="1" x2="12" y2="3"/>
+                <line x1="12" y1="21" x2="12" y2="23"/>
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                <line x1="1" y1="12" x2="3" y2="12"/>
+                <line x1="21" y1="12" x2="23" y2="12"/>
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+              </svg>
+            )}
+          </button>
+        )}
+        {/* Notification */}
         <button className="relative p-1">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
             <path d="M13.73 21a2 2 0 0 1-3.46 0" />
           </svg>
-          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-brand-red rounded-full border-2 border-brand-navy" />
+          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-blue-800" />
         </button>
-        {avatarUrl ? (
-          <img src={avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover border-2 border-white/30" />
+        {/* Avatar */}
+        {userProfile?.avatarUrl ? (
+          <img src={userProfile.avatarUrl} alt="" className="w-9 h-9 rounded-full object-cover border-2 border-white/30" />
         ) : (
-          <div className="w-9 h-9 rounded-full bg-brand-navy/20 flex items-center justify-center">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
+          <div className="w-9 h-9 rounded-full bg-white/10 flex items-center justify-center font-bold text-sm border-2 border-white/20">
+            {userProfile?.displayName?.[0]?.toUpperCase() || (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />
+              </svg>
+            )}
           </div>
         )}
       </div>
@@ -112,6 +147,7 @@ export const MobileHeader = ({
     )}
   </div>
 );
+
 
 /* ── Bottom Navigation ── */
 export const BottomNav = ({

@@ -1,16 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/app_provider.dart';
 import '../models/theme_provider.dart';
-import '../models/types.dart'; // UserRole
+import '../models/types.dart';
+import '../theme/app_theme.dart';
+import '../widgets/native_logo.dart';
 import 'dashboard_views.dart';
 import 'vocab_trainer.dart';
 import 'ai_speaking.dart';
-import 'booking_calendar.dart';
-import 'admin_views.dart';
+import 'chat_system.dart';
 import 'news_feed.dart';
+import 'admin_views.dart';
+import 'progress_chart.dart';
 
-
-// AppLayout maintains the active tab and provides the Header and BottomNav.
 class AppLayout extends StatefulWidget {
   const AppLayout({super.key});
 
@@ -19,52 +21,47 @@ class AppLayout extends StatefulWidget {
 }
 
 class _AppLayoutState extends State<AppLayout> {
-  // Hardcode for testing, usually retrieved from a Provider
-  final UserRole _role = UserRole.student;
   int _currentIndex = 0;
 
-  final List<Map<String, dynamic>> _studentTabs = [
-    {'id': 'home', 'label': 'Home', 'icon': Icons.home_rounded},
-    {'id': 'feed', 'label': 'Feed', 'icon': Icons.dynamic_feed_rounded},
-    {'id': 'vocab', 'label': 'Vocab', 'icon': Icons.book_rounded},
-    {'id': 'speaking', 'label': 'Speaking', 'icon': Icons.mic_rounded},
-    {'id': 'chat', 'label': 'Chat', 'icon': Icons.chat_bubble_rounded},
-    {'id': 'profile', 'label': 'Profile', 'icon': Icons.person_rounded},
-  ];
-
-  final List<Map<String, dynamic>> _teacherTabs = [
-    {'id': 'home', 'label': 'Home', 'icon': Icons.home_rounded},
-    {'id': 'feed', 'label': 'Feed', 'icon': Icons.dynamic_feed_rounded},
-    {'id': 'schedule', 'label': 'Schedule', 'icon': Icons.calendar_today_rounded},
-    {'id': 'students', 'label': 'Students', 'icon': Icons.people_rounded},
-    {'id': 'checkin', 'label': 'Check-in', 'icon': Icons.fact_check_rounded},
-    {'id': 'profile', 'label': 'Profile', 'icon': Icons.person_rounded},
-  ];
-
-  final List<Map<String, dynamic>> _adminTabs = [
-    {'id': 'home', 'label': 'Home', 'icon': Icons.home_rounded},
-    {'id': 'feed', 'label': 'Feed', 'icon': Icons.dynamic_feed_rounded},
-    {'id': 'bookings', 'label': 'Bookings', 'icon': Icons.calendar_month_rounded},
-    {'id': 'teachers', 'label': 'Teachers', 'icon': Icons.people_rounded},
-    {'id': 'slots', 'label': 'Slots', 'icon': Icons.event_available_rounded},
-    {'id': 'profile', 'label': 'Profile', 'icon': Icons.person_rounded},
-  ];
-
-  List<Map<String, dynamic>> get _currentTabs {
-    if (_role == UserRole.admin || _role == UserRole.superAdmin) return _adminTabs;
-    if (_role == UserRole.teacher) return _teacherTabs;
-    return _studentTabs;
+  List<Map<String, dynamic>> _getTabsForRole(UserRole role) {
+    switch (role) {
+      case UserRole.superAdmin:
+      case UserRole.admin:
+        return [
+          {'id': 'home', 'label': 'Bosh', 'icon': Icons.home_outlined, 'activeIcon': Icons.home_rounded},
+          {'id': 'feed', 'label': 'Feed', 'icon': Icons.grid_view_outlined, 'activeIcon': Icons.grid_view_rounded},
+          {'id': 'users', 'label': 'Users', 'icon': Icons.people_outline_rounded, 'activeIcon': Icons.people_rounded},
+          {'id': 'attendance', 'label': 'Davomat', 'icon': Icons.check_circle_outline_rounded, 'activeIcon': Icons.check_circle_rounded},
+          {'id': 'profile', 'label': 'Profil', 'icon': Icons.person_outline_rounded, 'activeIcon': Icons.person_rounded},
+        ];
+      case UserRole.teacher:
+        return [
+          {'id': 'home', 'label': 'Bosh', 'icon': Icons.home_outlined, 'activeIcon': Icons.home_rounded},
+          {'id': 'feed', 'label': 'Feed', 'icon': Icons.grid_view_outlined, 'activeIcon': Icons.grid_view_rounded},
+          {'id': 'students', 'label': 'Talabalar', 'icon': Icons.people_outline_rounded, 'activeIcon': Icons.people_rounded},
+          {'id': 'attendance', 'label': 'Davomat', 'icon': Icons.check_circle_outline_rounded, 'activeIcon': Icons.check_circle_rounded},
+          {'id': 'profile', 'label': 'Profil', 'icon': Icons.person_outline_rounded, 'activeIcon': Icons.person_rounded},
+        ];
+      default: // student
+        return [
+          {'id': 'home', 'label': 'Bosh', 'icon': Icons.home_outlined, 'activeIcon': Icons.home_rounded},
+          {'id': 'feed', 'label': 'Feed', 'icon': Icons.grid_view_outlined, 'activeIcon': Icons.grid_view_rounded},
+          {'id': 'vocab', 'label': 'Vocab', 'icon': Icons.menu_book_outlined, 'activeIcon': Icons.menu_book_rounded},
+          {'id': 'speaking', 'label': 'Speaking', 'icon': Icons.mic_none_rounded, 'activeIcon': Icons.mic_rounded},
+          {'id': 'chat', 'label': 'Chat', 'icon': Icons.chat_bubble_outline_rounded, 'activeIcon': Icons.chat_bubble_rounded},
+          {'id': 'profile', 'label': 'Profil', 'icon': Icons.person_outline_rounded, 'activeIcon': Icons.person_rounded},
+        ];
+    }
   }
 
-  void _onLogout() {
-    Navigator.pushReplacementNamed(context, '/');
-  }
-
-  Widget _buildContent() {
-    final activeTabId = _currentTabs[_currentIndex]['id'];
-
-    switch (activeTabId) {
+  Widget _buildContent(String tabId, UserRole role) {
+    switch (tabId) {
       case 'home':
+        if (role == UserRole.superAdmin || role == UserRole.admin) {
+          return const AdminDashboard();
+        } else if (role == UserRole.teacher) {
+          return const TeacherHome();
+        }
         return const StudentHome();
       case 'feed':
         return const NewsFeed();
@@ -72,119 +69,271 @@ class _AppLayoutState extends State<AppLayout> {
         return const VocabTrainer();
       case 'speaking':
         return const AISpeaking();
+      case 'chat':
+        return const ChatSystem();
+      case 'progress':
+        return const ProgressChart();
+      case 'users':
+        return const UsersManagement();
+      case 'students':
+        return const StudentsView();
+      case 'attendance':
+        return const AttendanceView();
       case 'profile':
         return const ProfileView();
-      case 'admin':
-        return const AdminDashboard();
-      case 'calendar':
-        return const BookingCalendar();
-      case 'students':
-      case 'teachers':
-      case 'courses':
-        return const TeacherList();
-      case 'checkin':
-        return const TeacherCheckIn();
       default:
-        return Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(_currentTabs[_currentIndex]['icon'], size: 80, color: Colors.white24),
-              const SizedBox(height: 16),
-              Text(
-                '$activeTabId Placeholder',
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-            ],
-          ),
-        );
+        return const StudentHome();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final titleMap = {
-      'home': _role == UserRole.admin ? 'Admin Dashboard' : _role == UserRole.teacher ? 'Teacher Dashboard' : 'Class Booking',
-      'feed': 'News Feed',
-      'vocab': 'Vocab Trainer',
-      'speaking': 'AI Speaking',
-      'chat': 'Messages',
-      'progress': 'My Progress',
-      'profile': 'Profile',
-      'schedule': 'My Schedule',
-      'students': 'My Students',
-      'checkin': 'Attendance Check-in',
-      'bookings': 'All Bookings',
-      'teachers': 'Manage Teachers',
-      'slots': 'Manage Slots',
-    };
-    final activeTabId = _currentTabs[_currentIndex]['id'];
+    final appProvider = context.watch<AppProvider>();
+    final themeProvider = context.watch<ThemeProvider>();
+    final user = appProvider.currentUser;
+    if (user == null) return const SizedBox();
 
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final primaryColor = Theme.of(context).primaryColor;
-    final navColor = isDark ? const Color(0xFF0E173C) : Colors.white;
-    final textColor = isDark ? Colors.white : const Color(0xFF0F172A);
+    final isDark = themeProvider.isDark;
+    final tabs = _getTabsForRole(user.role);
+
+    if (_currentIndex >= tabs.length) _currentIndex = 0;
+    final activeTabId = tabs[_currentIndex]['id'] as String;
+
+    // Colors
+    final navBg = isDark ? AppTheme.cardDark : Colors.white;
+    final selectedColor = AppTheme.accent;
+    final unselectedColor =
+        isDark ? AppTheme.textMutedDark : AppTheme.textMuted;
+    final dividerColor =
+        isDark ? const Color(0xFF2A2F52) : AppTheme.divider;
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: navColor,
-        elevation: 0,
-        centerTitle: false,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              titleMap[activeTabId] ?? 'Native Elite',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w800,
-                color: textColor,
-                letterSpacing: -0.5,
-              ),
-            ),
-            if (activeTabId == 'home')
-              Text(
-                _role == UserRole.admin ? 'Manage the platform' : 'IELTS Learning Hub',
-                style: const TextStyle(fontSize: 11, color: Colors.grey, fontWeight: FontWeight.normal),
-              ),
-          ],
+      appBar: _buildAppBar(user, activeTabId, isDark, themeProvider),
+      body: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 220),
+        switchInCurve: Curves.easeOut,
+        switchOutCurve: Curves.easeIn,
+        child: KeyedSubtree(
+          key: ValueKey(activeTabId),
+          child: _buildContent(activeTabId, user.role),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded, color: textColor, size: 20),
-            onPressed: () => context.read<ThemeProvider>().toggleTheme(),
+      ),
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: navBg,
+          border: Border(top: BorderSide(color: dividerColor, width: 1)),
+        ),
+        child: SafeArea(
+          child: SizedBox(
+            height: 60,
+            child: Row(
+              children: tabs.asMap().entries.map((entry) {
+                final index = entry.key;
+                final tab = entry.value;
+                final isActive = index == _currentIndex;
+                return Expanded(
+                  child: InkWell(
+                    onTap: () => setState(() => _currentIndex = index),
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 200),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            isActive
+                                ? tab['activeIcon'] as IconData
+                                : tab['icon'] as IconData,
+                            color: isActive ? selectedColor : unselectedColor,
+                            size: 22,
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            tab['label'] as String,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: isActive
+                                  ? FontWeight.w700
+                                  : FontWeight.w400,
+                              color: isActive ? selectedColor : unselectedColor,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
           ),
-          IconButton(
-            icon: Icon(Icons.logout_rounded, color: textColor, size: 20),
-            onPressed: () => Navigator.pushReplacementNamed(context, '/auth'),
+        ),
+      ),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(
+    UserProfile user,
+    String activeTabId,
+    bool isDark,
+    ThemeProvider themeProvider,
+  ) {
+    final appBarBg =
+        isDark ? AppTheme.surfaceDark : AppTheme.primary;
+    final dividerColor =
+        isDark ? const Color(0xFF2A2F52) : Colors.transparent;
+
+    final titles = {
+      'home': user.role == UserRole.admin || user.role == UserRole.superAdmin
+          ? 'Dashboard'
+          : user.role == UserRole.teacher
+              ? 'Teacher Panel'
+              : 'Bosh Sahifa',
+      'feed': 'News Feed',
+      'vocab': 'Vocabulary',
+      'speaking': 'AI Speaking',
+      'chat': 'Xabarlar',
+      'progress': 'Progress',
+      'profile': 'Profil',
+      'users': 'Foydalanuvchilar',
+      'students': 'Talabalar',
+      'attendance': 'Davomat',
+    };
+
+    return AppBar(
+      backgroundColor: appBarBg,
+      elevation: 0,
+      automaticallyImplyLeading: false,
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1),
+        child: Container(height: 1, color: dividerColor),
+      ),
+      title: Row(
+        children: [
+          // Logo box
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF4F72FF), Color(0xFF1A1F3C)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: const Center(child: NativeLogo(size: 18)),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Text(
+                'NATIVE ELITE',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 2.5,
+                  height: 1,
+                ),
+              ),
+              Text(
+                titles[activeTabId] ?? 'IELTS Hub',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.5),
+                  fontSize: 10.5,
+                  fontWeight: FontWeight.w400,
+                  letterSpacing: 0.3,
+                ),
+              ),
+            ],
+          ),
         ],
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 600), // tablet max width
-          child: _buildContent(),
+      actions: [
+        // Theme toggle
+        IconButton(
+          icon: Icon(
+            isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+            color: Colors.white.withValues(alpha: 0.8),
+            size: 20,
+          ),
+          onPressed: () => themeProvider.toggleTheme(),
+          tooltip: isDark ? 'Light mode' : 'Dark mode',
         ),
-      ),
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: isDark ? const Color(0xFF0F172A) : Colors.white,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF3B82F6), // brand-blue
-        unselectedItemColor: isDark ? Colors.white54 : Colors.black54,
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        selectedFontSize: 11,
-        unselectedFontSize: 11,
-        items: _currentTabs.map((tab) {
-          return BottomNavigationBarItem(
-            icon: Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Icon(tab['icon']),
+        // Notifications
+        IconButton(
+          icon: Icon(
+            Icons.notifications_outlined,
+            color: Colors.white.withValues(alpha: 0.8),
+            size: 20,
+          ),
+          onPressed: () {},
+        ),
+        // Logout
+        IconButton(
+          icon: Icon(
+            Icons.logout_rounded,
+            color: Colors.white.withValues(alpha: 0.8),
+            size: 20,
+          ),
+          onPressed: _showLogoutDialog,
+        ),
+        const SizedBox(width: 4),
+      ],
+    );
+  }
+
+  void _showLogoutDialog() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? AppTheme.cardDark : Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          'Chiqish',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: isDark ? Colors.white : AppTheme.textDark,
+          ),
+        ),
+        content: Text(
+          'Hisobdan chiqishni xohlaysizmi?',
+          style: TextStyle(
+            color: isDark ? AppTheme.textMutedDark : AppTheme.textMuted,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              'Bekor qilish',
+              style: TextStyle(
+                color: isDark ? AppTheme.textMutedDark : AppTheme.textMuted,
+              ),
             ),
-            label: tab['label'],
-          );
-        }).toList(),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              context.read<AppProvider>().logout();
+              Navigator.pushNamedAndRemoveUntil(context, '/', (_) => false);
+            },
+            child: const Text(
+              'Chiqish',
+              style: TextStyle(
+                color: AppTheme.error,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

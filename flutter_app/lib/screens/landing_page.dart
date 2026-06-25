@@ -16,7 +16,7 @@ class LandingPage extends StatelessWidget {
             decoration: BoxDecoration(
               color: const Color(0xFF0F172A),
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: const Color(0xFF3B82F6).withOpacity(0.3)), // brand-blue/30
+              border: Border.all(color: const Color(0xFF3B82F6).withValues(alpha: 0.3)), // brand-blue/30
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(24),
@@ -31,9 +31,9 @@ class LandingPage extends StatelessWidget {
                       height: 240,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: const Color(0xFF0F172A).withOpacity(0.5),
+                        color: const Color(0xFF0F172A).withValues(alpha: 0.5),
                         boxShadow: [
-                          BoxShadow(color: Colors.white.withOpacity(0.05), blurRadius: 100, spreadRadius: 40)
+                          BoxShadow(color: Colors.white.withValues(alpha: 0.05), blurRadius: 100, spreadRadius: 40)
                         ],
                       ),
                     ),
@@ -72,7 +72,7 @@ class LandingPage extends StatelessWidget {
                             const SizedBox(height: 12),
                             Text(
                               'Connect with expert teachers. Choose your time, confirm your slot, and start learning.',
-                              style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 14, height: 1.5),
+                              style: TextStyle(color: Colors.white.withValues(alpha: 0.7), fontSize: 14, height: 1.5),
                             ).animate().fadeIn().moveY(begin: 20, delay: 400.ms),
                           ],
                         ),
@@ -140,7 +140,7 @@ class LandingPage extends StatelessWidget {
         color: const Color(0xFF0F172A),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.2), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 10, offset: const Offset(0, 4)),
         ],
       ),
       child: Row(
@@ -149,7 +149,7 @@ class LandingPage extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: const Color(0xFF3B82F6).withOpacity(0.1),
+              color: const Color(0xFF3B82F6).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             alignment: Alignment.center,

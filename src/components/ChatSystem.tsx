@@ -1,273 +1,372 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
+import { db, storage } from '../lib/firebase';
+import {
+  collection, addDoc, onSnapshot, query, where, orderBy,
+  serverTimestamp, doc, getDocs, Timestamp
+} from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import type { UserProfile } from '../types';
+
+/* ═══════════════════════════════════════════
+   CHAT SYSTEM – Telegram-like real-time chat
+═══════════════════════════════════════════ */
 
 interface ChatMessage {
-    id: string;
-    sender: 'me' | 'other';
-    senderName: string;
-    text: string;
-    timestamp: string;
-    type: 'text' | 'file' | 'homework';
-    fileName?: string;
+  id: string;
+  senderId: string;
+  senderName: string;
+  receiverId: string;
+  text: string;
+  imageUrl?: string;
+  timestamp: string;
+  read: boolean;
+  conversationId: string;
 }
 
-interface ChatContact {
-    id: string;
-    name: string;
-    role: 'teacher' | 'admin' | 'student';
-    avatarColor: string;
-    lastMessage: string;
-    lastTime: string;
-    unread: number;
-    online: boolean;
+const getConversationId = (uid1: string, uid2: string) =>
+  [uid1, uid2].sort().join('_');
+
+interface ChatSystemProps {
+  userProfile: UserProfile;
 }
 
-const CONTACTS: ChatContact[] = [
-    { id: 'c1', name: 'Ms. Osiyo', role: 'teacher', avatarColor: 'from-purple-500 to-violet-600', lastMessage: 'Great job on your essay! 👏', lastTime: '2 min', unread: 2, online: true },
-    { id: 'c2', name: 'Mr. Sarvar', role: 'teacher', avatarColor: 'from-orange-500 to-amber-600', lastMessage: 'Don\'t forget tomorrow\'s class', lastTime: '15 min', unread: 0, online: true },
-    { id: 'c3', name: 'Admin Support', role: 'admin', avatarColor: 'from-brand-blue-mid to-teal-600', lastMessage: 'Your payment has been confirmed', lastTime: '1h', unread: 1, online: false },
-    { id: 'c4', name: 'Ali Karimov', role: 'student', avatarColor: 'from-blue-500 to-cyan-600', lastMessage: 'Can you share your notes?', lastTime: '3h', unread: 0, online: false },
-];
+export const ChatSystem: React.FC<ChatSystemProps> = ({ userProfile }) => {
+  const [contacts, setContacts] = useState<UserProfile[]>([]);
+  const [activeContact, setActiveContact] = useState<UserProfile | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [inputText, setInputText] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [isSending, setIsSending] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const unsubRef = useRef<(() => void) | null>(null);
 
-const DEMO_MESSAGES: Record<string, ChatMessage[]> = {
-    c1: [
-        { id: 'm1', sender: 'other', senderName: 'Ms. Osiyo', text: 'Hello! How was your speaking practice today?', timestamp: '10:30', type: 'text' },
-        { id: 'm2', sender: 'me', senderName: 'Me', text: 'It was great! I practiced Part 2 about describing a person.', timestamp: '10:32', type: 'text' },
-        { id: 'm3', sender: 'other', senderName: 'Ms. Osiyo', text: 'Excellent! Remember to use varied vocabulary and complex sentence structures.', timestamp: '10:33', type: 'text' },
-        { id: 'm4', sender: 'other', senderName: 'Ms. Osiyo', text: '', timestamp: '10:34', type: 'homework', fileName: 'Speaking_Task_Week5.pdf' },
-        { id: 'm5', sender: 'me', senderName: 'Me', text: 'Thank you! I\'ll complete it by Friday.', timestamp: '10:35', type: 'text' },
-        { id: 'm6', sender: 'other', senderName: 'Ms. Osiyo', text: 'Great job on your essay! 👏', timestamp: '10:40', type: 'text' },
-    ],
-    c2: [
-        { id: 'm7', sender: 'other', senderName: 'Mr. Sarvar', text: 'Hi! Class starts at 16:00 tomorrow.', timestamp: '14:00', type: 'text' },
-        { id: 'm8', sender: 'me', senderName: 'Me', text: 'Got it! Should I prepare anything?', timestamp: '14:05', type: 'text' },
-        { id: 'm9', sender: 'other', senderName: 'Mr. Sarvar', text: 'Don\'t forget tomorrow\'s class', timestamp: '14:10', type: 'text' },
-    ],
-    c3: [
-        { id: 'm10', sender: 'other', senderName: 'Admin', text: 'Welcome to Native Elite! Your account has been activated.', timestamp: '09:00', type: 'text' },
-        { id: 'm11', sender: 'me', senderName: 'Me', text: 'Thank you! How can I make a payment?', timestamp: '09:15', type: 'text' },
-        { id: 'm12', sender: 'other', senderName: 'Admin', text: 'Your payment has been confirmed', timestamp: '09:30', type: 'text' },
-    ],
-    c4: [
-        { id: 'm13', sender: 'other', senderName: 'Ali', text: 'Hey! Can you share your notes?', timestamp: '16:00', type: 'text' },
-    ],
-};
-
-export const ChatSystem = () => {
-    const [activeChat, setActiveChat] = useState<string | null>(null);
-    const [messages, setMessages] = useState<Record<string, ChatMessage[]>>(DEMO_MESSAGES);
-    const [inputText, setInputText] = useState('');
-    const [searchQuery, setSearchQuery] = useState('');
-    const messagesEndRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages, activeChat]);
-
-    const sendMessage = () => {
-        if (!inputText.trim() || !activeChat) return;
-        const newMsg: ChatMessage = {
-            id: `m-${Date.now()}`,
-            sender: 'me',
-            senderName: 'Me',
-            text: inputText,
-            timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-            type: 'text',
-        };
-        setMessages(prev => ({
-            ...prev,
-            [activeChat]: [...(prev[activeChat] || []), newMsg],
-        }));
-        setInputText('');
+  // Load all users (contacts)
+  useEffect(() => {
+    const fetchContacts = async () => {
+      const snap = await getDocs(collection(db, 'users'));
+      const all = snap.docs
+        .map(d => ({ uid: d.id, ...d.data() } as UserProfile))
+        .filter(u => u.uid !== userProfile.uid);
+      setContacts(all);
     };
+    fetchContacts();
+  }, [userProfile.uid]);
 
-    const sendFile = () => {
-        if (!activeChat) return;
-        const newMsg: ChatMessage = {
-            id: `m-${Date.now()}`,
-            sender: 'me',
-            senderName: 'Me',
-            text: '',
-            timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
-            type: 'file',
-            fileName: 'my_homework.pdf',
-        };
-        setMessages(prev => ({
-            ...prev,
-            [activeChat]: [...(prev[activeChat] || []), newMsg],
-        }));
-    };
+  // Scroll to bottom
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
-    const filteredContacts = CONTACTS.filter(c =>
-        c.name.toLowerCase().includes(searchQuery.toLowerCase())
+  // Subscribe to messages for active conversation
+  useEffect(() => {
+    if (!activeContact) return;
+    if (unsubRef.current) unsubRef.current();
+
+    const convId = getConversationId(userProfile.uid, activeContact.uid);
+    const q = query(
+      collection(db, 'messages'),
+      where('conversationId', '==', convId),
+      orderBy('createdAt', 'asc')
     );
 
-    const activeContact = CONTACTS.find(c => c.id === activeChat);
+    unsubRef.current = onSnapshot(q, snap => {
+      const msgs = snap.docs.map(d => {
+        const data = d.data();
+        return {
+          id: d.id,
+          senderId: data.senderId,
+          senderName: data.senderName,
+          receiverId: data.receiverId,
+          text: data.text || '',
+          imageUrl: data.imageUrl,
+          conversationId: data.conversationId,
+          read: data.read || false,
+          timestamp: data.createdAt instanceof Timestamp
+            ? data.createdAt.toDate().toLocaleTimeString('uz-UZ', { hour: '2-digit', minute: '2-digit' })
+            : data.timestamp || '',
+        } as ChatMessage;
+      });
+      setMessages(msgs);
+    });
 
-    /* ── CONTACT LIST ── */
-    if (!activeChat) {
-        return (
-            <div className="min-h-screen bg-[#0a1628] text-white pb-24">
-                {/* Header */}
-                <div className="px-4 pt-6 pb-3">
-                    <h2 className="text-xl font-black text-white mb-1">Messages</h2>
-                    <p className="text-gray-500 text-xs">Chat with teachers and support</p>
-                </div>
+    return () => { if (unsubRef.current) unsubRef.current(); };
+  }, [activeContact, userProfile.uid]);
 
-                {/* Search */}
-                <div className="px-4 mb-4">
-                    <div className="relative">
-                        <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-                        </svg>
-                        <input
-                            type="text"
-                            value={searchQuery}
-                            onChange={e => setSearchQuery(e.target.value)}
-                            placeholder="Search conversations..."
-                            className="w-full py-2.5 pl-10 pr-4 rounded-xl bg-[#0d1f38] border border-gray-700/40 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-brand-blue-light/40"
-                        />
-                    </div>
-                </div>
+  const sendMessage = async () => {
+    if ((!inputText.trim() && !imageFile) || !activeContact || isSending) return;
+    setIsSending(true);
 
-                {/* Contact List */}
-                <div className="px-4 space-y-2">
-                    {filteredContacts.map(contact => (
-                        <motion.button
-                            key={contact.id}
-                            whileTap={{ scale: 0.98 }}
-                            onClick={() => setActiveChat(contact.id)}
-                            className="w-full p-3 rounded-xl bg-[#0d1f38] border border-gray-700/30 flex items-center gap-3 text-left hover:border-brand-blue-light/20 transition-all"
-                        >
-                            <div className="relative flex-shrink-0">
-                                <div className={cn('w-12 h-12 rounded-full bg-gradient-to-br flex items-center justify-center text-white font-bold text-sm', contact.avatarColor)}>
-                                    {contact.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                                </div>
-                                {contact.online && (
-                                    <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-brand-blue-light rounded-full border-2 border-[#0d1f38]" />
-                                )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between">
-                                    <p className="text-sm font-bold text-white truncate">{contact.name}</p>
-                                    <span className="text-[10px] text-gray-500 flex-shrink-0">{contact.lastTime}</span>
-                                </div>
-                                <div className="flex items-center justify-between mt-0.5">
-                                    <p className="text-xs text-gray-400 truncate">{contact.lastMessage}</p>
-                                    {contact.unread > 0 && (
-                                        <span className="ml-2 w-5 h-5 bg-brand-blue-light rounded-full flex items-center justify-center text-[10px] font-bold text-[#0a1628] flex-shrink-0">
-                                            {contact.unread}
-                                        </span>
-                                    )}
-                                </div>
-                                <span className={cn(
-                                    'text-[9px] font-bold uppercase tracking-wider mt-1 inline-block px-1.5 py-0.5 rounded',
-                                    contact.role === 'teacher' ? 'bg-purple-400/10 text-purple-400' :
-                                        contact.role === 'admin' ? 'bg-brand-blue-light/10 text-brand-blue-light' :
-                                            'bg-blue-400/10 text-blue-400'
-                                )}>
-                                    {contact.role}
-                                </span>
-                            </div>
-                        </motion.button>
-                    ))}
-                </div>
-            </div>
-        );
+    try {
+      let imageUrl = '';
+      if (imageFile) {
+        const storageRef = ref(storage, `chat/${Date.now()}_${imageFile.name}`);
+        await uploadBytes(storageRef, imageFile);
+        imageUrl = await getDownloadURL(storageRef);
+        setImageFile(null);
+      }
+
+      const convId = getConversationId(userProfile.uid, activeContact.uid);
+      await addDoc(collection(db, 'messages'), {
+        senderId: userProfile.uid,
+        senderName: userProfile.displayName,
+        receiverId: activeContact.uid,
+        text: inputText.trim(),
+        imageUrl: imageUrl || null,
+        conversationId: convId,
+        read: false,
+        createdAt: serverTimestamp(),
+      });
+      setInputText('');
+    } finally {
+      setIsSending(false);
     }
+  };
 
-    /* ── CHAT VIEW ── */
-    const chatMessages = messages[activeChat] || [];
+  const filteredContacts = contacts.filter(c =>
+    c.displayName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    c.username?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
+  const roleColors: Record<string, string> = {
+    'student': 'from-blue-500 to-blue-700',
+    'teacher': 'from-green-500 to-green-700',
+    'admin': 'from-purple-500 to-purple-700',
+    'super-admin': 'from-red-500 to-red-700',
+  };
+
+  const roleLabels: Record<string, string> = {
+    'student': 'Talaba',
+    'teacher': 'O\'qituvchi',
+    'admin': 'Admin',
+    'super-admin': 'Super Admin',
+  };
+
+  /* ── If in a conversation ── */
+  if (activeContact) {
     return (
-        <div className="min-h-screen bg-[#0a1628] text-white flex flex-col pb-24">
-            {/* Chat Header */}
-            <div className="px-4 py-3 border-b border-gray-700/30 flex items-center gap-3 bg-[#0d1f38]/80 backdrop-blur-sm sticky top-0 z-10">
-                <button onClick={() => setActiveChat(null)} className="p-1 text-gray-400 hover:text-white transition-colors">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M15 18l-6-6 6-6" />
-                    </svg>
-                </button>
-                <div className={cn('w-9 h-9 rounded-full bg-gradient-to-br flex items-center justify-center text-white font-bold text-xs', activeContact?.avatarColor)}>
-                    {activeContact?.name.split(' ').map(n => n[0]).join('').slice(0, 2)}
-                </div>
-                <div className="flex-1">
-                    <p className="text-sm font-bold text-white">{activeContact?.name}</p>
-                    <p className="text-[10px] text-brand-blue-light">{activeContact?.online ? '● Online' : '○ Offline'}</p>
-                </div>
-            </div>
+      <div className="flex flex-col h-[calc(100vh-160px)]" style={{ background: 'var(--theme-bg)' }}>
+        {/* Chat Header */}
+        <div className="flex items-center gap-3 px-4 py-3 bg-[var(--theme-card)] border-b border-[var(--theme-border)]">
+          <button
+            onClick={() => setActiveContact(null)}
+            className="text-[var(--theme-text-muted)] p-1"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
 
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
-                {chatMessages.map(msg => (
-                    <motion.div
-                        key={msg.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className={cn('flex', msg.sender === 'me' ? 'justify-end' : 'justify-start')}
-                    >
-                        <div className={cn(
-                            'max-w-[80%] rounded-2xl px-4 py-2.5',
-                            msg.sender === 'me'
-                                ? 'bg-brand-blue-light text-[#0a1628]'
-                                : 'bg-[#0d1f38] border border-gray-700/40 text-white'
-                        )}>
-                            {msg.type === 'text' && <p className="text-sm leading-relaxed">{msg.text}</p>}
-                            {(msg.type === 'file' || msg.type === 'homework') && (
-                                <div className="flex items-center gap-2">
-                                    <div className={cn(
-                                        'w-8 h-8 rounded-lg flex items-center justify-center text-sm',
-                                        msg.sender === 'me' ? 'bg-[#0a1628]/20' : 'bg-brand-blue-light/10'
-                                    )}>
-                                        📎
-                                    </div>
-                                    <div>
-                                        <p className="text-xs font-bold">{msg.fileName}</p>
-                                        <p className={cn('text-[10px]', msg.sender === 'me' ? 'text-[#0a1628]/70' : 'text-gray-500')}>
-                                            {msg.type === 'homework' ? 'Homework' : 'File'}
-                                        </p>
-                                    </div>
-                                </div>
-                            )}
-                            <p className={cn('text-[10px] mt-1', msg.sender === 'me' ? 'text-[#0a1628]/50' : 'text-gray-600')}>
-                                {msg.timestamp}
-                            </p>
-                        </div>
-                    </motion.div>
-                ))}
-                <div ref={messagesEndRef} />
+          <div className="relative">
+            <div className={cn('w-9 h-9 rounded-full bg-gradient-to-br flex items-center justify-center text-white font-bold text-sm', roleColors[activeContact.role] || 'from-gray-500 to-gray-700')}>
+              {activeContact.displayName[0].toUpperCase()}
             </div>
+            <div className={cn(
+              'absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[var(--theme-card)]',
+              activeContact.isOnline ? 'bg-green-400' : 'bg-gray-400'
+            )} />
+          </div>
 
-            {/* Input */}
-            <div className="px-4 py-3 border-t border-gray-700/30 bg-[#0d1f38]/80 backdrop-blur-sm">
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={sendFile}
-                        className="w-10 h-10 rounded-xl bg-[#0a1628] border border-gray-700/40 flex items-center justify-center text-gray-400 hover:text-brand-blue-light hover:border-brand-blue-light/40 transition-all flex-shrink-0"
-                    >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" />
-                        </svg>
-                    </button>
-                    <input
-                        type="text"
-                        value={inputText}
-                        onChange={e => setInputText(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && sendMessage()}
-                        placeholder="Type a message..."
-                        className="flex-1 py-2.5 px-4 rounded-xl bg-[#0a1628] border border-gray-700/40 text-white text-sm placeholder-gray-600 focus:outline-none focus:border-brand-blue-light/40"
-                    />
-                    <button
-                        onClick={sendMessage}
-                        className="w-10 h-10 rounded-xl bg-brand-blue-light flex items-center justify-center text-[#0a1628] hover:bg-brand-blue-light transition-all flex-shrink-0"
-                    >
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="22" y1="2" x2="11" y2="13" /><polygon points="22 2 15 22 11 13 2 9 22 2" />
-                        </svg>
-                    </button>
-                </div>
-            </div>
+          <div className="flex-1">
+            <p className="font-bold text-sm text-[var(--theme-text)]">{activeContact.displayName}</p>
+            <p className="text-xs text-[var(--theme-text-muted)]">
+              {activeContact.isOnline ? '🟢 Online' : '⚪ Offline'} • {roleLabels[activeContact.role]}
+            </p>
+          </div>
         </div>
+
+        {/* Messages */}
+        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 hide-scrollbar">
+          {messages.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-full text-center">
+              <div className="text-5xl mb-3">💬</div>
+              <p className="text-sm font-bold text-[var(--theme-text)]">{activeContact.displayName} bilan suhbat</p>
+              <p className="text-xs text-[var(--theme-text-muted)] mt-1">Birinchi xabar yuboring!</p>
+            </div>
+          )}
+
+          {messages.map((msg, idx) => {
+            const isMe = msg.senderId === userProfile.uid;
+            const showTime = idx === 0 || messages[idx-1].senderId !== msg.senderId;
+
+            return (
+              <motion.div
+                key={msg.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className={cn('flex', isMe ? 'justify-end' : 'justify-start')}
+              >
+                <div className={cn('max-w-[78%] space-y-1', isMe ? 'items-end' : 'items-start', 'flex flex-col')}>
+                  {showTime && !isMe && (
+                    <span className="text-[10px] text-[var(--theme-text-muted)] px-2">{msg.senderName}</span>
+                  )}
+                  <div className={cn(
+                    'px-3.5 py-2.5 rounded-2xl',
+                    isMe
+                      ? 'message-bubble-sent rounded-br-sm'
+                      : 'message-bubble-received rounded-bl-sm'
+                  )}>
+                    {msg.imageUrl && (
+                      <img src={msg.imageUrl} alt="" className="rounded-xl max-w-full mb-2 max-h-48 object-cover" />
+                    )}
+                    {msg.text && (
+                      <p className="text-sm leading-relaxed">{msg.text}</p>
+                    )}
+                    <p className={cn('text-[10px] mt-1', isMe ? 'text-white/60 text-right' : 'text-[var(--theme-text-muted)]')}>
+                      {msg.timestamp}
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Image preview */}
+        {imageFile && (
+          <div className="px-4 py-2 bg-[var(--theme-card)] border-t border-[var(--theme-border)]">
+            <div className="flex items-center gap-2">
+              <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-[var(--theme-bg)]">
+                <img
+                  src={URL.createObjectURL(imageFile)}
+                  alt=""
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <span className="text-xs text-[var(--theme-text)] flex-1 truncate">{imageFile.name}</span>
+              <button onClick={() => setImageFile(null)} className="text-red-400 text-xs">✕</button>
+            </div>
+          </div>
+        )}
+
+        {/* Input */}
+        <div className="px-4 py-3 bg-[var(--theme-card)] border-t border-[var(--theme-border)] flex items-end gap-2">
+          <button
+            onClick={() => fileRef.current?.click()}
+            className="w-10 h-10 rounded-xl bg-[var(--theme-bg)] flex items-center justify-center text-[var(--theme-text-muted)] hover:text-blue-400 transition-colors flex-shrink-0"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+          </button>
+          <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={e => setImageFile(e.target.files?.[0] || null)} />
+
+          <div className="flex-1 flex items-end bg-[var(--theme-bg)] rounded-2xl border border-[var(--theme-border)] px-3 py-2">
+            <textarea
+              value={inputText}
+              onChange={e => setInputText(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+              placeholder="Xabar yozing..."
+              rows={1}
+              className="flex-1 bg-transparent text-sm text-[var(--theme-text)] placeholder-[var(--theme-text-muted)] resize-none outline-none max-h-24"
+            />
+          </div>
+
+          <button
+            onClick={sendMessage}
+            disabled={(!inputText.trim() && !imageFile) || isSending}
+            className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white flex-shrink-0 disabled:opacity-40 transition-opacity"
+          >
+            {isSending ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/>
+              </svg>
+            )}
+          </button>
+        </div>
+      </div>
     );
+  }
+
+  /* ── Contact List ── */
+  return (
+    <div className="pb-24" style={{ background: 'var(--theme-bg)' }}>
+      {/* Search */}
+      <div className="px-4 pt-4 pb-2">
+        <div className="relative">
+          <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--theme-text-muted)]">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+          </div>
+          <input
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Foydalanuvchi qidirish..."
+            className="w-full pl-10 pr-4 py-3 bg-[var(--theme-card)] border border-[var(--theme-border)] rounded-2xl text-sm text-[var(--theme-text)] placeholder-[var(--theme-text-muted)] outline-none focus:border-blue-500 transition-colors"
+          />
+        </div>
+      </div>
+
+      {/* Contacts */}
+      <div className="px-4 space-y-1.5 pt-1">
+        {filteredContacts.length === 0 && searchQuery && (
+          <div className="text-center py-10 text-[var(--theme-text-muted)]">
+            <div className="text-4xl mb-3">🔍</div>
+            <p className="text-sm">"{searchQuery}" topilmadi</p>
+          </div>
+        )}
+
+        {filteredContacts.length === 0 && !searchQuery && (
+          <div className="text-center py-16 text-[var(--theme-text-muted)]">
+            <div className="text-5xl mb-3">👥</div>
+            <p className="text-sm font-bold text-[var(--theme-text)]">Foydalanuvchilar yuklanmoqda...</p>
+          </div>
+        )}
+
+        {filteredContacts.map((contact, idx) => (
+          <motion.button
+            key={contact.uid}
+            initial={{ opacity: 0, x: -10 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: idx * 0.04 }}
+            onClick={() => setActiveContact(contact)}
+            className="w-full flex items-center gap-3 p-3.5 bg-[var(--theme-card)] rounded-2xl border border-[var(--theme-border)] hover:border-blue-500/30 transition-all text-left"
+          >
+            {/* Avatar */}
+            <div className="relative flex-shrink-0">
+              <div className={cn(
+                'w-12 h-12 rounded-full bg-gradient-to-br flex items-center justify-center text-white font-bold text-lg',
+                roleColors[contact.role] || 'from-gray-500 to-gray-700'
+              )}>
+                {contact.displayName[0].toUpperCase()}
+              </div>
+              <div className={cn(
+                'absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full border-2 border-[var(--theme-card)]',
+                contact.isOnline ? 'bg-green-400' : 'bg-gray-400'
+              )} />
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-[var(--theme-text)] truncate">{contact.displayName}</span>
+                <span className={cn(
+                  'text-[9px] font-bold px-1.5 py-0.5 rounded-full flex-shrink-0',
+                  contact.role === 'teacher' ? 'bg-green-500/10 text-green-400' :
+                  contact.role === 'admin' ? 'bg-purple-500/10 text-purple-400' :
+                  contact.role === 'super-admin' ? 'bg-red-500/10 text-red-400' :
+                  'bg-blue-500/10 text-blue-400'
+                )}>
+                  {roleLabels[contact.role]}
+                </span>
+              </div>
+              <p className="text-xs text-[var(--theme-text-muted)] mt-0.5">@{contact.username}</p>
+            </div>
+
+            {/* Online status */}
+            <div className="flex-shrink-0 text-right">
+              <span className="text-xs text-[var(--theme-text-muted)]">
+                {contact.isOnline ? '🟢' : '⚪'}
+              </span>
+            </div>
+          </motion.button>
+        ))}
+      </div>
+    </div>
+  );
 };

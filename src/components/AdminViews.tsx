@@ -1,451 +1,722 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Card, AppButton } from './UI';
 import { cn } from '../lib/utils';
-import type { BookingRecord, UserProfile } from '../types';
+import { db } from '../lib/firebase';
+import {
+  collection, getDocs, addDoc, doc, setDoc, updateDoc,
+  serverTimestamp, query, where, orderBy, onSnapshot, Timestamp
+} from 'firebase/firestore';
+import type { BookingRecord, UserProfile, AttendanceRecord, ScoreRecord, HomeworkAssignment } from '../types';
+import type { UserRole } from '../types';
 
-/* ── Admin Dashboard ── */
-export const AdminDashboard = ({ 
+/* ── Tab types ── */
+type AdminTab = 'overview' | 'users' | 'attendance' | 'scores' | 'homework';
+
+/* ═══════════════════════════════════════════
+   ADMIN DASHBOARD
+═══════════════════════════════════════════ */
+export const AdminDashboard = ({
   user,
   allBookings = [],
   setAllBookings,
-}: { 
+}: {
   user: UserProfile,
   allBookings?: BookingRecord[],
   setAllBookings?: (bookings: BookingRecord[]) => void,
-  key?: any 
+  key?: any
 }) => {
-  const [activeSubTab, setActiveSubTab] = useState<'overview' | 'bookings' | 'reports' | 'slots' | 'feedbacks'>('overview');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<AdminTab>('overview');
 
-  // Combine mock data with real bookings
-  const [mockBookings] = useState<BookingRecord[]>([
-    { id: '1', slotId: 's1', studentId: 'u1', studentName: 'Alex Johnson', studentStage: 'B2', teacherId: 't2', teacherName: 'Miss Osiyo', day: 'Mon', dayDate: 'May 5', fullDate: '2026-05-05', startTime: '16:00', endTime: '16:30', status: 'confirmed', createdAt: '2026-05-20T10:00:00Z', checkedIn: false },
-    { id: '2', slotId: 's2', studentId: 'u2', studentName: 'Elena Smith', studentStage: 'C1', teacherId: 't2', teacherName: 'Miss Osiyo', day: 'Mon', dayDate: 'May 5', fullDate: '2026-05-05', startTime: '17:00', endTime: '17:30', status: 'pending', createdAt: '2026-05-20T10:30:00Z', checkedIn: false },
-    { id: '3', slotId: 's3', studentId: 'u3', studentName: 'Marcus Wright', studentStage: 'A2', teacherId: 't3', teacherName: 'Mr Sarvar', day: 'Tue', dayDate: 'May 6', fullDate: '2026-05-06', startTime: '15:00', endTime: '15:30', status: 'attended', createdAt: '2026-05-19T14:00:00Z', checkedIn: true },
-    { id: '4', slotId: 's4', studentId: 'u4', studentName: 'Sara Ali', studentStage: 'B1', teacherId: 't3', teacherName: 'Mr Sarvar', day: 'Wed', dayDate: 'May 7', fullDate: '2026-05-07', startTime: '18:00', endTime: '18:30', status: 'cancelled', createdAt: '2026-05-20T09:00:00Z', checkedIn: false },
-  ]);
+  const isSuperAdmin = user.role === 'super-admin';
 
-  // Merge bookings
-  const combinedBookings = useMemo(() => {
-    const allBs = [...mockBookings, ...allBookings];
-    // Remove duplicates by ID
-    const seen = new Set<string>();
-    return allBs.filter(b => {
-      if (seen.has(b.id)) return false;
-      seen.add(b.id);
-      return true;
-    });
-  }, [mockBookings, allBookings]);
-
-  const bookings = user.role === 'super-admin'
-    ? combinedBookings
-    : combinedBookings.filter(b => b.teacherId === user.assignedTeacherId);
-
-  const updateStatus = (id: string, status: BookingRecord['status']) => {
-    if (setAllBookings) {
-      const updatedBookings = allBookings.map(b => 
-        b.id === id ? { ...b, status, checkedIn: status === 'attended' } : b
-      );
-      setAllBookings(updatedBookings);
-    }
-  };
-
-  const deleteBooking = (id: string) => {
-    if (setAllBookings) {
-      setAllBookings(allBookings.filter((b) => b.id !== id));
-    }
-  };
-
-  const filtered = bookings.filter(
-    (b) => b.studentName.toLowerCase().includes(searchQuery.toLowerCase()) || b.teacherName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const stats = [
-    { label: 'Total Bookings', value: bookings.length, color: 'bg-blue-100 text-brand-blue' },
-    { label: 'Pending', value: bookings.filter((b) => b.status === 'pending').length, color: 'bg-orange-100 text-brand-orange' },
-    { label: 'Confirmed', value: bookings.filter((b) => b.status === 'confirmed').length, color: 'bg-green-100 text-brand-green' },
-    { label: 'Attended', value: bookings.filter((b) => b.status === 'attended').length, color: 'bg-purple-100 text-purple-600' },
+  const tabs = [
+    { id: 'overview' as AdminTab, label: 'Overview', icon: '📊' },
+    ...(isSuperAdmin ? [{ id: 'users' as AdminTab, label: 'Foydalanuvchilar', icon: '👥' }] : []),
+    { id: 'attendance' as AdminTab, label: 'Davomat', icon: '✅' },
+    { id: 'scores' as AdminTab, label: 'Balllar', icon: '⭐' },
+    { id: 'homework' as AdminTab, label: 'Vazifalar', icon: '📚' },
   ];
 
   return (
-    <div className="px-4 pt-4 pb-4 space-y-4">
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-3">
-        {stats.map((s, i) => (
-          <Card key={i} className="p-4">
-            <div className={cn('w-10 h-10 rounded-xl flex items-center justify-center mb-3', s.color)}>
-              <span className="text-lg font-bold">{s.value}</span>
-            </div>
-            <p className="text-xs text-brand-text-light font-medium">{s.label}</p>
-          </Card>
-        ))}
-      </div>
-
-      {/* Sub-tabs Navigation */}
-      <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
-        {[
-          { id: 'overview', label: 'Overview' },
-          { id: 'bookings', label: 'Bookings' },
-          { id: 'slots', label: 'Status Board' },
-          { id: 'reports', label: 'Reports' },
-          { id: 'feedbacks', label: 'Feedbacks' },
-        ].map((tab) => (
+    <div className="min-h-screen pb-24" style={{ background: 'var(--theme-bg)' }}>
+      {/* Tab nav */}
+      <div className="flex gap-2 px-4 py-3 overflow-x-auto hide-scrollbar">
+        {tabs.map(t => (
           <button
-            key={tab.id}
-            onClick={() => setActiveSubTab(tab.id as any)}
+            key={t.id}
+            onClick={() => setActiveTab(t.id)}
             className={cn(
-              'px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap',
-              activeSubTab === tab.id ? 'bg-brand-blue text-white shadow-md' : 'bg-brand-navy text-brand-text-light border border-brand-blue/30'
+              'flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition-all',
+              activeTab === t.id
+                ? 'bg-blue-600 text-white shadow-lg'
+                : 'bg-[var(--theme-card)] text-[var(--theme-text-muted)] border border-[var(--theme-border)]'
             )}
           >
-            {tab.label}
+            <span>{t.icon}</span> {t.label}
           </button>
         ))}
       </div>
 
-      {activeSubTab === 'overview' && (
-        <>
-          {/* Search */}
-          <div className="relative">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search bookings..."
-              className="w-full bg-brand-navy border-2 border-brand-blue/30 rounded-xl py-2.5 pl-9 pr-4 text-sm text-white placeholder:text-gray-300 focus:outline-none focus:border-brand-blue transition-all"
-            />
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.2 }}
+        >
+          {activeTab === 'overview' && <OverviewTab user={user} allBookings={allBookings} />}
+          {activeTab === 'users' && isSuperAdmin && <UsersTab currentUser={user} />}
+          {activeTab === 'attendance' && <AttendanceTab teacher={user} />}
+          {activeTab === 'scores' && <ScoresTab teacher={user} />}
+          {activeTab === 'homework' && <HomeworkTab teacher={user} />}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
+};
+
+/* ─── Overview Tab ─── */
+const OverviewTab = ({ user, allBookings }: { user: UserProfile; allBookings: BookingRecord[] }) => {
+  const stats = [
+    { label: 'Jami Bookings', value: allBookings.length, color: '#3B82F6', icon: '📅' },
+    { label: 'Confirmed', value: allBookings.filter(b => b.status === 'confirmed').length, color: '#10B981', icon: '✅' },
+    { label: 'Attended', value: allBookings.filter(b => b.status === 'attended').length, color: '#8B5CF6', icon: '🎓' },
+    { label: 'Pending', value: allBookings.filter(b => b.status === 'pending').length, color: '#F59E0B', icon: '⏳' },
+  ];
+
+  return (
+    <div className="px-4 space-y-4">
+      <div className="grid grid-cols-2 gap-3">
+        {stats.map(s => (
+          <div key={s.label} className="bg-[var(--theme-card)] rounded-2xl p-4 border border-[var(--theme-border)]">
+            <div className="text-2xl mb-2">{s.icon}</div>
+            <div className="text-2xl font-black" style={{ color: s.color }}>{s.value}</div>
+            <div className="text-xs text-[var(--theme-text-muted)] mt-1">{s.label}</div>
           </div>
-        </>
+        ))}
+      </div>
+
+      <div className="bg-[var(--theme-card)] rounded-2xl p-4 border border-[var(--theme-border)]">
+        <h3 className="font-bold text-[var(--theme-text)] mb-1">Xush kelibsiz, {user.displayName}!</h3>
+        <p className="text-sm text-[var(--theme-text-muted)]">
+          {user.role === 'super-admin' ? 'Super Admin' : user.role === 'admin' ? 'Admin' : 'Teacher'} sifatida tizimga kirdingiz.
+          Yuqoridagi tablardan kerakli bo\'limni tanlang.
+        </p>
+      </div>
+    </div>
+  );
+};
+
+/* ─── Users Tab (Super Admin only) ─── */
+const UsersTab = ({ currentUser }: { currentUser: UserProfile }) => {
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [showCreate, setShowCreate] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      const snap = await getDocs(collection(db, 'users'));
+      setUsers(snap.docs.map(d => ({ uid: d.id, ...d.data() } as UserProfile)));
+      setIsLoading(false);
+    };
+    fetchUsers();
+  }, [showCreate]);
+
+  const roleColor: Record<string, string> = {
+    'student': 'bg-blue-500/10 text-blue-400',
+    'teacher': 'bg-green-500/10 text-green-400',
+    'admin': 'bg-purple-500/10 text-purple-400',
+    'super-admin': 'bg-red-500/10 text-red-400',
+  };
+
+  return (
+    <div className="px-4 space-y-3">
+      <div className="flex items-center justify-between py-2">
+        <h3 className="font-bold text-[var(--theme-text)]">Barcha foydalanuvchilar</h3>
+        <button
+          onClick={() => setShowCreate(true)}
+          className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Yangi Foydalanuvchi
+        </button>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-2">
+          {[1,2,3].map(i => <div key={i} className="h-16 rounded-2xl shimmer" />)}
+        </div>
+      ) : (
+        users.map(u => (
+          <div key={u.uid} className="bg-[var(--theme-card)] rounded-2xl p-3.5 flex items-center gap-3 border border-[var(--theme-border)]">
+            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+              {(u.displayName || 'U')[0].toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-sm text-[var(--theme-text)] truncate">{u.displayName}</p>
+              <p className="text-xs text-[var(--theme-text-muted)]">@{u.username}</p>
+            </div>
+            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${roleColor[u.role] || 'bg-gray-500/10 text-gray-400'}`}>
+              {u.role}
+            </span>
+          </div>
+        ))
       )}
 
-      {activeSubTab === 'slots' && <SlotStatusBoard user={user} />}
-      {activeSubTab === 'reports' && <ReportsView bookings={bookings} user={user} />}
-      {activeSubTab === 'feedbacks' && <FeedbacksView />}
-      {activeSubTab === 'bookings' && (
-        <div className="relative">
-          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search bookings..."
-            className="w-full bg-brand-navy border-2 border-brand-blue/30 rounded-xl py-2.5 pl-9 pr-4 text-sm text-white placeholder:text-gray-300 focus:outline-none focus:border-brand-blue transition-all"
+      <AnimatePresence>
+        {showCreate && (
+          <CreateUserModal
+            onClose={() => setShowCreate(false)}
           />
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+/* ─── Create User Modal ─── */
+const CreateUserModal = ({ onClose }: { onClose: () => void }) => {
+  const [form, setForm] = useState({
+    username: '',
+    password: '',
+    displayName: '',
+    role: 'student' as UserRole,
+    stage: 'stage1',
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+
+  const handleCreate = async () => {
+    if (!form.username || !form.password || !form.displayName) {
+      setError('Barcha maydonlarni to\'ldiring!');
+      return;
+    }
+    setIsLoading(true);
+    setError('');
+    try {
+      // Check username unique
+      const q = query(collection(db, 'users'), where('username', '==', form.username.toLowerCase()));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        setError('Bu username allaqachon mavjud!');
+        setIsLoading(false);
+        return;
+      }
+
+      const uid = `user_${Date.now()}`;
+      await setDoc(doc(db, 'users', uid), {
+        uid,
+        username: form.username.toLowerCase(),
+        password: form.password,
+        displayName: form.displayName,
+        role: form.role,
+        stage: form.stage,
+        score: 0,
+        totalScore: 0,
+        attendanceCount: 0,
+        isOnline: false,
+        createdAt: serverTimestamp(),
+      });
+      setSuccess(`✅ Foydalanuvchi yaratildi! Username: ${form.username} | Parol: ${form.password}`);
+    } catch (err) {
+      setError('Xatolik yuz berdi.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-end justify-center"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <motion.div
+        initial={{ y: '100%' }}
+        animate={{ y: 0 }}
+        exit={{ y: '100%' }}
+        transition={{ type: 'spring', damping: 25 }}
+        className="bg-[var(--theme-card)] rounded-t-3xl w-full max-w-[480px] p-6"
+      >
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-lg font-bold text-[var(--theme-text)]">Yangi Foydalanuvchi</h3>
+          <button onClick={onClose} className="text-[var(--theme-text-muted)]">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+
+        {error && <div className="mb-3 p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400 text-sm">{error}</div>}
+        {success ? (
+          <div className="space-y-3">
+            <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-xl text-green-400 text-sm font-medium">{success}</div>
+            <button onClick={onClose} className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl">Yopish</button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <FormField label="To'liq Ism" value={form.displayName} onChange={v => setForm({...form, displayName: v})} placeholder="Ism Familiya" />
+            <FormField label="Username" value={form.username} onChange={v => setForm({...form, username: v})} placeholder="username" />
+            <FormField label="Parol" value={form.password} onChange={v => setForm({...form, password: v})} placeholder="parol" type="password" />
+
+            <div>
+              <label className="text-xs font-bold text-[var(--theme-text-muted)] uppercase tracking-wider block mb-1.5">Rol</label>
+              <select
+                value={form.role}
+                onChange={e => setForm({...form, role: e.target.value as UserRole})}
+                className="w-full px-3 py-2.5 bg-[var(--theme-bg)] border border-[var(--theme-border)] rounded-xl text-[var(--theme-text)] text-sm outline-none"
+              >
+                <option value="student">Student</option>
+                <option value="teacher">Teacher</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+
+            {form.role === 'student' && (
+              <div>
+                <label className="text-xs font-bold text-[var(--theme-text-muted)] uppercase tracking-wider block mb-1.5">Stage</label>
+                <select
+                  value={form.stage}
+                  onChange={e => setForm({...form, stage: e.target.value})}
+                  className="w-full px-3 py-2.5 bg-[var(--theme-bg)] border border-[var(--theme-border)] rounded-xl text-[var(--theme-text)] text-sm outline-none"
+                >
+                  {['stage1','stage2','stage3','stage4','stage5','stage6'].map((s, i) => (
+                    <option key={s} value={s}>Stage {i+1}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <button
+              onClick={handleCreate}
+              disabled={isLoading}
+              className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
+              Yaratish
+            </button>
+          </div>
+        )}
+        <div className="h-6" />
+      </motion.div>
+    </motion.div>
+  );
+};
+
+const FormField = ({ label, value, onChange, placeholder, type = 'text' }: any) => (
+  <div>
+    <label className="text-xs font-bold text-[var(--theme-text-muted)] uppercase tracking-wider block mb-1.5">{label}</label>
+    <input
+      type={type}
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="w-full px-3 py-2.5 bg-[var(--theme-bg)] border border-[var(--theme-border)] rounded-xl text-[var(--theme-text)] text-sm outline-none focus:border-blue-500 transition-colors"
+    />
+  </div>
+);
+
+/* ─── Attendance Tab ─── */
+const AttendanceTab = ({ teacher }: { teacher: UserProfile }) => {
+  const [students, setStudents] = useState<UserProfile[]>([]);
+  const [attendance, setAttendance] = useState<Record<string, 'present' | 'absent' | null>>({});
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      const q = query(collection(db, 'users'), where('role', '==', 'student'));
+      const snap = await getDocs(q);
+      setStudents(snap.docs.map(d => ({ uid: d.id, ...d.data() } as UserProfile)));
+    };
+    fetchStudents();
+  }, []);
+
+  const mark = (uid: string, status: 'present' | 'absent') => {
+    setAttendance(prev => ({ ...prev, [uid]: prev[uid] === status ? null : status }));
+    setSaved(false);
+  };
+
+  const saveAttendance = async () => {
+    setIsSaving(true);
+    try {
+      for (const [studentId, status] of Object.entries(attendance)) {
+        if (!status) continue;
+        const student = students.find(s => s.uid === studentId);
+        await addDoc(collection(db, 'attendance'), {
+          studentId,
+          studentName: student?.displayName || '',
+          teacherId: teacher.uid,
+          teacherName: teacher.displayName,
+          date,
+          status,
+          createdAt: serverTimestamp(),
+        });
+      }
+      setSaved(true);
+      setAttendance({});
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const markedCount = Object.values(attendance).filter(Boolean).length;
+
+  return (
+    <div className="px-4 space-y-3">
+      <div className="flex items-center gap-3">
+        <div className="flex-1">
+          <label className="text-xs text-[var(--theme-text-muted)] font-bold uppercase tracking-wider block mb-1">Sana</label>
+          <input
+            type="date"
+            value={date}
+            onChange={e => setDate(e.target.value)}
+            className="w-full px-3 py-2 bg-[var(--theme-card)] border border-[var(--theme-border)] rounded-xl text-[var(--theme-text)] text-sm outline-none"
+          />
+        </div>
+        <div className="pt-5">
+          <span className="text-xs text-[var(--theme-text-muted)]">{markedCount} / {students.length} belgilandi</span>
+        </div>
+      </div>
+
+      {saved && (
+        <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-xl text-green-400 text-sm font-medium text-center">
+          ✅ Davomat saqlandi!
         </div>
       )}
 
-      {/* Bookings List */}
-      {(activeSubTab === 'overview' || activeSubTab === 'bookings') && (
-        <div className="space-y-3">
-          <h3 className="text-sm font-bold text-white italic">
-            {activeSubTab === 'overview' ? 'Recent Bookings' : 'All Bookings'}
-          </h3>
+      <div className="space-y-2">
+        {students.length === 0 && (
+          <div className="text-center py-10 text-[var(--theme-text-muted)] text-sm">Talabalar topilmadi</div>
+        )}
+        {students.map(s => (
+          <div key={s.uid} className="bg-[var(--theme-card)] rounded-2xl p-3.5 flex items-center gap-3 border border-[var(--theme-border)]">
+            <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+              {(s.displayName || 'S')[0].toUpperCase()}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-sm text-[var(--theme-text)] truncate">{s.displayName}</p>
+              <p className="text-xs text-[var(--theme-text-muted)]">@{s.username} • {s.stage || 'Stage 1'}</p>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => mark(s.uid, 'present')}
+                className={cn(
+                  'w-9 h-9 rounded-xl text-sm font-bold transition-all border-2',
+                  attendance[s.uid] === 'present'
+                    ? 'bg-green-500 border-green-500 text-white'
+                    : 'border-[var(--theme-border)] text-[var(--theme-text-muted)] hover:border-green-500/50'
+                )}
+              >✓</button>
+              <button
+                onClick={() => mark(s.uid, 'absent')}
+                className={cn(
+                  'w-9 h-9 rounded-xl text-sm font-bold transition-all border-2',
+                  attendance[s.uid] === 'absent'
+                    ? 'bg-red-500 border-red-500 text-white'
+                    : 'border-[var(--theme-border)] text-[var(--theme-text-muted)] hover:border-red-500/50'
+                )}
+              >✗</button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {markedCount > 0 && (
+        <button
+          onClick={saveAttendance}
+          disabled={isSaving}
+          className="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2"
+        >
+          {isSaving && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
+          Davomatni Saqlash ({markedCount} ta)
+        </button>
+      )}
+    </div>
+  );
+};
+
+/* ─── Scores Tab ─── */
+const ScoresTab = ({ teacher }: { teacher: UserProfile }) => {
+  const [students, setStudents] = useState<UserProfile[]>([]);
+  const [selectedStudent, setSelectedStudent] = useState<string>('');
+  const [score, setScore] = useState('');
+  const [maxScore, setMaxScore] = useState('10');
+  const [note, setNote] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [recentScores, setRecentScores] = useState<ScoreRecord[]>([]);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      const q = query(collection(db, 'users'), where('role', '==', 'student'));
+      const snap = await getDocs(q);
+      setStudents(snap.docs.map(d => ({ uid: d.id, ...d.data() } as UserProfile)));
+    };
+    fetchStudents();
+
+    // Recent scores
+    const q2 = query(collection(db, 'scores'), where('teacherId', '==', teacher.uid), orderBy('date', 'desc'));
+    const unsub = onSnapshot(q2, snap => {
+      setRecentScores(snap.docs.slice(0, 10).map(d => ({ id: d.id, ...d.data() } as ScoreRecord)));
+    });
+    return () => unsub();
+  }, [teacher.uid]);
+
+  const saveScore = async () => {
+    if (!selectedStudent || !score) return;
+    setIsSaving(true);
+    try {
+      const student = students.find(s => s.uid === selectedStudent);
+      await addDoc(collection(db, 'scores'), {
+        studentId: selectedStudent,
+        studentName: student?.displayName || '',
+        teacherId: teacher.uid,
+        teacherName: teacher.displayName,
+        score: Number(score),
+        maxScore: Number(maxScore),
+        note: note.trim(),
+        date: new Date().toISOString(),
+        createdAt: serverTimestamp(),
+      });
+
+      // Update student's total score
+      await updateDoc(doc(db, 'users', selectedStudent), {
+        score: (student?.score || 0) + Number(score),
+        totalScore: (student?.totalScore || 0) + Number(maxScore),
+      });
+
+      setSaved(true);
+      setScore('');
+      setNote('');
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="px-4 space-y-4">
+      <div className="bg-[var(--theme-card)] rounded-2xl p-4 border border-[var(--theme-border)] space-y-3">
+        <h3 className="font-bold text-[var(--theme-text)]">Ball Berish</h3>
+
+        {saved && (
+          <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-xl text-green-400 text-sm font-medium text-center">
+            ✅ Ball saqlandi!
+          </div>
+        )}
+
+        <div>
+          <label className="text-xs text-[var(--theme-text-muted)] font-bold uppercase tracking-wider block mb-1.5">Talaba</label>
+          <select
+            value={selectedStudent}
+            onChange={e => setSelectedStudent(e.target.value)}
+            className="w-full px-3 py-2.5 bg-[var(--theme-bg)] border border-[var(--theme-border)] rounded-xl text-[var(--theme-text)] text-sm outline-none"
+          >
+            <option value="">Talabani tanlang</option>
+            {students.map(s => (
+              <option key={s.uid} value={s.uid}>{s.displayName} (@{s.username})</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3">
+          <FormField label="Ball" value={score} onChange={setScore} placeholder="0" type="number" />
+          <FormField label="Maksimum" value={maxScore} onChange={setMaxScore} placeholder="10" type="number" />
+        </div>
+
+        <FormField label="Izoh (ixtiyoriy)" value={note} onChange={setNote} placeholder="Dars izohi..." />
+
+        <button
+          onClick={saveScore}
+          disabled={!selectedStudent || !score || isSaving}
+          className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl disabled:opacity-50"
+        >
+          Ball Berish
+        </button>
+      </div>
+
+      {recentScores.length > 0 && (
+        <div className="space-y-2">
+          <h4 className="font-bold text-sm text-[var(--theme-text)]">So'nggi Balllar</h4>
+          {recentScores.map(s => (
+            <div key={s.id} className="bg-[var(--theme-card)] rounded-xl p-3 flex items-center gap-3 border border-[var(--theme-border)]">
+              <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
+                <span className="text-green-400 font-black text-sm">{s.score}/{s.maxScore}</span>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm font-bold text-[var(--theme-text)]">{s.studentName}</p>
+                <p className="text-xs text-[var(--theme-text-muted)]">{s.note || 'Izohsiz'} • {new Date(s.date).toLocaleDateString('uz-UZ')}</p>
+              </div>
+              <span className="text-xs font-bold px-2 py-1 rounded-full bg-blue-500/10 text-blue-400">
+                {Math.round((s.score / s.maxScore) * 100)}%
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ─── Homework Tab ─── */
+const HomeworkTab = ({ teacher }: { teacher: UserProfile }) => {
+  const [homeworks, setHomeworks] = useState<HomeworkAssignment[]>([]);
+  const [showCreate, setShowCreate] = useState(false);
+  const [form, setForm] = useState({ title: '', description: '', deadline: '' });
+  const [isSaving, setIsSaving] = useState(false);
+  const [viewSubmissions, setViewSubmissions] = useState<string | null>(null);
+
+  useEffect(() => {
+    const q = query(collection(db, 'homework'), where('teacherId', '==', teacher.uid), orderBy('createdAt', 'desc'));
+    const unsub = onSnapshot(q, snap => {
+      setHomeworks(snap.docs.map(d => ({ id: d.id, ...d.data() } as HomeworkAssignment)));
+    });
+    return () => unsub();
+  }, [teacher.uid]);
+
+  const createHomework = async () => {
+    if (!form.title) return;
+    setIsSaving(true);
+    try {
+      await addDoc(collection(db, 'homework'), {
+        teacherId: teacher.uid,
+        teacherName: teacher.displayName,
+        title: form.title,
+        description: form.description,
+        deadline: form.deadline,
+        submissions: [],
+        createdAt: serverTimestamp(),
+      });
+      setForm({ title: '', description: '', deadline: '' });
+      setShowCreate(false);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="px-4 space-y-3">
+      <div className="flex items-center justify-between py-1">
+        <h3 className="font-bold text-[var(--theme-text)]">Vazifalar</h3>
+        <button
+          onClick={() => setShowCreate(!showCreate)}
+          className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Yangi Vazifa
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {showCreate && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            className="overflow-hidden"
+          >
+            <div className="bg-[var(--theme-card)] rounded-2xl p-4 border border-[var(--theme-border)] space-y-3">
+              <FormField label="Vazifa nomi" value={form.title} onChange={(v: string) => setForm({...form, title: v})} placeholder="Masalan: IELTS Writing Task 2" />
+              <div>
+                <label className="text-xs font-bold text-[var(--theme-text-muted)] uppercase tracking-wider block mb-1.5">Tavsif</label>
+                <textarea
+                  value={form.description}
+                  onChange={e => setForm({...form, description: e.target.value})}
+                  placeholder="Vazifa tavsifi..."
+                  rows={3}
+                  className="w-full px-3 py-2.5 bg-[var(--theme-bg)] border border-[var(--theme-border)] rounded-xl text-[var(--theme-text)] text-sm outline-none resize-none focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-[var(--theme-text-muted)] uppercase tracking-wider block mb-1.5">Deadline</label>
+                <input
+                  type="datetime-local"
+                  value={form.deadline}
+                  onChange={e => setForm({...form, deadline: e.target.value})}
+                  className="w-full px-3 py-2.5 bg-[var(--theme-bg)] border border-[var(--theme-border)] rounded-xl text-[var(--theme-text)] text-sm outline-none"
+                />
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowCreate(false)}
+                  className="flex-1 py-2.5 border border-[var(--theme-border)] text-[var(--theme-text-muted)] font-bold rounded-xl text-sm"
+                >Bekor</button>
+                <button
+                  onClick={createHomework}
+                  disabled={!form.title || isSaving}
+                  className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl text-sm disabled:opacity-50"
+                >Yaratish</button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {homeworks.length === 0 && !showCreate && (
+        <div className="text-center py-16 text-[var(--theme-text-muted)]">
+          <div className="text-4xl mb-3">📚</div>
+          <p className="text-sm">Hali vazifa yo'q</p>
+        </div>
+      )}
+
+      {homeworks.map(hw => (
+        <div key={hw.id} className="bg-[var(--theme-card)] rounded-2xl p-4 border border-[var(--theme-border)]">
+          <div className="flex items-start gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 text-xl flex-shrink-0">📝</div>
+            <div className="flex-1 min-w-0">
+              <h4 className="font-bold text-sm text-[var(--theme-text)]">{hw.title}</h4>
+              {hw.description && <p className="text-xs text-[var(--theme-text-muted)] mt-0.5 line-clamp-2">{hw.description}</p>}
+              {hw.deadline && (
+                <p className="text-xs text-orange-400 mt-1 font-semibold">
+                  ⏰ {new Date(hw.deadline).toLocaleString('uz-UZ')}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="mt-3 flex items-center gap-2">
+            <span className="text-xs text-[var(--theme-text-muted)]">
+              {(hw.submissions || []).length} ta topshirildi
+            </span>
+            <button
+              onClick={() => setViewSubmissions(viewSubmissions === hw.id ? null : hw.id)}
+              className="ml-auto text-xs text-blue-400 font-semibold"
+            >
+              {viewSubmissions === hw.id ? 'Yopish' : 'Ko\'rish'}
+            </button>
+          </div>
+
           <AnimatePresence>
-            {filtered.length === 0 ? (
-              <div className="text-center py-8 text-brand-text-light">No bookings found</div>
-            ) : (
-              filtered.map((booking) => (
-                <motion.div
-                  key={booking.id}
-                  layout
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, x: -100 }}
-                >
-                  <Card className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-brand-blue flex items-center justify-center text-white font-bold text-sm">
-                          {booking.studentName.split(' ').map((n) => n[0]).join('')}
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-white">{booking.studentName}</p>
-                          <p className="text-xs text-brand-text-light">Stage: {booking.studentStage} • {booking.teacherName}</p>
-                        </div>
-                      </div>
-                      <span className={cn(
-                        'text-[10px] font-bold px-2 py-1 rounded-full',
-                        booking.status === 'attended' ? 'bg-green-100 text-brand-green' :
-                          booking.status === 'confirmed' ? 'bg-blue-100 text-brand-blue' :
-                            booking.status === 'cancelled' ? 'bg-red-100 text-brand-red' :
-                              booking.status === 'absent' ? 'bg-red-100 text-brand-red' :
-                                'bg-orange-100 text-brand-orange'
-                      )}>
-                        {booking.status === 'attended' ? 'Keldi' :
-                          booking.status === 'absent' ? 'Kemadi' :
-                            booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                      </span>
+            {viewSubmissions === hw.id && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden mt-3 pt-3 border-t border-[var(--theme-border)]"
+              >
+                {(hw.submissions || []).length === 0 ? (
+                  <p className="text-xs text-[var(--theme-text-muted)] text-center py-3">Hali topshirilmagan</p>
+                ) : (
+                  (hw.submissions || []).map(sub => (
+                    <div key={sub.id} className="py-2 border-b border-[var(--theme-border)] last:border-0">
+                      <p className="text-sm font-bold text-[var(--theme-text)]">{sub.studentName}</p>
+                      <p className="text-xs text-[var(--theme-text-muted)] mt-0.5">{sub.text}</p>
                     </div>
-                    <div className="flex items-center gap-2 text-xs text-brand-text-light mb-3">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-                      </svg>
-                      {booking.day}, {booking.dayDate} • {booking.startTime} - {booking.endTime}
-                    </div>
-                    <div className="flex gap-2">
-                      {booking.status === 'pending' && (
-                        <AppButton variant="primary" className="text-xs py-1.5 px-3" onClick={() => updateStatus(booking.id, 'confirmed')}>
-                          Approve
-                        </AppButton>
-                      )}
-                      {booking.status === 'confirmed' && (
-                        <>
-                          <AppButton variant="primary" className="text-xs py-1.5 px-3 bg-brand-green hover:bg-green-600" onClick={() => updateStatus(booking.id, 'attended')}>
-                            ✓ Attended
-                          </AppButton>
-                          <AppButton variant="danger" className="text-xs py-1.5 px-3 border border-red-200" onClick={() => updateStatus(booking.id, 'absent')}>
-                            ✗ Absent
-                          </AppButton>
-                        </>
-                      )}
-                      {booking.status !== 'cancelled' && booking.status !== 'attended' && booking.status !== 'absent' && (
-                        <AppButton variant="danger" className="text-xs py-1.5 px-3 ml-2" onClick={() => updateStatus(booking.id, 'cancelled')}>
-                          Cancel
-                        </AppButton>
-                      )}
-                      <AppButton variant="ghost" className="text-xs py-1.5 px-3 ml-auto" onClick={() => deleteBooking(booking.id)}>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                        </svg>
-                      </AppButton>
-                    </div>
-                  </Card>
-                </motion.div>
-              ))
+                  ))
+                )}
+              </motion.div>
             )}
           </AnimatePresence>
         </div>
-      )}
-    </div>
-  );
-};
-
-/* ── Status Board View ── */
-const SlotStatusBoard = ({ user }: { user: UserProfile }) => {
-  const [selectedTeacher, setSelectedTeacher] = useState(user.assignedTeacherId || 't2');
-  const allTeachers = [
-    { id: 't2', name: 'Miss Osiyo' },
-    { id: 't3', name: 'Mr Sarvar' },
-  ];
-
-  const teachers = user.role === 'super-admin'
-    ? allTeachers
-    : allTeachers.filter(t => t.id === user.assignedTeacherId);
-
-  const hours = ['12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00', '17:30', '18:00', '18:30', '19:00', '19:30'];
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-  return (
-    <div className="space-y-4">
-      <div className="flex gap-2 overflow-x-auto pb-1 hide-scrollbar">
-        {teachers.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setSelectedTeacher(t.id)}
-            className={cn(
-              'px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all',
-              selectedTeacher === t.id ? 'bg-brand-blue text-white shadow-sm' : 'bg-brand-navy text-brand-text-light'
-            )}
-          >
-            {t.name}
-          </button>
-        ))}
-      </div>
-
-      <Card className="p-4 overflow-x-auto hide-scrollbar">
-        <div className="min-w-[500px]">
-          <div className="grid grid-cols-[80px_1fr] border-b border-brand-blue/30 pb-2">
-            <div className="text-[10px] font-bold text-gray-400 uppercase">Time</div>
-            <div className="grid grid-cols-7 gap-1">
-              {days.map(d => <div key={d} className="text-[10px] font-bold text-white text-center">{d}</div>)}
-            </div>
-          </div>
-          <div className="space-y-1 mt-2">
-            {hours.map(h => (
-              <div key={h} className="grid grid-cols-[80px_1fr] items-center gap-1">
-                <div className="text-[10px] font-bold text-brand-text-light">{h}</div>
-                <div className="grid grid-cols-7 gap-1">
-                  {days.map(d => {
-                    const isBooked = Math.random() > 0.7;
-                    return (
-                      <div
-                        key={d}
-                        className={cn(
-                          'h-6 rounded-md border-2 transition-colors',
-                          isBooked ? 'bg-brand-blue/10 border-brand-blue/30' : 'bg-gray-50 border-brand-blue/30'
-                        )}
-                      />
-                    );
-                  })}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </Card>
-      <div className="flex items-center gap-4 px-2">
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm bg-gray-50 border border-brand-blue/30" />
-          <span className="text-[10px] text-brand-text-light">Available</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded-sm bg-brand-blue/10 border border-brand-blue/30" />
-          <span className="text-[10px] text-brand-text-light">Booked</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/* ── Reports View ── */
-const ReportsView = ({ bookings, user }: { bookings: BookingRecord[], user: UserProfile }) => {
-  const [reportType, setReportType] = useState<'daily' | 'weekly' | 'monthly'>('weekly');
-
-  const exportToExcel = () => {
-    const headers = "ID,Student,Stage,Teacher,Day,Date,Time,Status,Attendance\n";
-    const rows = bookings.map(b => {
-      let statusCz: string = b.status;
-      if (b.status === 'attended') statusCz = 'Attended';
-      else if (b.status === 'absent') statusCz = 'Absent';
-      else if (b.status === 'confirmed') statusCz = 'Confirmed';
-      else if (b.status === 'pending') statusCz = 'Pending';
-      else if (b.status === 'cancelled') statusCz = 'Cancelled';
-      return `${b.id},${b.studentName},${b.studentStage},${b.teacherName},${b.day},${b.dayDate},${b.startTime},${statusCz},${b.checkedIn ? 'Yes' : 'No'}`;
-    }).join('\n');
-    const csvContent = headers + rows;
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `attendance_report_${reportType}_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2">
-          {['daily', 'weekly', 'monthly'].map(type => (
-            <button
-              key={type}
-              onClick={() => setReportType(type as any)}
-              className={cn(
-                'px-3 py-1.5 rounded-lg text-[10px] font-bold capitalize transition-all',
-                reportType === type ? 'bg-brand-navy text-white shadow-sm' : 'bg-brand-navy text-brand-text-light border border-brand-blue/30'
-              )}
-            >
-              {type}
-            </button>
-          ))}
-        </div>
-        <AppButton
-          variant="outline"
-          className="py-2 px-3 text-[10px] border-brand-blue/30 text-white h-auto gap-1"
-          onClick={exportToExcel}
-        >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
-          </svg>
-          Export Excel
-        </AppButton>
-      </div>
-
-      <Card className="p-5 space-y-4">
-        <h4 className="text-xs font-bold text-white flex items-center gap-2">
-          <span className="w-1.5 h-4 bg-brand-blue rounded-full" />
-          {reportType.charAt(0).toUpperCase() + reportType.slice(1)} Attendance Summary
-        </h4>
-
-        <div className="space-y-4">
-          {[
-            { id: 't2', name: 'Miss Osiyo', count: 52, color: 'bg-purple-500' },
-            { id: 't3', name: 'Mr Sarvar', count: 48, color: 'bg-orange-500' },
-          ].filter(t => user.role === 'super-admin' || t.id === user.assignedTeacherId).map(teacher => (
-            <div key={teacher.name} className="space-y-1.5">
-              <div className="flex justify-between items-center text-[10px]">
-                <span className="font-bold text-white">{teacher.name}</span>
-                <span className="text-brand-text-light">{teacher.count} Students</span>
-              </div>
-              <div className="h-2 w-full bg-brand-navy rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${(teacher.count / 50) * 100}%` }}
-                  className={cn('h-full rounded-full', teacher.color)}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="pt-2 border-t border-brand-blue/30 grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-[10px] text-brand-text-light mb-1">Top Student</p>
-            <p className="text-xs font-bold text-brand-navy">Dilshod K. (12 visits)</p>
-          </div>
-          <div>
-            <p className="text-[10px] text-brand-text-light mb-1">Peak Time</p>
-            <p className="text-xs font-bold text-brand-navy">16:30 - 17:30</p>
-          </div>
-        </div>
-      </Card>
-    </div>
-  );
-};
-
-/* ── Feedbacks View ── */
-const MOCK_FEEDBACKS = [
-  { id: '1', date: '2026-05-20', studentName: 'Alex Johnson', stage: 'Stage 4', text: 'The lesson was very interactive and helpful.' },
-  { id: '2', date: '2026-05-21', studentName: 'Elena Smith', stage: 'Stage 6', text: 'Great explanations of the grammar rules.' },
-  { id: '3', date: '2026-05-22', studentName: 'Marcus Wright', stage: 'Stage 2', text: 'Could we have more speaking exercises?' },
-];
-
-const FeedbacksView = () => {
-  const exportFeedbacks = () => {
-    const headers = "ID,Date,Student,Stage,Feedback\n";
-    const rows = MOCK_FEEDBACKS.map(f => `${f.id},${f.date},${f.studentName},${f.stage},"${f.text}"`).join('\n');
-    const csvContent = headers + rows;
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `feedbacks_export_${new Date().toISOString().split('T')[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  return (
-    <div className="space-y-4 pt-4">
-      <div className="flex justify-end">
-        <AppButton variant="outline" className="py-2 px-3 text-[10px] border-brand-blue/30 text-white h-auto gap-1" onClick={exportFeedbacks}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
-          </svg>
-          Export Excel
-        </AppButton>
-      </div>
-      <div className="space-y-3">
-        {MOCK_FEEDBACKS.map(f => (
-          <Card key={f.id} className="p-4 shadow-sm border border-brand-blue/30">
-            <div className="flex justify-between items-start mb-2">
-              <p className="text-sm font-bold text-white">{f.studentName}</p>
-              <span className="text-[10px] text-gray-400 font-medium">{f.date}</span>
-            </div>
-            <p className="text-xs text-brand-text-light mb-2">Stage: {f.stage}</p>
-            <p className="text-sm text-brand-navy p-3 bg-brand-blue/10/50 rounded-lg italic">"{f.text}"</p>
-          </Card>
-        ))}
-      </div>
+      ))}
     </div>
   );
 };

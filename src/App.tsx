@@ -1,20 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth } from './lib/firebase';
-import { SUPER_ADMIN_EMAILS, ADMIN_EMAILS, ADMIN_TEACHER_MAP } from './lib/constants';
 import { motion, AnimatePresence } from 'motion/react';
 import { LandingPage } from './pages/Landing';
 import { AuthPage } from './pages/Auth';
 import { AppLayout } from './components/Layout';
-import { StudentHome, TeacherList, TeacherCheckIn, ProfileView } from './components/DashboardViews';
+import { StudentHome, ProfileView } from './components/DashboardViews';
 import { AdminDashboard } from './components/AdminViews';
-import { BookingCalendar } from './components/BookingCalendar';
-import { FeedbackInterface } from './components/ChatInterface';
 import { VocabTrainer } from './components/VocabTrainer';
 import { ChatSystem } from './components/ChatSystem';
-import { ProgressChart } from './components/ProgressChart';
 import { AISpeaking } from './components/AISpeaking';
+import { NewsFeed } from './components/NewsFeed';
 import { UserRole, UserProfile, BookingRecord, TimeSlot } from './types';
+import { db } from './lib/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 type AppState = 'landing' | 'auth' | 'app';
 
@@ -23,40 +20,21 @@ export default function App() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [activeTab, setActiveTab] = useState('home');
   const [isLoading, setIsLoading] = useState(true);
-  const [activeBooking, setActiveBooking] = useState<BookingRecord | null>(null);
   const [allBookings, setAllBookings] = useState<BookingRecord[]>([]);
 
+  // Restore session from sessionStorage
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user && user.email) {
-        // Determine role based on email if we have persistent auth
-        let role: UserRole = 'student';
-        let assignedTeacherId: string | undefined = undefined;
-
-        if (SUPER_ADMIN_EMAILS.includes(user.email)) {
-          role = 'super-admin';
-        } else if (ADMIN_EMAILS.includes(user.email)) {
-          role = 'admin';
-          assignedTeacherId = ADMIN_TEACHER_MAP[user.email];
-        }
-
-        setUserProfile({
-          uid: user.uid,
-          email: user.email,
-          displayName: user.displayName || 'User',
-          role: role,
-          assignedTeacherId: assignedTeacherId,
-          avatarUrl: user.photoURL || undefined,
-        });
+    const stored = sessionStorage.getItem('userProfile');
+    if (stored) {
+      try {
+        const profile = JSON.parse(stored) as UserProfile;
+        setUserProfile(profile);
         setState('app');
-      } else {
-        setUserProfile(null);
-        if (state === 'app') setState('landing');
+      } catch {
+        // ignore
       }
-      setIsLoading(false);
-    });
-
-    return () => unsubscribe();
+    }
+    setIsLoading(false);
   }, []);
 
   const handleStart = () => setState('auth');
@@ -65,56 +43,39 @@ export default function App() {
     setUserProfile(profile);
     setActiveTab('home');
     setState('app');
+    // Persist session
+    sessionStorage.setItem('userProfile', JSON.stringify(profile));
   };
 
   const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      setUserProfile(null);
-      setState('landing');
-      setActiveTab('home');
-      setActiveBooking(null);
-      setAllBookings([]);
-    } catch (err) {
-      console.error('Logout error:', err);
+    if (userProfile) {
+      try {
+        // Set offline status
+        await setDoc(doc(db, 'users', userProfile.uid), { isOnline: false }, { merge: true });
+      } catch {/* ignore */}
     }
-  };
-
-  const handleBookSlot = (slot: TimeSlot) => {
-    if (!userProfile) return;
-
-    const newBooking: BookingRecord = {
-      id: Math.random().toString(36).substr(2, 9),
-      slotId: slot.id,
-      studentId: userProfile.uid,
-      studentName: userProfile.displayName,
-      studentStage: userProfile.stage || 'Stage 1',
-      teacherId: slot.teacherId,
-      teacherName: slot.teacherName,
-      day: slot.day,
-      dayDate: slot.dayDate,
-      fullDate: slot.fullDate,
-      startTime: slot.startTime,
-      endTime: slot.endTime,
-      status: 'pending',
-      checkedIn: false,
-      createdAt: new Date().toISOString(),
-    };
-
-    // Add to all bookings and set as active
-    setAllBookings(prev => [newBooking, ...prev]);
-    setActiveBooking(newBooking);
+    setUserProfile(null);
+    setState('landing');
+    setActiveTab('home');
+    setAllBookings([]);
+    sessionStorage.removeItem('userProfile');
   };
 
   const renderContent = () => {
     if (!userProfile) return null;
 
+    const isAdmin = userProfile.role === 'admin' || userProfile.role === 'super-admin';
+    const isTeacher = userProfile.role === 'teacher';
+
     // ── Admin/Super Admin views ──
-    if (userProfile.role === 'admin' || userProfile.role === 'super-admin') {
+    if (isAdmin) {
       switch (activeTab) {
         case 'home':
-        case 'bookings':
-          return <AdminDashboard key={userProfile.assignedTeacherId} user={userProfile} allBookings={allBookings} setAllBookings={setAllBookings} />;
+          return <AdminDashboard key={userProfile.uid} user={userProfile} allBookings={allBookings} setAllBookings={setAllBookings} />;
+        case 'feed':
+          return <NewsFeed userProfile={userProfile} />;
+        case 'chat':
+          return <ChatSystem userProfile={userProfile} />;
         case 'profile':
           return <ProfileView userProfile={userProfile} handleLogout={handleLogout} />;
         default:
@@ -123,65 +84,59 @@ export default function App() {
     }
 
     // ── Teacher views ──
-    if (userProfile.role === 'teacher') {
+    if (isTeacher) {
       switch (activeTab) {
         case 'home':
-          return <StudentHome userProfile={userProfile} activeBooking={null} onBookSlot={() => { }} />;
-        case 'schedule':
-          return <BookingCalendar onBookSlot={handleBookSlot} activeBooking={activeBooking} />;
-        case 'students':
-          return <TeacherList />;
-        case 'checkin':
-          return <TeacherCheckIn />;
+          return <AdminDashboard key={userProfile.uid} user={userProfile} allBookings={allBookings} setAllBookings={setAllBookings} />;
+        case 'attendance':
+          return <AdminDashboard key="attendance" user={userProfile} allBookings={allBookings} setAllBookings={setAllBookings} />;
+        case 'feed':
+          return <NewsFeed userProfile={userProfile} />;
+        case 'chat':
+          return <ChatSystem userProfile={userProfile} />;
         case 'profile':
           return <ProfileView userProfile={userProfile} handleLogout={handleLogout} />;
         default:
-          return <StudentHome userProfile={userProfile} activeBooking={null} onBookSlot={() => { }} />;
+          return <AdminDashboard user={userProfile} allBookings={allBookings} setAllBookings={setAllBookings} />;
       }
     }
 
     // ── Student views ──
     switch (activeTab) {
       case 'home':
-        return <StudentHome
-          userProfile={userProfile}
-          activeBooking={activeBooking}
-          onBookSlot={handleBookSlot}
-        />;
+        return <StudentHome userProfile={userProfile} activeBooking={null} onBookSlot={() => {}} />;
       case 'vocab':
         return <VocabTrainer />;
-      case 'chat':
-        return <ChatSystem />;
-      case 'progress':
-        return <ProgressChart />;
+      case 'feed':
+        return <NewsFeed userProfile={userProfile} />;
       case 'speaking':
         return <AISpeaking />;
-      case 'courses':
-        return <TeacherList />;
-      case 'feedback':
-        return <FeedbackInterface />;
+      case 'chat':
+        return <ChatSystem userProfile={userProfile} />;
       case 'profile':
         return <ProfileView userProfile={userProfile} handleLogout={handleLogout} />;
       default:
-        return <StudentHome userProfile={userProfile} activeBooking={activeBooking} onBookSlot={handleBookSlot} />;
+        return <StudentHome userProfile={userProfile} activeBooking={null} onBookSlot={() => {}} />;
     }
   };
 
   // ── Loading screen ──
   if (isLoading) {
     return (
-      <div className="h-screen w-screen bg-brand-navy flex flex-col items-center justify-center gap-4">
+      <div className="h-screen w-screen flex flex-col items-center justify-center gap-4" style={{ background: 'var(--theme-bg)' }}>
         <motion.div
           animate={{ scale: [1, 1.1, 1] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
           className="flex items-center gap-3"
         >
-          <svg width="40" height="40" viewBox="0 0 100 100" fill="none">
-            <path d="M25 75V25L75 75V25" stroke="#FFFFFF" strokeWidth="15" strokeLinecap="square" strokeLinejoin="miter" />
-          </svg>
-          <span className="text-2xl font-bold text-white tracking-tight">Native Elite</span>
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center shadow-lg">
+            <svg width="28" height="28" viewBox="0 0 100 100" fill="none">
+              <path d="M25 75V25L75 75V25" stroke="#FFFFFF" strokeWidth="15" strokeLinecap="square" strokeLinejoin="miter" />
+            </svg>
+          </div>
+          <span className="text-2xl font-bold text-[var(--theme-text)] tracking-tight">Native Elite</span>
         </motion.div>
-        <div className="w-8 h-8 border-3 border-white/20 border-t-white rounded-full animate-spin" />
+        <div className="w-8 h-8 border-3 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
       </div>
     );
   }
@@ -200,13 +155,14 @@ export default function App() {
         </motion.div>
       )}
 
-      {state === 'app' && (
+      {state === 'app' && userProfile && (
         <motion.div key="app" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <AppLayout
             role={userProfile.role}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
             onLogout={handleLogout}
+            userProfile={userProfile}
           >
             {renderContent()}
           </AppLayout>

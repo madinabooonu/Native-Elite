@@ -1,117 +1,221 @@
 import React, { useState } from 'react';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
-import { auth } from '../lib/firebase';
-import { SUPER_ADMIN_EMAILS, ADMIN_EMAILS, ADMIN_TEACHER_MAP } from '../lib/constants';
+import { db } from '../lib/firebase';
+import { collection, getDocs, query, where, doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import type { UserRole, UserProfile } from '../types';
+import { motion } from 'motion/react';
 
 interface AuthPageProps {
   onAuthSuccess: (profile: UserProfile) => void;
 }
 
 export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
-  const getProfileFromUser = (user: any): UserProfile => {
-    let role: UserRole = 'student';
-    let assignedTeacherId: string | undefined = undefined;
-
-    if (user.email && SUPER_ADMIN_EMAILS.includes(user.email)) {
-      role = 'super-admin';
-    } else if (user.email && ADMIN_EMAILS.includes(user.email)) {
-      role = 'admin';
-      assignedTeacherId = ADMIN_TEACHER_MAP[user.email];
-    }
-
-    return {
-      uid: user.uid,
-      email: user.email || '',
-      displayName: user.displayName || 'User',
-      role,
-      assignedTeacherId,
-      avatarUrl: user.photoURL || undefined,
-    };
+  // Seed super admin if it doesn't exist
+  const seedSuperAdmin = async () => {
+    const ref = doc(db, 'users', 'superadmin');
+    await setDoc(ref, {
+      uid: 'superadmin',
+      username: 'superadmin',
+      displayName: 'Super Admin',
+      role: 'super-admin',
+      password: 'Admin@123',
+      createdAt: serverTimestamp(),
+      isOnline: false,
+      score: 0,
+    }, { merge: true });
   };
 
-  const handleGoogleLogin = async () => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!username.trim() || !password.trim()) {
+      setError('Username va password kiritng!');
+      return;
+    }
     setIsLoading(true);
     setError(null);
+
     try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      onAuthSuccess(getProfileFromUser(result.user));
-    } catch (err: any) {
-      console.error('Auth error:', err);
-      if (err.code === 'auth/unauthorized-domain') {
-        setError('This domain is not authorized for sign-in. Please contact the admin.');
-      } else {
-        setError(err.message || 'An error occurred during sign-in.');
+      // Ensure super admin exists
+      await seedSuperAdmin();
+
+      // Query Firestore users collection by username
+      const usersRef = collection(db, 'users');
+      const q = query(usersRef, where('username', '==', username.trim().toLowerCase()));
+      const snap = await getDocs(q);
+
+      if (snap.empty) {
+        setError('Foydalanuvchi topilmadi. Username noto\'g\'ri.');
+        return;
       }
+
+      const userDoc = snap.docs[0];
+      const userData = userDoc.data();
+
+      if (userData.password !== password) {
+        setError('Password noto\'g\'ri. Iltimos qayta urinib ko\'ring.');
+        return;
+      }
+
+      const profile: UserProfile = {
+        uid: userData.uid || userDoc.id,
+        username: userData.username,
+        displayName: userData.displayName || userData.username,
+        role: userData.role as UserRole,
+        email: userData.email,
+        avatarUrl: userData.avatarUrl,
+        stage: userData.stage || 'stage1',
+        assignedTeacherId: userData.assignedTeacherId,
+        score: userData.score || 0,
+        totalScore: userData.totalScore || 0,
+        attendanceCount: userData.attendanceCount || 0,
+      };
+
+      // Update online status
+      await setDoc(doc(db, 'users', userDoc.id), {
+        isOnline: true,
+        lastSeen: new Date().toISOString(),
+      }, { merge: true });
+
+      onAuthSuccess(profile);
+    } catch (err: any) {
+      console.error('Login error:', err);
+      setError('Xatolik yuz berdi. Internetni tekshiring.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-brand-navy flex flex-col items-center justify-center relative overflow-hidden px-6">
-      {/* Background decorations */}
-      <div className="absolute top-[-80px] right-[-80px] w-64 h-64 rounded-full bg-brand-blue/10 blur-3xl" />
-      <div className="absolute bottom-[-100px] left-[-60px] w-80 h-80 rounded-full bg-purple-500/10 blur-3xl" />
-
-      {/* Logo */}
-      <div className="flex items-center gap-3 mb-10 relative z-10">
-        <svg width="44" height="44" viewBox="0 0 100 100" fill="none">
-          <path d="M25 75V25L75 75V25" stroke="#FFFFFF" strokeWidth="15" strokeLinecap="square" strokeLinejoin="miter" />
-        </svg>
-        <span className="text-3xl font-bold text-white tracking-tight">Native Elite</span>
+    <div className="min-h-screen bg-[var(--theme-bg)] flex flex-col items-center justify-center relative overflow-hidden px-6">
+      {/* Animated background blobs */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+        <div className="absolute top-[-100px] right-[-80px] w-72 h-72 rounded-full bg-blue-600/20 blur-3xl animate-pulse" />
+        <div className="absolute bottom-[-80px] left-[-60px] w-80 h-80 rounded-full bg-purple-600/15 blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-cyan-500/5 blur-3xl" />
       </div>
 
-      {/* Card */}
-      <div className="w-full max-w-[380px] bg-brand-navy rounded-[28px] shadow-2xl shadow-black/30 overflow-hidden relative z-10">
-        {/* Header */}
-        <div className="pt-10 pb-6 px-8 text-center">
-          <h1 className="text-2xl font-extrabold text-brand-navy">Welcome!</h1>
-          <p className="text-sm text-gray-400 mt-2">Sign in to continue learning</p>
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
+        className="w-full max-w-[400px] relative z-10"
+      >
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-10">
+          <motion.div
+            initial={{ scale: 0.8 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+            className="w-20 h-20 rounded-[28px] bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-2xl shadow-blue-500/30 mb-4"
+          >
+            <svg width="40" height="40" viewBox="0 0 100 100" fill="none">
+              <path d="M25 75V25L75 75V25" stroke="#FFFFFF" strokeWidth="15" strokeLinecap="square" strokeLinejoin="miter" />
+            </svg>
+          </motion.div>
+          <h1 className="text-3xl font-extrabold text-[var(--theme-text)] tracking-tight">Native Elite</h1>
+          <p className="text-[var(--theme-text-muted)] text-sm mt-1">IELTS Learning Platform</p>
         </div>
 
-        {/* Content */}
-        <div className="px-8 pb-10">
-          {error && (
-            <div className="mb-5 p-3.5 bg-red-50 border border-red-100 rounded-2xl text-red-500 text-xs font-medium text-center leading-relaxed">
-              {error}
-            </div>
-          )}
-
-          {/* Google Button */}
-          <button
-            onClick={handleGoogleLogin}
-            disabled={isLoading}
-            className="w-full py-4 rounded-2xl bg-brand-navy border-2 border-brand-blue/30 text-gray-700 font-semibold text-[15px] hover:bg-gray-50 hover:shadow-lg hover:border-gray-300 flex items-center justify-center gap-3 transition-all active:scale-[0.97] disabled:opacity-50 shadow-sm"
-          >
-            <svg viewBox="0 0 24 24" className="w-5 h-5" xmlns="http://www.w3.org/2000/svg">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-            </svg>
-            {isLoading ? 'Connecting...' : 'Continue with Google'}
-          </button>
-
-          {/* Divider */}
-          <div className="flex items-center gap-3 my-6">
-            <div className="flex-1 h-px bg-gray-200" />
-            <span className="text-xs text-gray-300 font-medium">secure login</span>
-            <div className="flex-1 h-px bg-gray-200" />
+        {/* Card */}
+        <div className="bg-[var(--theme-card)] rounded-3xl shadow-2xl overflow-hidden border border-[var(--theme-border)]">
+          <div className="px-8 pt-8 pb-2">
+            <h2 className="text-xl font-bold text-[var(--theme-text)]">Kirish</h2>
+            <p className="text-sm text-[var(--theme-text-muted)] mt-1">Username va parolingizni kiriting</p>
           </div>
 
-          <p className="text-center text-[11px] text-gray-400 px-4 leading-relaxed">
-            Your data is protected by Firebase Authentication. We never store your password.
-          </p>
-        </div>
-      </div>
+          <form onSubmit={handleLogin} className="px-8 pb-8 pt-4 space-y-4">
+            {/* Error */}
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="p-3.5 bg-red-500/10 border border-red-500/30 rounded-2xl text-red-400 text-sm font-medium flex items-center gap-2"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                {error}
+              </motion.div>
+            )}
 
-      {/* Footer */}
-      <p className="text-white/30 text-xs mt-8 relative z-10">© 2026 Native Elite • All rights reserved</p>
+            {/* Username */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[var(--theme-text-muted)] uppercase tracking-wider">Username</label>
+              <div className="relative">
+                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--theme-text-muted)]">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                </div>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="username kiriting"
+                  autoCapitalize="none"
+                  autoComplete="username"
+                  className="w-full pl-11 pr-4 py-3.5 bg-[var(--theme-bg)] border-2 border-[var(--theme-border)] rounded-2xl text-[var(--theme-text)] placeholder-[var(--theme-text-muted)] text-sm font-medium focus:outline-none focus:border-blue-500 transition-colors"
+                />
+              </div>
+            </div>
+
+            {/* Password */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[var(--theme-text-muted)] uppercase tracking-wider">Parol</label>
+              <div className="relative">
+                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--theme-text-muted)]">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                </div>
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="parol kiriting"
+                  autoComplete="current-password"
+                  className="w-full pl-11 pr-12 py-3.5 bg-[var(--theme-bg)] border-2 border-[var(--theme-border)] rounded-2xl text-[var(--theme-text)] placeholder-[var(--theme-text-muted)] text-sm font-medium focus:outline-none focus:border-blue-500 transition-colors"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--theme-text-muted)] hover:text-[var(--theme-text)] transition-colors"
+                >
+                  {showPassword ? (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  ) : (
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-500 text-white font-bold text-base rounded-2xl shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 transition-all active:scale-[0.97] disabled:opacity-60 disabled:pointer-events-none flex items-center justify-center gap-3 mt-2"
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Kirilmoqda...
+                </>
+              ) : (
+                <>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+                  Kirish
+                </>
+              )}
+            </button>
+
+            <p className="text-center text-xs text-[var(--theme-text-muted)] pt-2">
+              Ro'yxatdan o'tish faqat Admin orqali amalga oshiriladi
+            </p>
+          </form>
+        </div>
+
+        <p className="text-center text-[var(--theme-text-muted)] text-xs mt-6">© 2026 Native Elite • Barcha huquqlar himoyalangan</p>
+      </motion.div>
     </div>
   );
 };
