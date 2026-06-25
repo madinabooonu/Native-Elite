@@ -858,7 +858,7 @@ const StudentDetailsModal = ({
 };
 
 /* ─── Users Tab ─── */
-const UsersTab = ({ currentUser }: { currentUser: UserProfile }) => {
+const UsersTab = ({ currentUser, allBookings = [] }: { currentUser: UserProfile; allBookings?: BookingRecord[] }) => {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [showCreate, setShowCreate] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -957,39 +957,50 @@ const UsersTab = ({ currentUser }: { currentUser: UserProfile }) => {
           {filteredUsers.length === 0 ? (
             <p className="text-center py-8 text-xs text-[var(--theme-text-muted)]">Foydalanuvchi topilmadi.</p>
           ) : (
-            filteredUsers.map(u => (
-              <div
-                key={u.uid}
-                onClick={() => u.role === 'student' && setSelectedStudent(u)}
-                className={cn(
-                  "bg-[var(--theme-card)] rounded-2xl p-3.5 flex items-center gap-3 border border-[var(--theme-border)] transition-all",
-                  u.role === 'student' && "cursor-pointer hover:border-blue-500/50 hover:shadow-sm"
-                )}
-              >
-                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-                  {(u.displayName || 'U')[0].toUpperCase()}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-sm text-[var(--theme-text)] truncate flex items-center gap-1.5">
-                    {u.displayName}
-                    {u.role === 'student' && (
-                      <span className="text-[10px] font-normal text-[var(--theme-text-muted)]">
-                        ({u.stage || 'Stage 1'})
-                      </span>
-                    )}
-                  </p>
-                  <p className="text-xs text-[var(--theme-text-muted)] truncate">@{u.username}</p>
-                </div>
-                <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                  <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${roleColor[u.role] || 'bg-gray-500/10 text-gray-400'}`}>
-                    {u.role}
-                  </span>
-                  {u.role === 'student' && (
-                    <span className="text-[10px] text-blue-500 font-bold hover:underline">Boshqarish ➜</span>
+            filteredUsers.map(u => {
+              const studentBookings = allBookings.filter(b => b.studentId === u.uid);
+              const activeBooking = studentBookings.find(b => b.status === 'pending' || b.status === 'confirmed');
+
+              return (
+                <div
+                  key={u.uid}
+                  onClick={() => u.role === 'student' && setSelectedStudent(u)}
+                  className={cn(
+                    "bg-[var(--theme-card)] rounded-2xl p-3.5 flex items-center gap-3 border border-[var(--theme-border)] transition-all",
+                    u.role === 'student' && "cursor-pointer hover:border-blue-500/50 hover:shadow-sm"
                   )}
+                >
+                  <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
+                    {(u.displayName || 'U')[0].toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-sm text-[var(--theme-text)] truncate flex items-center gap-1.5">
+                      {u.displayName}
+                      {u.role === 'student' && (
+                        <span className="text-[10px] font-normal text-[var(--theme-text-muted)]">
+                          ({u.stage || 'Stage 1'})
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-xs text-[var(--theme-text-muted)] truncate">@{u.username}</p>
+                    {u.role === 'student' && activeBooking && (
+                      <p className="text-[10px] text-orange-400 font-extrabold mt-0.5 flex items-center gap-1">
+                        <span>📅 {activeBooking.status === 'confirmed' ? 'Tasdiqlangan' : 'Kutilmoqda'}:</span>
+                        <span>{activeBooking.dayDate} ({activeBooking.startTime})</span>
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                    <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${roleColor[u.role] || 'bg-gray-500/10 text-gray-400'}`}>
+                      {u.role}
+                    </span>
+                    {u.role === 'student' && (
+                      <span className="text-[10px] text-blue-500 font-bold hover:underline">Boshqarish ➜</span>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       )}
