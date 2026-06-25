@@ -14,48 +14,48 @@ import type { Post, PostComment, UserProfile } from '../types';
 // Client-side image compression utility to speed up image uploading
 const compressImage = (file: File | Blob, maxWidth = 640, maxHeight = 640, quality = 0.6): Promise<Blob> => {
   return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.src = url;
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
 
-        if (width > height) {
-          if (width > maxWidth) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          }
-        } else {
-          if (height > maxHeight) {
-            width = Math.round((width * maxHeight) / height);
-            height = maxHeight;
-          }
+      if (width > height) {
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
         }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve(file);
-          return;
+      } else {
+        if (height > maxHeight) {
+          width = Math.round((width * maxHeight) / height);
+          height = maxHeight;
         }
+      }
 
-        ctx.drawImage(img, 0, 0, width, height);
-        canvas.toBlob(
-          (blob) => {
-            resolve(blob || file);
-          },
-          'image/jpeg',
-          quality
-        );
-      };
-      img.onerror = () => resolve(file);
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(file);
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          resolve(blob || file);
+        },
+        'image/jpeg',
+        quality
+      );
     };
-    reader.onerror = () => resolve(file);
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(file);
+    };
   });
 };
 
@@ -732,6 +732,12 @@ const CreatePostModal = ({
           <div className="relative mx-5 mb-4 rounded-2xl overflow-hidden border border-[var(--theme-border)] bg-black/5 aspect-video flex items-center justify-center">
             <img src={imagePreview || imageUrlInput.trim()} alt="Post preview" className="w-full h-full object-contain rounded-2xl" />
             
+            {imageFile && (
+              <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-lg text-[10px] text-white font-mono z-10">
+                {(imageFile.size / 1024).toFixed(1)} KB
+              </div>
+            )}
+
             {isUploadingImage && (
               <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center gap-2">
                 <svg className="animate-spin h-6 w-6 text-white" fill="none" viewBox="0 0 24 24">

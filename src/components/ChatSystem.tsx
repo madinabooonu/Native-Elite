@@ -31,48 +31,48 @@ const getConversationId = (uid1: string, uid2: string) =>
 // Client-side image compression utility to speed up image uploading
 const compressImage = (file: File | Blob, maxWidth = 640, maxHeight = 640, quality = 0.6): Promise<Blob> => {
   return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.src = url;
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
 
-        if (width > height) {
-          if (width > maxWidth) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          }
-        } else {
-          if (height > maxHeight) {
-            width = Math.round((width * maxHeight) / height);
-            height = maxHeight;
-          }
+      if (width > height) {
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
         }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve(file);
-          return;
+      } else {
+        if (height > maxHeight) {
+          width = Math.round((width * maxHeight) / height);
+          height = maxHeight;
         }
+      }
 
-        ctx.drawImage(img, 0, 0, width, height);
-        canvas.toBlob(
-          (blob) => {
-            resolve(blob || file);
-          },
-          'image/jpeg',
-          quality
-        );
-      };
-      img.onerror = () => resolve(file);
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        resolve(file);
+        return;
+      }
+
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          resolve(blob || file);
+        },
+        'image/jpeg',
+        quality
+      );
     };
-    reader.onerror = () => resolve(file);
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(file);
+    };
   });
 };
 
