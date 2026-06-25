@@ -8,6 +8,63 @@ interface AuthPageProps {
   onAuthSuccess: (profile: UserProfile) => void;
 }
 
+const LOCAL_USERS = [
+  {
+    uid: 'superadmin',
+    username: 'superadmin',
+    displayName: 'Super Admin',
+    role: 'super-admin',
+    password: 'Admin@123',
+    stage: 'stage1',
+  },
+  {
+    uid: 'admin1',
+    username: 'admin1',
+    displayName: 'John Admin',
+    role: 'admin',
+    password: 'Admin@123',
+    stage: 'stage1',
+  },
+  {
+    uid: 'teacher1',
+    username: 'teacher1',
+    displayName: 'Sarah Teacher',
+    role: 'teacher',
+    password: 'Teacher@123',
+    stage: 'stage1',
+  },
+  {
+    uid: 'teacher2',
+    username: 'teacher2',
+    displayName: 'Michael Teacher',
+    role: 'teacher',
+    password: 'Teacher@123',
+    stage: 'stage1',
+  },
+  {
+    uid: 'student1',
+    username: 'student1',
+    displayName: 'Alex Student',
+    role: 'student',
+    password: 'Student@123',
+    stage: 'stage2',
+    score: 85,
+    totalScore: 100,
+    attendanceCount: 12,
+  },
+  {
+    uid: 'student2',
+    username: 'student2',
+    displayName: 'Emily Student',
+    role: 'student',
+    password: 'Student@123',
+    stage: 'stage3',
+    score: 92,
+    totalScore: 100,
+    attendanceCount: 15,
+  }
+];
+
 export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -92,17 +149,49 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim() || !password.trim()) {
+    const inputUsername = username.trim().toLowerCase();
+    const inputPassword = password;
+
+    if (!inputUsername || !inputPassword) {
       setError('Username va password kiritng!');
       return;
     }
     setIsLoading(true);
     setError(null);
 
+    // ── Local Bypass Check ──
+    const matchedLocal = LOCAL_USERS.find(
+      u => u.username === inputUsername && u.password === inputPassword
+    );
+
+    if (matchedLocal) {
+      const profile: UserProfile = {
+        uid: matchedLocal.uid,
+        username: matchedLocal.username,
+        displayName: matchedLocal.displayName,
+        role: matchedLocal.role as UserRole,
+        stage: matchedLocal.stage || 'stage1',
+        score: matchedLocal.score || 0,
+        totalScore: matchedLocal.totalScore || 0,
+        attendanceCount: matchedLocal.attendanceCount || 0,
+      };
+
+      // Try to seed to Firestore in background (fails silently if permissions or offline block it)
+      setDoc(doc(db, 'users', matchedLocal.uid), {
+        ...matchedLocal,
+        isOnline: true,
+        lastSeen: new Date().toISOString(),
+      }, { merge: true }).catch(err => console.error('Failed to sync bypass user:', err));
+
+      onAuthSuccess(profile);
+      setIsLoading(false);
+      return;
+    }
+
     try {
       // Query Firestore users collection by username
       const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('username', '==', username.trim().toLowerCase()));
+      const q = query(usersRef, where('username', '==', inputUsername));
       const snap = await getDocs(q);
 
       if (snap.empty) {
@@ -113,7 +202,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
       const userDoc = snap.docs[0];
       const userData = userDoc.data();
 
-      if (userData.password !== password) {
+      if (userData.password !== inputPassword) {
         setError('Password noto\'g\'ri. Iltimos qayta urinib ko\'ring.');
         return;
       }
