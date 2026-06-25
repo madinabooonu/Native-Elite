@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { db } from '../lib/firebase';
-import { collection, getDocs, query, where, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import type { UserRole, UserProfile } from '../types';
 import { motion } from 'motion/react';
 
@@ -17,6 +17,13 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
 
   // Seed super admin and test users
   const seedTestUsers = async () => {
+    // Check if already seeded to avoid slow sequential Firestore writes on every login
+    const checkRef = doc(db, 'users', 'superadmin');
+    const checkSnap = await getDoc(checkRef);
+    if (checkSnap.exists()) {
+      return; // Already seeded, skip
+    }
+
     const usersToSeed = [
       {
         uid: 'superadmin',
