@@ -11,7 +11,7 @@ import { AISpeaking } from './components/AISpeaking';
 import { NewsFeed } from './components/NewsFeed';
 import { UserRole, UserProfile, BookingRecord, TimeSlot } from './types';
 import { db } from './lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 
 type AppState = 'landing' | 'auth' | 'app';
 
@@ -21,6 +21,55 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [isLoading, setIsLoading] = useState(true);
   const [allBookings, setAllBookings] = useState<BookingRecord[]>([]);
+
+  // Load bookings from Firestore in real-time
+  useEffect(() => {
+    const q = query(collection(db, 'bookings'), orderBy('createdAt', 'desc'));
+    const unsub = onSnapshot(q, (snap) => {
+      const bookingsData = snap.docs.map(d => {
+        const raw = d.data();
+        return {
+          id: d.id,
+          ...raw,
+          createdAt: raw.createdAt && typeof raw.createdAt.toDate === 'function'
+            ? raw.createdAt.toDate().toISOString()
+            : raw.createdAt || new Date().toISOString(),
+        } as BookingRecord;
+      });
+      setAllBookings(bookingsData);
+    });
+    return () => unsub();
+  }, []);
+
+  const activeBooking = userProfile
+    ? allBookings.find(b => b.studentId === userProfile.uid && (b.status === 'pending' || b.status === 'confirmed'))
+    : null;
+
+  const handleBookSlot = async (slot: TimeSlot) => {
+    if (!userProfile) return;
+    try {
+      const bookingId = `book_${Date.now()}`;
+      const newBooking = {
+        slotId: slot.id,
+        studentId: userProfile.uid,
+        studentName: userProfile.displayName,
+        studentStage: userProfile.stage || 'stage1',
+        teacherId: slot.teacherId,
+        teacherName: slot.teacherName,
+        day: slot.day,
+        dayDate: slot.dayDate,
+        fullDate: slot.fullDate,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        checkedIn: false
+      };
+      await setDoc(doc(db, 'bookings', bookingId), newBooking);
+    } catch (err) {
+      console.error('Error booking slot:', err);
+    }
+  };
 
   // Restore session from sessionStorage
   useEffect(() => {
@@ -104,7 +153,7 @@ export default function App() {
     // ── Student views ──
     switch (activeTab) {
       case 'home':
-        return <StudentHome userProfile={userProfile} activeBooking={null} onBookSlot={() => {}} />;
+        return <StudentHome userProfile={userProfile} activeBooking={activeBooking} allBookings={allBookings} onBookSlot={handleBookSlot} />;
       case 'vocab':
         return <VocabTrainer />;
       case 'feed':
@@ -116,7 +165,7 @@ export default function App() {
       case 'profile':
         return <ProfileView userProfile={userProfile} handleLogout={handleLogout} />;
       default:
-        return <StudentHome userProfile={userProfile} activeBooking={null} onBookSlot={() => {}} />;
+        return <StudentHome userProfile={userProfile} activeBooking={activeBooking} allBookings={allBookings} onBookSlot={handleBookSlot} />;
     }
   };
 

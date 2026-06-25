@@ -86,8 +86,17 @@ const OverviewTab = ({ user, allBookings }: { user: UserProfile; allBookings: Bo
     { label: 'Pending', value: allBookings.filter(b => b.status === 'pending').length, color: '#F59E0B', icon: '⏳' },
   ];
 
+  const updateBookingStatus = async (id: string, status: BookingRecord['status']) => {
+    try {
+      await updateDoc(doc(db, 'bookings', id), { status });
+    } catch (err) {
+      console.error('Error updating booking status:', err);
+    }
+  };
+
   return (
     <div className="px-4 space-y-4">
+      {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-3">
         {stats.map(s => (
           <div key={s.label} className="bg-[var(--theme-card)] rounded-2xl p-4 border border-[var(--theme-border)]">
@@ -96,6 +105,81 @@ const OverviewTab = ({ user, allBookings }: { user: UserProfile; allBookings: Bo
             <div className="text-xs text-[var(--theme-text-muted)] mt-1">{s.label}</div>
           </div>
         ))}
+      </div>
+
+      {/* Bookings List */}
+      <div className="bg-[var(--theme-card)] rounded-2xl p-4 border border-[var(--theme-border)] space-y-3">
+        <h3 className="font-bold text-sm text-[var(--theme-text)] flex items-center justify-between">
+          <span>Dars band qilish ro'yxati</span>
+          <span className="text-[11px] font-normal text-[var(--theme-text-muted)]">Jami: {allBookings.length} ta</span>
+        </h3>
+
+        {allBookings.length === 0 ? (
+          <p className="text-center py-6 text-[var(--theme-text-muted)] text-xs">Hali band qilingan darslar yo'q.</p>
+        ) : (
+          <div className="space-y-3 max-h-96 overflow-y-auto pr-1 hide-scrollbar">
+            {allBookings.map((b) => (
+              <div key={b.id} className="p-3 bg-[var(--theme-bg)] rounded-xl border border-[var(--theme-border)] space-y-2">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="text-xs font-bold text-[var(--theme-text)]">{b.studentName}</p>
+                    <p className="text-[10px] text-[var(--theme-text-muted)] mt-0.5">Stage: {b.studentStage || 'N/A'}</p>
+                  </div>
+                  <span className={cn(
+                    'text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter',
+                    b.status === 'confirmed' && 'bg-green-500/15 text-green-500',
+                    b.status === 'pending' && 'bg-orange-500/15 text-orange-500',
+                    b.status === 'attended' && 'bg-blue-500/15 text-blue-500',
+                    (b.status === 'cancelled' || b.status === 'absent') && 'bg-red-500/15 text-red-500'
+                  )}>
+                    {b.status}
+                  </span>
+                </div>
+                
+                <div className="flex justify-between items-center text-[11px] text-[var(--theme-text-muted)] pt-1 border-t border-[var(--theme-border-light)]">
+                  <p>📅 {b.day}, {b.dayDate} • {b.startTime}-{b.endTime}</p>
+                  <p className="font-semibold text-blue-500">Ustoz: {b.teacherName}</p>
+                </div>
+
+                {/* Status action buttons */}
+                {(b.status === 'pending' || b.status === 'confirmed') && (
+                  <div className="flex gap-2 pt-1">
+                    {b.status === 'pending' && (
+                      <button
+                        onClick={() => updateBookingStatus(b.id, 'confirmed')}
+                        className="flex-1 py-1 px-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-[10px] font-bold transition-all cursor-pointer"
+                      >
+                        Tasdiqlash ✓
+                      </button>
+                    )}
+                    {b.status === 'confirmed' && (
+                      <>
+                        <button
+                          onClick={() => updateBookingStatus(b.id, 'attended')}
+                          className="flex-1 py-1 px-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold transition-all cursor-pointer"
+                        >
+                          Keldi 🎓
+                        </button>
+                        <button
+                          onClick={() => updateBookingStatus(b.id, 'absent')}
+                          className="flex-1 py-1 px-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-[10px] font-bold transition-all cursor-pointer"
+                        >
+                          Kelmadi ✗
+                        </button>
+                      </>
+                    )}
+                    <button
+                      onClick={() => updateBookingStatus(b.id, 'cancelled')}
+                      className="py-1 px-2.5 border border-red-500/40 hover:bg-red-500/5 text-red-400 rounded-lg text-[10px] font-bold transition-all cursor-pointer"
+                    >
+                      Bekor qilish
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="bg-[var(--theme-card)] rounded-2xl p-4 border border-[var(--theme-border)]">

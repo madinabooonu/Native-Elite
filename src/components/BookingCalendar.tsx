@@ -126,9 +126,13 @@ function generateSlotsForTeacher(teacherId: string, weekDays: any[]) {
 export const BookingCalendar = ({
   onBookSlot,
   activeBooking,
+  allBookings = [],
+  userProfile,
 }: {
   onBookSlot?: (slot: TimeSlot) => void;
   activeBooking?: BookingRecord | null;
+  allBookings?: BookingRecord[];
+  userProfile?: any;
 }) => {
   const weekDays = useMemo(() => getCurrentWeekDays(), []);
   const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -145,8 +149,29 @@ export const BookingCalendar = ({
   const allTeacherSlots = useMemo(() => {
     const t2Slots = generateSlotsForTeacher('t2', weekDays);
     const t3Slots = generateSlotsForTeacher('t3', weekDays);
-    return { t2: t2Slots, t3: t3Slots };
-  }, [weekDays]);
+    
+    const updateSlotsWithBookings = (slots: TimeSlot[]) => {
+      return slots.map(slot => {
+        const activeBookingsForSlot = allBookings.filter(
+          b => b.slotId === slot.id && 
+               b.fullDate === slot.fullDate && 
+               (b.status === 'confirmed' || b.status === 'pending')
+        );
+        const bookedCount = activeBookingsForSlot.length;
+        const isFull = bookedCount >= slot.maxStudents;
+        return {
+          ...slot,
+          bookedStudents: bookedCount,
+          status: isFull ? 'full' as const : 'available' as const
+        };
+      });
+    };
+
+    return { 
+      t2: updateSlotsWithBookings(t2Slots), 
+      t3: updateSlotsWithBookings(t3Slots) 
+    };
+  }, [weekDays, allBookings]);
 
   const teacherSlots = selectedTeacher ? allTeacherSlots[selectedTeacher as 't2' | 't3'] || [] : [];
   const filteredSlots = teacherSlots.filter((s) => s.day === selectedDay);
@@ -300,6 +325,7 @@ export const BookingCalendar = ({
           <BookingFormModal
             slot={selectedSlot}
             teacher={currentTeacher}
+            userProfile={userProfile}
             onClose={() => {
               setShowBookingForm(false);
               setSelectedSlot(null);
@@ -316,10 +342,10 @@ export const BookingCalendar = ({
   );
 };
 
-const BookingFormModal = ({ slot, teacher, onClose, onConfirm }: any) => {
-  const [fullName, setFullName] = useState('');
-  const [stage, setStage] = useState('');
-  const [mainTeacher, setMainTeacher] = useState('');
+const BookingFormModal = ({ slot, teacher, userProfile, onClose, onConfirm }: any) => {
+  const [fullName, setFullName] = useState(userProfile?.displayName || '');
+  const [stage, setStage] = useState(userProfile?.stage ? (userProfile.stage.startsWith('stage') ? 'Stage ' + userProfile.stage.slice(-1) : userProfile.stage) : '');
+  const [mainTeacher, setMainTeacher] = useState(slot.teacherName || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 

@@ -1,0 +1,6 @@
+{
+  "firestore": {
+    "database": "ai-studio-supportteacher-3058f922-ac42-4fc5-9dea-49e53fdbd3d6",
+    "rules": "firestore.rules"
+  }
+}

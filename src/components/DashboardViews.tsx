@@ -12,10 +12,12 @@ import type { BookingRecord, TimeSlot } from '../types';
 export const StudentHome = ({
   userProfile,
   activeBooking,
+  allBookings = [],
   onBookSlot
 }: {
   userProfile: any,
   activeBooking?: BookingRecord | null,
+  allBookings?: BookingRecord[],
   onBookSlot?: (slot: TimeSlot) => void
 }) => {
   const [activeSubTab, setActiveSubTab] = useState('schedule');
@@ -32,12 +34,12 @@ export const StudentHome = ({
         <AnimatePresence mode="wait">
           {activeSubTab === 'schedule' && (
             <motion.div key="schedule" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <BookingCalendar activeBooking={activeBooking} onBookSlot={onBookSlot} />
+              <BookingCalendar activeBooking={activeBooking} allBookings={allBookings} userProfile={userProfile} onBookSlot={onBookSlot} />
             </motion.div>
           )}
           {activeSubTab === 'mybookings' && (
             <motion.div key="bookings" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}>
-              <MyBookingsView activeBooking={activeBooking} />
+              <MyBookingsView studentBookings={allBookings.filter(b => b.studentId === userProfile?.uid)} />
             </motion.div>
           )}
         </AnimatePresence>
@@ -47,20 +49,14 @@ export const StudentHome = ({
 };
 
 /* ── My Bookings View ── */
-const MyBookingsView = ({ activeBooking }: { activeBooking?: BookingRecord | null }) => {
-  const defaultBookings = [
-    { id: '1', teacherName: 'Miss Osiyo', day: 'Mon', dayDate: 'May 19', startTime: '16:00', endTime: '16:30', status: 'confirmed', checkedIn: false },
-    { id: '2', teacherName: 'Mr Sarvar', day: 'Wed', dayDate: 'May 21', startTime: '17:00', endTime: '17:30', status: 'pending', checkedIn: false },
-  ];
-  const bookings = activeBooking ? [activeBooking, ...defaultBookings] : defaultBookings;
-
+const MyBookingsView = ({ studentBookings = [] }: { studentBookings: BookingRecord[] }) => {
   return (
     <div className="px-4 md:px-6 pt-4 space-y-3">
       <h3 className="text-sm font-bold text-white italic">Your Active Sessions</h3>
-      {bookings.length === 0 ? (
-        <div className="text-center py-12 text-brand-text-light text-sm bg-brand-navy rounded-2xl border-2 border-dashed border-brand-blue/30">No bookings yet.</div>
+      {studentBookings.length === 0 ? (
+        <div className="text-center py-12 text-brand-text-light text-sm bg-brand-navy rounded-2xl border-2 border-dashed border-brand-blue/30">Hali darslar band qilinmagan.</div>
       ) : (
-        bookings.map((b) => (
+        studentBookings.map((b) => (
           <Card key={b.id} className="p-4 flex items-center gap-4 rounded-2xl border-none shadow-sm hover:shadow-md transition-shadow">
             <div className="w-12 h-12 rounded-xl bg-brand-blue/10 flex items-center justify-center text-brand-blue font-bold text-lg">
               {b.teacherName.split(' ')[1]?.[0] || 'T'}
@@ -71,7 +67,10 @@ const MyBookingsView = ({ activeBooking }: { activeBooking?: BookingRecord | nul
             </div>
             <span className={cn(
               'text-[10px] font-extrabold px-2.5 py-1 rounded-full uppercase tracking-tighter',
-              b.status === 'confirmed' ? 'bg-green-50 text-brand-green' : 'bg-orange-50 text-brand-orange'
+              b.status === 'confirmed' && 'bg-green-500/15 text-brand-green',
+              b.status === 'pending' && 'bg-orange-500/15 text-brand-orange',
+              b.status === 'attended' && 'bg-blue-500/15 text-brand-blue',
+              (b.status === 'cancelled' || b.status === 'absent') && 'bg-red-500/15 text-brand-red'
             )}>
               {b.status}
             </span>
