@@ -99,7 +99,10 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ userProfile }) => {
     setUploadedImageUrl(null);
     try {
       const storageRef = ref(storage, `chat/${Date.now()}_${file.name}`);
-      await uploadBytes(storageRef, file);
+      const metadata = {
+        cacheControl: 'public, max-age=31536000',
+      };
+      await uploadBytes(storageRef, file, metadata);
       const url = await getDownloadURL(storageRef);
       setUploadedImageUrl(url);
     } catch (err) {
@@ -177,6 +180,19 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ userProfile }) => {
     return () => { if (unsubRef.current) unsubRef.current(); };
   }, [activeContact, userProfile.uid]);
 
+  // Prefetch last 5 chat images in background for instant viewing
+  useEffect(() => {
+    if (messages.length > 0) {
+      const imageMsgs = messages.filter(m => m.imageUrl).slice(-5);
+      imageMsgs.forEach((msg) => {
+        if (msg.imageUrl && !msg.imageUrl.startsWith('data:')) {
+          const img = new Image();
+          img.src = msg.imageUrl;
+        }
+      });
+    }
+  }, [messages]);
+
   const sendMessage = async () => {
     if ((!inputText.trim() && !imageFile) || !activeContact || isSending || isUploadingImage) return;
     setIsSending(true);
@@ -189,7 +205,10 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ userProfile }) => {
         setImageFile(null);
       } else if (imageFile) {
         const storageRef = ref(storage, `chat/${Date.now()}_${imageFile.name}`);
-        await uploadBytes(storageRef, imageFile);
+        const metadata = {
+          cacheControl: 'public, max-age=31536000',
+        };
+        await uploadBytes(storageRef, imageFile, metadata);
         imageUrl = await getDownloadURL(storageRef);
         setImageFile(null);
       }
@@ -295,7 +314,7 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ userProfile }) => {
                       : 'message-bubble-received rounded-bl-sm'
                   )}>
                     {msg.imageUrl && (
-                      <img src={msg.imageUrl} alt="" className="rounded-xl max-w-full mb-2 max-h-48 object-cover" />
+                      <img src={msg.imageUrl} alt="" className="rounded-xl max-w-full mb-2 max-h-48 object-cover" loading="lazy" />
                     )}
                     {msg.text && (
                       <p className="text-sm leading-relaxed">{msg.text}</p>

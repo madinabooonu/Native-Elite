@@ -93,6 +93,19 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ userProfile }) => {
     return () => unsub();
   }, []);
 
+  // Prefetch first 5 post images in background for instant viewing
+  useEffect(() => {
+    if (posts.length > 0) {
+      const firstPosts = posts.slice(0, 5);
+      firstPosts.forEach((post) => {
+        if (post.imageUrl && !post.imageUrl.startsWith('data:')) {
+          const img = new Image();
+          img.src = post.imageUrl;
+        }
+      });
+    }
+  }, [posts]);
+
   const handleLike = async (postId: string, liked: boolean) => {
     const ref2 = doc(db, 'posts', postId);
     if (liked) {
@@ -489,7 +502,10 @@ const CreatePostModal = ({
     setUploadedImageUrl(null);
     try {
       const storageRef = ref(storage, `posts/${Date.now()}_${file.name}`);
-      await uploadBytes(storageRef, file);
+      const metadata = {
+        cacheControl: 'public, max-age=31536000',
+      };
+      await uploadBytes(storageRef, file, metadata);
       const url = await getDownloadURL(storageRef);
       setUploadedImageUrl(url);
     } catch (err) {
@@ -608,7 +624,10 @@ const CreatePostModal = ({
         imageUrl = uploadedImageUrl;
       } else if (imageFile) {
         const storageRef = ref(storage, `posts/${Date.now()}_${imageFile.name}`);
-        await uploadBytes(storageRef, imageFile);
+        const metadata = {
+          cacheControl: 'public, max-age=31536000',
+        };
+        await uploadBytes(storageRef, imageFile, metadata);
         imageUrl = await getDownloadURL(storageRef);
       }
 
