@@ -71,7 +71,7 @@ function generateSlotsForTeacher(teacherId: string, weekDays: any[]) {
           fullDate: dayObj?.fullDate || '',
           startTime: time,
           endTime: times[i + 1] || '20:00',
-          maxStudents: 2,
+          maxStudents: 1,
           bookedStudents: 0,
           status: 'available' as const
         });
@@ -92,7 +92,7 @@ function generateSlotsForTeacher(teacherId: string, weekDays: any[]) {
           fullDate: dayObj?.fullDate || '',
           startTime: time,
           endTime: extendedTimes[i + 1] || '20:00',
-          maxStudents: 2,
+          maxStudents: 1,
           bookedStudents: 0,
           status: 'available' as const
         });
@@ -112,7 +112,7 @@ function generateSlotsForTeacher(teacherId: string, weekDays: any[]) {
           fullDate: dayObj?.fullDate || '',
           startTime: time,
           endTime: times[i + 1] || '20:00',
-          maxStudents: 2,
+          maxStudents: 1,
           bookedStudents: 0,
           status: 'available' as const
         });
@@ -308,8 +308,8 @@ export const BookingCalendar = ({
                         <p className="text-[11px] text-brand-text-light">{slot.teacherName}</p>
                       </div>
                     </div>
-                    <span className={cn('text-[11px] font-bold px-2 py-1 rounded-full', isFull ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600')}>
-                      {isFull ? 'Full' : 'Available'}
+                    <span className={cn('text-[11px] font-bold px-2 py-1 rounded-full', isFull ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500')}>
+                      {isFull ? 'Band' : 'Available'}
                     </span>
                   </div>
                 );
