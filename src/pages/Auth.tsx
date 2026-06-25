@@ -14,17 +14,12 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [seedingError, setSeedingError] = useState<string | null>(null);
 
   // Seed super admin and test users in the background on mount
   useEffect(() => {
     const seedTestUsers = async () => {
       try {
-        const checkRef = doc(db, 'users', 'superadmin');
-        const checkSnap = await getDoc(checkRef);
-        if (checkSnap.exists()) {
-          return; // Already seeded, skip
-        }
-
         const usersToSeed = [
           {
             uid: 'superadmin',
@@ -86,8 +81,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
             isOnline: false,
           }, { merge: true });
         }
-      } catch (e) {
+      } catch (e: any) {
         console.error('Seeding error:', e);
+        setSeedingError(`Seeding error: ${e.code || ''} - ${e.message || e}`);
       }
     };
 
@@ -107,79 +103,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
       // Query Firestore users collection by username
       const usersRef = collection(db, 'users');
       const q = query(usersRef, where('username', '==', username.trim().toLowerCase()));
-      let snap = await getDocs(q);
-
-      if (snap.empty && username.trim().toLowerCase() === 'superadmin') {
-        try {
-          const usersToSeed = [
-            {
-              uid: 'superadmin',
-              username: 'superadmin',
-              displayName: 'Super Admin',
-              role: 'super-admin',
-              password: 'Admin@123',
-            },
-            {
-              uid: 'admin1',
-              username: 'admin1',
-              displayName: 'John Admin',
-              role: 'admin',
-              password: 'Admin@123',
-            },
-            {
-              uid: 'teacher1',
-              username: 'teacher1',
-              displayName: 'Sarah Teacher',
-              role: 'teacher',
-              password: 'Teacher@123',
-            },
-            {
-              uid: 'teacher2',
-              username: 'teacher2',
-              displayName: 'Michael Teacher',
-              role: 'teacher',
-              password: 'Teacher@123',
-            },
-            {
-              uid: 'student1',
-              username: 'student1',
-              displayName: 'Alex Student',
-              role: 'student',
-              password: 'Student@123',
-              stage: 'stage2',
-              score: 85,
-              totalScore: 100,
-              attendanceCount: 12,
-            },
-            {
-              uid: 'student2',
-              username: 'student2',
-              displayName: 'Emily Student',
-              role: 'student',
-              password: 'Student@123',
-              stage: 'stage3',
-              score: 92,
-              totalScore: 100,
-              attendanceCount: 15,
-            }
-          ];
-
-          for (const u of usersToSeed) {
-            const ref = doc(db, 'users', u.uid);
-            await setDoc(ref, {
-              ...u,
-              createdAt: serverTimestamp(),
-              isOnline: false,
-            }, { merge: true });
-          }
-
-          snap = await getDocs(q);
-        } catch (seedErr: any) {
-          console.error('On-demand seeding error:', seedErr);
-          setError(`Foydalanuvchilarni yaratib bo'lmadi: ${seedErr.code || ''} - ${seedErr.message || seedErr}`);
-          return;
-        }
-      }
+      const snap = await getDocs(q);
 
       if (snap.empty) {
         setError('Foydalanuvchi topilmadi. Username noto\'g\'ri.');
@@ -271,6 +195,17 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
               >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
                 {error}
+              </motion.div>
+            )}
+
+            {seedingError && (
+              <motion.div
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                className="p-3.5 bg-yellow-500/10 border border-yellow-500/30 rounded-2xl text-yellow-500 text-sm font-medium flex items-center gap-2"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                {seedingError}
               </motion.div>
             )}
 
