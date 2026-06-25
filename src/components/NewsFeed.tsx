@@ -359,6 +359,7 @@ const CreatePostModal = ({
   const [caption, setCaption] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageUrlInput, setImageUrlInput] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -372,11 +373,11 @@ const CreatePostModal = ({
   };
 
   const handleSubmit = async () => {
-    if ((!caption.trim() && !imageFile) || isUploading) return;
+    if ((!caption.trim() && !imageFile && !imageUrlInput.trim()) || isUploading) return;
     setIsUploading(true);
 
     try {
-      let imageUrl = '';
+      let imageUrl = imageUrlInput.trim();
       if (imageFile) {
         const storageRef = ref(storage, `posts/${Date.now()}_${imageFile.name}`);
         await uploadBytes(storageRef, imageFile);
@@ -429,7 +430,7 @@ const CreatePostModal = ({
           <h3 className="font-bold text-[var(--theme-text)]">Yangi Post</h3>
           <button
             onClick={handleSubmit}
-            disabled={(!caption.trim() && !imageFile) || isUploading}
+            disabled={(!caption.trim() && !imageFile && !imageUrlInput.trim()) || isUploading}
             className="text-blue-500 font-bold text-sm disabled:opacity-40"
           >
             {isUploading ? 'Jo\'natilmoqda...' : 'Ulashish'}
@@ -452,17 +453,29 @@ const CreatePostModal = ({
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
           placeholder="Dars jarayonidan nima ulashmoqchisiz?"
-          rows={4}
-          className="w-full px-5 text-[var(--theme-text)] text-sm bg-transparent placeholder-[var(--theme-text-muted)] resize-none outline-none"
+          rows={3}
+          className="w-full px-5 text-[var(--theme-text)] text-sm bg-transparent placeholder-[var(--theme-text-muted)] resize-none outline-none mb-3"
         />
 
+        {/* Direct Image URL input */}
+        <div className="px-5 mb-4">
+          <label className="text-[10px] font-bold text-[var(--theme-text-muted)] uppercase tracking-wider block mb-1">Rasm URL manzili (ixtiyoriy)</label>
+          <input
+            type="text"
+            value={imageUrlInput}
+            onChange={(e) => setImageUrlInput(e.target.value)}
+            placeholder="Internetdan to'g'ridan-to'g'ri rasm linkini joylang (masalan: https://...)"
+            className="w-full px-3 py-2 bg-[var(--theme-bg)] border border-[var(--theme-border)] rounded-xl text-[var(--theme-text)] text-xs outline-none focus:border-blue-500 transition-colors"
+          />
+        </div>
+
         {/* Image preview */}
-        {imagePreview && (
-          <div className="relative mx-5 mb-4 rounded-2xl overflow-hidden">
-            <img src={imagePreview} alt="" className="w-full max-h-60 object-cover rounded-2xl" />
+        {(imagePreview || imageUrlInput.trim()) && (
+          <div className="relative mx-5 mb-4 rounded-2xl overflow-hidden border border-[var(--theme-border)]">
+            <img src={imagePreview || imageUrlInput.trim()} alt="Post preview" className="w-full max-h-48 object-cover rounded-2xl" />
             <button
-              onClick={() => { setImageFile(null); setImagePreview(null); }}
-              className="absolute top-2 right-2 w-8 h-8 bg-black/60 rounded-full flex items-center justify-center text-white"
+              onClick={() => { setImageFile(null); setImagePreview(null); setImageUrlInput(''); }}
+              className="absolute top-2 right-2 w-8 h-8 bg-black/60 rounded-full flex items-center justify-center text-white cursor-pointer hover:bg-black/80"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
@@ -473,10 +486,10 @@ const CreatePostModal = ({
         <div className="px-5 py-4 border-t border-[var(--theme-border)]">
           <button
             onClick={() => fileRef.current?.click()}
-            className="flex items-center gap-2 text-blue-500 font-semibold text-sm"
+            className="flex items-center gap-2 text-blue-500 font-semibold text-sm cursor-pointer hover:opacity-80"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            Rasm qo'shish
+            Rasm faylini tanlash
           </button>
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
         </div>
