@@ -633,7 +633,7 @@ const CreatePostModal = ({
             onClick={isCameraActive ? stopCamera : startCamera}
             className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs cursor-pointer transition-all active:scale-95 text-center whitespace-nowrap min-w-[120px]"
           >
-            {isCameraActive ? '📷 Kamerani O'chirish' : '📷 Sayt kamerasini yoqish'}
+            {isCameraActive ? "📷 Kamerani O'chirish" : "📷 Sayt kamerasini yoqish"}
           </button>
           <button
             type="button"
