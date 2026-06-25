@@ -88,9 +88,27 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ userProfile }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [isSending, setIsSending] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const unsubRef = useRef<(() => void) | null>(null);
+
+  const uploadFileAsync = async (file: File) => {
+    setIsUploadingImage(true);
+    setUploadedImageUrl(null);
+    try {
+      const storageRef = ref(storage, `chat/${Date.now()}_${file.name}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setUploadedImageUrl(url);
+    } catch (err) {
+      console.error("Chat image upload error:", err);
+      alert("Rasmni yuklashda xatolik yuz berdi. Qayta urinib ko'ring.");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
 
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -99,9 +117,11 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ userProfile }) => {
       const compressedBlob = await compressImage(file);
       const compressedFile = new File([compressedBlob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' });
       setImageFile(compressedFile);
+      uploadFileAsync(compressedFile);
     } catch (err) {
       console.error("Error compressing chat image:", err);
       setImageFile(file);
+      uploadFileAsync(file);
     }
   };
 
@@ -158,12 +178,16 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ userProfile }) => {
   }, [activeContact, userProfile.uid]);
 
   const sendMessage = async () => {
-    if ((!inputText.trim() && !imageFile) || !activeContact || isSending) return;
+    if ((!inputText.trim() && !imageFile) || !activeContact || isSending || isUploadingImage) return;
     setIsSending(true);
 
     try {
       let imageUrl = '';
-      if (imageFile) {
+      if (uploadedImageUrl) {
+        imageUrl = uploadedImageUrl;
+        setUploadedImageUrl(null);
+        setImageFile(null);
+      } else if (imageFile) {
         const storageRef = ref(storage, `chat/${Date.now()}_${imageFile.name}`);
         await uploadBytes(storageRef, imageFile);
         imageUrl = await getDownloadURL(storageRef);
@@ -291,15 +315,35 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ userProfile }) => {
         {imageFile && (
           <div className="px-4 py-2 bg-[var(--theme-card)] border-t border-[var(--theme-border)]">
             <div className="flex items-center gap-2">
-              <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-[var(--theme-bg)]">
+              <div className="relative w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-[var(--theme-bg)] flex items-center justify-center">
                 <img
                   src={URL.createObjectURL(imageFile)}
                   alt=""
                   className="w-full h-full object-cover"
                 />
+                {isUploadingImage && (
+                  <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center">
+                    <svg className="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                  </div>
+                )}
               </div>
-              <span className="text-xs text-[var(--theme-text)] flex-1 truncate">{imageFile.name}</span>
-              <button onClick={() => setImageFile(null)} className="text-red-400 text-xs">✕</button>
+              <span className="text-xs text-[var(--theme-text)] flex-1 truncate">
+                {imageFile.name} {isUploadingImage && <span className="text-blue-500 font-semibold">(Yuklanmoqda...)</span>}
+              </span>
+              <button 
+                onClick={() => { 
+                  setImageFile(null); 
+                  setUploadedImageUrl(null); 
+                  setIsUploadingImage(false); 
+                }} 
+                disabled={isUploadingImage}
+                className="text-red-400 text-xs disabled:opacity-40"
+              >
+                ✕
+              </button>
             </div>
           </div>
         )}
@@ -327,7 +371,7 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ userProfile }) => {
 
           <button
             onClick={sendMessage}
-            disabled={(!inputText.trim() && !imageFile) || isSending}
+            disabled={(!inputText.trim() && !imageFile) || isSending || isUploadingImage}
             className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center text-white flex-shrink-0 disabled:opacity-40 transition-opacity"
           >
             {isSending ? (

@@ -11,6 +11,54 @@ import type { Post, PostComment, UserProfile } from '../types';
 /* ═══════════════════════════════════
    NEWS FEED – Instagram/FB-like
 ═══════════════════════════════════ */
+// Client-side image compression utility to speed up image uploading
+const compressImage = (file: File | Blob, maxWidth = 1080, maxHeight = 1080, quality = 0.75): Promise<Blob> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxWidth) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          }
+        } else {
+          if (height > maxHeight) {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(file);
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            resolve(blob || file);
+          },
+          'image/jpeg',
+          quality
+        );
+      };
+      img.onerror = () => resolve(file);
+    };
+    reader.onerror = () => resolve(file);
+  });
+};
+
 interface NewsFeedProps {
   userProfile: UserProfile;
 }
@@ -76,16 +124,25 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ userProfile }) => {
     return d.toLocaleDateString('uz-UZ', { month: 'short', day: 'numeric' });
   };
 
-  const handleMainImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMainImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setPreloadedFile(file);
-    const reader = new FileReader();
-    reader.onload = () => {
-      setPreloadedPreview(reader.result as string);
+    try {
+      const compressedBlob = await compressImage(file);
+      const compressedFile = new File([compressedBlob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' });
+      setPreloadedFile(compressedFile);
+      setPreloadedPreview(URL.createObjectURL(compressedBlob));
       setShowCreate(true);
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      console.error("Error compressing image:", err);
+      setPreloadedFile(file);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setPreloadedPreview(reader.result as string);
+        setShowCreate(true);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -387,53 +444,6 @@ const PostCard = ({
   );
 };
 
-// Client-side image compression utility to speed up image uploading
-const compressImage = (file: File | Blob, maxWidth = 1080, maxHeight = 1080, quality = 0.75): Promise<Blob> => {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > maxWidth) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          }
-        } else {
-          if (height > maxHeight) {
-            width = Math.round((width * maxHeight) / height);
-            height = maxHeight;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          resolve(file);
-          return;
-        }
-
-        ctx.drawImage(img, 0, 0, width, height);
-        canvas.toBlob(
-          (blob) => {
-            resolve(blob || file);
-          },
-          'image/jpeg',
-          quality
-        );
-      };
-      img.onerror = () => resolve(file);
-    };
-    reader.onerror = () => resolve(file);
-  });
-};
 
 /* ─── Create Post Modal ─── */
 const CreatePostModal = ({
@@ -454,6 +464,8 @@ const CreatePostModal = ({
   const [imagePreview, setImagePreview] = useState<string | null>(preloadedPreview);
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadedImageUrl, setUploadedImageUrl] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   // In-app live camera viewfinder states
   const [isCameraActive, setIsCameraActive] = useState(false);
@@ -471,6 +483,29 @@ const CreatePostModal = ({
     };
   }, [cameraStream]);
 
+  // Upload image to Firebase Storage in background immediately
+  const uploadFileAsync = async (file: File) => {
+    setIsUploadingImage(true);
+    setUploadedImageUrl(null);
+    try {
+      const storageRef = ref(storage, `posts/${Date.now()}_${file.name}`);
+      await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(storageRef);
+      setUploadedImageUrl(url);
+    } catch (err) {
+      console.error("Image upload error:", err);
+      alert("Rasmni yuklashda xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.");
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  useEffect(() => {
+    if (preloadedFile) {
+      uploadFileAsync(preloadedFile);
+    }
+  }, [preloadedFile]);
+
   const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -479,12 +514,16 @@ const CreatePostModal = ({
       const compressedFile = new File([compressedBlob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", { type: 'image/jpeg' });
       setImageFile(compressedFile);
       setImagePreview(URL.createObjectURL(compressedBlob));
+      uploadFileAsync(compressedFile);
     } catch (err) {
       console.error("Error compressing image:", err);
       // Fallback
       setImageFile(file);
       const reader = new FileReader();
-      reader.onload = () => setImagePreview(reader.result as string);
+      reader.onload = () => {
+        setImagePreview(reader.result as string);
+        uploadFileAsync(file);
+      };
       reader.readAsDataURL(file);
     }
   };
@@ -553,18 +592,21 @@ const CreatePostModal = ({
           setImageFile(file);
           setImagePreview(URL.createObjectURL(file));
           stopCamera();
+          uploadFileAsync(file);
         }
       }, 'image/jpeg', 0.75);
     }
   };
 
   const handleSubmit = async () => {
-    if ((!caption.trim() && !imageFile && !imageUrlInput.trim()) || isUploading) return;
+    if ((!caption.trim() && !imageFile && !imageUrlInput.trim()) || isUploading || isUploadingImage) return;
     setIsUploading(true);
 
     try {
       let imageUrl = imageUrlInput.trim();
-      if (imageFile) {
+      if (uploadedImageUrl) {
+        imageUrl = uploadedImageUrl;
+      } else if (imageFile) {
         const storageRef = ref(storage, `posts/${Date.now()}_${imageFile.name}`);
         await uploadBytes(storageRef, imageFile);
         imageUrl = await getDownloadURL(storageRef);
@@ -616,7 +658,7 @@ const CreatePostModal = ({
           <h3 className="font-bold text-[var(--theme-text)]">Yangi Post</h3>
           <button
             onClick={handleSubmit}
-            disabled={(!caption.trim() && !imageFile && !imageUrlInput.trim()) || isUploading}
+            disabled={(!caption.trim() && !imageFile && !imageUrlInput.trim()) || isUploading || isUploadingImage}
             className="text-blue-500 font-bold text-sm disabled:opacity-40"
           >
             {isUploading ? 'Jo\'natilmoqda...' : 'Ulashish'}
@@ -687,11 +729,29 @@ const CreatePostModal = ({
 
         {/* Image preview */}
         {!isCameraActive && (imagePreview || imageUrlInput.trim()) && (
-          <div className="relative mx-5 mb-4 rounded-2xl overflow-hidden border border-[var(--theme-border)]">
-            <img src={imagePreview || imageUrlInput.trim()} alt="Post preview" className="w-full max-h-48 object-cover rounded-2xl" />
+          <div className="relative mx-5 mb-4 rounded-2xl overflow-hidden border border-[var(--theme-border)] bg-black/5 aspect-video flex items-center justify-center">
+            <img src={imagePreview || imageUrlInput.trim()} alt="Post preview" className="w-full h-full object-contain rounded-2xl" />
+            
+            {isUploadingImage && (
+              <div className="absolute inset-0 bg-black/50 backdrop-blur-sm flex flex-col items-center justify-center gap-2">
+                <svg className="animate-spin h-6 w-6 text-white" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                <span className="text-white text-xs font-semibold">Serverga yuklanmoqda...</span>
+              </div>
+            )}
+
             <button
-              onClick={() => { setImageFile(null); setImagePreview(null); setImageUrlInput(''); }}
-              className="absolute top-2 right-2 w-8 h-8 bg-black/60 rounded-full flex items-center justify-center text-white cursor-pointer hover:bg-black/80"
+              onClick={() => { 
+                setImageFile(null); 
+                setImagePreview(null); 
+                setImageUrlInput(''); 
+                setUploadedImageUrl(null);
+                setIsUploadingImage(false);
+              }}
+              disabled={isUploadingImage}
+              className="absolute top-2 right-2 w-8 h-8 bg-black/60 rounded-full flex items-center justify-center text-white cursor-pointer hover:bg-black/80 disabled:opacity-40"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
