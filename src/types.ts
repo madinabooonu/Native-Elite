@@ -139,3 +139,16 @@ export interface AttendanceRecord {
   status: 'present' | 'absent';
   note?: string;
 }
+
+export interface PaymentRecord {
+  id: string;
+  studentId: string;
+  studentName: string;
+  amount: number;
+  note?: string;
+  date: string;
+  teacherId: string;
+  teacherName: string;
+  createdAt?: any;
+}
+
