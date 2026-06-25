@@ -58,7 +58,7 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ userProfile }) => {
 
   const handleComment = async (postId: string, text: string) => {
     const comment: PostComment = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: Math.random().toString(36).slice(2, 11),
       authorId: userProfile.uid,
       authorName: userProfile.displayName,
       text,
@@ -217,7 +217,6 @@ const PostCard = ({
               {post.authorName[0].toUpperCase()}
             </div>
           )}
-          <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 rounded-full border-2 border-[var(--theme-card)]" />
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
@@ -306,8 +305,8 @@ const PostCard = ({
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden"
             >
-              <div className="space-y-2 mb-3">
-                {post.comments.slice(-3).map((c) => (
+              <div className="space-y-2 mb-3 max-h-60 overflow-y-auto pr-1 hide-scrollbar">
+                {post.comments.map((c) => (
                   <div key={c.id} className="flex gap-2">
                     <div className="w-7 h-7 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                       {c.authorName[0].toUpperCase()}
@@ -373,7 +372,7 @@ const CreatePostModal = ({
   };
 
   const handleSubmit = async () => {
-    if (!caption.trim() && !imageFile) return;
+    if ((!caption.trim() && !imageFile) || isUploading) return;
     setIsUploading(true);
 
     try {
