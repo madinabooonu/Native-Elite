@@ -236,6 +236,38 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
     }
   };
 
+  const handleQuickLogin = (usr: string, pass: string) => {
+    setUsername(usr);
+    setPassword(pass);
+    setIsLoading(true);
+    setError(null);
+    setTimeout(() => {
+      const matchedLocal = LOCAL_USERS.find(u => u.username === usr && u.password === pass);
+      if (matchedLocal) {
+        const profile: UserProfile = {
+          uid: matchedLocal.uid,
+          username: matchedLocal.username,
+          displayName: matchedLocal.displayName,
+          role: matchedLocal.role as UserRole,
+          stage: matchedLocal.stage || 'stage1',
+          score: matchedLocal.score || 0,
+          totalScore: matchedLocal.totalScore || 0,
+          attendanceCount: matchedLocal.attendanceCount || 0,
+        };
+        setDoc(doc(db, 'users', matchedLocal.uid), {
+          ...matchedLocal,
+          isOnline: true,
+          lastSeen: new Date().toISOString(),
+        }, { merge: true }).catch(err => console.error(err));
+        
+        onAuthSuccess(profile);
+      } else {
+        setError('Xatolik: Matched local user not found');
+      }
+      setIsLoading(false);
+    }, 200);
+  };
+
   return (
     <div className="min-h-screen bg-[var(--theme-bg)] flex flex-col items-center justify-center relative overflow-hidden px-6">
       {/* Animated background blobs */}
@@ -369,6 +401,34 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
               Ro'yxatdan o'tish faqat Admin orqali amalga oshiriladi
             </p>
           </form>
+
+          {/* Quick Login Section */}
+          <div className="px-8 pb-6 border-t border-[var(--theme-border)] pt-4 bg-[var(--theme-card-alt)]">
+            <p className="text-xs font-bold text-[var(--theme-text-muted)] uppercase tracking-wider mb-2.5 text-center">Tezkor kirish (Quick Login)</p>
+            <div className="grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('student1', 'Student@123')}
+                className="py-2 px-1 bg-blue-500/10 hover:bg-blue-500/25 text-blue-500 hover:text-blue-600 text-xs font-bold rounded-xl border border-blue-500/20 transition-all text-center cursor-pointer"
+              >
+                Student 1
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('teacher1', 'Teacher@123')}
+                className="py-2 px-1 bg-green-500/10 hover:bg-green-500/25 text-green-500 hover:text-green-600 text-xs font-bold rounded-xl border border-green-500/20 transition-all text-center cursor-pointer"
+              >
+                Teacher 1
+              </button>
+              <button
+                type="button"
+                onClick={() => handleQuickLogin('superadmin', 'Admin@123')}
+                className="py-2 px-1 bg-purple-500/10 hover:bg-purple-500/25 text-purple-500 hover:text-purple-600 text-xs font-bold rounded-xl border border-purple-500/20 transition-all text-center cursor-pointer"
+              >
+                Super Admin
+              </button>
+            </div>
+          </div>
         </div>
 
         <p className="text-center text-[var(--theme-text-muted)] text-xs mt-6">© 2026 Native Elite • Barcha huquqlar himoyalangan</p>
