@@ -362,6 +362,7 @@ const CreatePostModal = ({
   const [imageUrlInput, setImageUrlInput] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const cameraRef = useRef<HTMLInputElement>(null);
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -482,16 +483,25 @@ const CreatePostModal = ({
           </div>
         )}
 
-        {/* Image button */}
-        <div className="px-5 py-4 border-t border-[var(--theme-border)]">
+        {/* Image source action buttons */}
+        <div className="px-5 py-4 border-t border-[var(--theme-border)] flex gap-3">
           <button
-            onClick={() => fileRef.current?.click()}
-            className="flex items-center gap-2 text-blue-500 font-semibold text-sm cursor-pointer hover:opacity-80"
+            type="button"
+            onClick={() => cameraRef.current?.click()}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs cursor-pointer transition-all active:scale-95"
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-            Rasm faylini tanlash
+            📷 Rasmga Olish
           </button>
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2.5 border border-[var(--theme-border)] hover:bg-[var(--theme-bg)] text-[var(--theme-text)] rounded-xl font-bold text-xs cursor-pointer transition-all active:scale-95"
+          >
+            🖼️ Galereyadan Tanlash
+          </button>
+
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />
+          <input ref={cameraRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={handleImageSelect} />
         </div>
 
         {/* Safe bottom area */}
