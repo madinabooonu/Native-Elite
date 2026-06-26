@@ -15,6 +15,37 @@ import { doc, setDoc, collection, query, orderBy, onSnapshot } from 'firebase/fi
 
 type AppState = 'landing' | 'auth' | 'app';
 
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: any }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    console.error("ErrorBoundary caught an error", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-6 bg-red-950/40 border border-red-500/30 rounded-2xl text-red-200 text-sm font-mono overflow-auto max-h-[80vh] m-5">
+          <h2 className="text-base font-bold mb-2 text-red-400">⚠️ Crash in AI Speaking:</h2>
+          <p className="mb-4 font-bold">{this.state.error?.toString()}</p>
+          <pre className="text-[10px] leading-relaxed opacity-80">{this.state.error?.stack}</pre>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 export default function App() {
   const [state, setState] = useState<AppState>('landing');
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -159,7 +190,11 @@ export default function App() {
       case 'feed':
         return <NewsFeed userProfile={userProfile} />;
       case 'speaking':
-        return <AISpeaking />;
+        return (
+          <ErrorBoundary>
+            <AISpeaking />
+          </ErrorBoundary>
+        );
       case 'chat':
         return <ChatSystem userProfile={userProfile} />;
       case 'profile':
