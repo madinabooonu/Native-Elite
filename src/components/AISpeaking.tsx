@@ -431,56 +431,61 @@ export const AISpeaking = () => {
 
     // ── Speech Recognition Setup ──
     const startListening = useCallback(() => {
-        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            setStatusText('Speech recognition not supported');
-            return;
-        }
-
-        const recognition = new SpeechRecognition();
-        recognition.lang = 'en-US';
-        recognition.interimResults = true;
-        recognition.continuous = true;
-        recognition.maxAlternatives = 1;
-
-        recognition.onstart = () => {
-            setIsListening(true);
-            setStatusText('Listening... Speak now');
-        };
-
-        recognition.onresult = (event: any) => {
-            let finalTranscript = '';
-            let interimTranscript = '';
-            for (let i = 0; i < event.results.length; i++) {
-                const text = event.results[i][0].transcript;
-                if (event.results[i].isFinal) {
-                    finalTranscript += text + ' ';
-                } else {
-                    interimTranscript += text;
-                }
+        try {
+            const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+            if (!SpeechRecognition) {
+                setStatusText('Speech recognition not supported');
+                return;
             }
-            // Real-time subtitle combination of final + active words
-            setTranscript((finalTranscript + interimTranscript).trim());
-        };
 
-        recognition.onerror = (event: any) => {
-            if (event.error === 'not-allowed') {
-                setStatusText('Microphone permission denied');
-            } else if (event.error !== 'aborted') {
+            const recognition = new SpeechRecognition();
+            recognition.lang = 'en-US';
+            recognition.interimResults = true;
+            recognition.continuous = true;
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = () => {
+                setIsListening(true);
                 setStatusText('Listening... Speak now');
-            }
-        };
+            };
 
-        recognition.onend = () => {
-            setIsListening(false);
-            // Auto restart if still in call and not muted
-            if (sessionState === 'call' && !isMuted) {
-                // Will be handled by submitResponse or re-start
-            }
-        };
+            recognition.onresult = (event: any) => {
+                let finalTranscript = '';
+                let interimTranscript = '';
+                for (let i = 0; i < event.results.length; i++) {
+                    const text = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += text + ' ';
+                    } else {
+                        interimTranscript += text;
+                    }
+                }
+                // Real-time subtitle combination of final + active words
+                setTranscript((finalTranscript + interimTranscript).trim());
+            };
 
-        recognitionRef.current = recognition;
-        recognition.start();
+            recognition.onerror = (event: any) => {
+                if (event.error === 'not-allowed') {
+                    setStatusText('Microphone permission denied');
+                } else if (event.error !== 'aborted') {
+                    setStatusText('Listening... Speak now');
+                }
+            };
+
+            recognition.onend = () => {
+                setIsListening(false);
+                // Auto restart if still in call and not muted
+                if (sessionState === 'call' && !isMuted) {
+                    // Will be handled by submitResponse or re-start
+                }
+            };
+
+            recognitionRef.current = recognition;
+            recognition.start();
+        } catch (err) {
+            console.error('Error starting SpeechRecognition:', err);
+            setStatusText('Speech recognition error or not supported');
+        }
     }, [sessionState, isMuted]);
 
     const stopListening = useCallback(() => {
@@ -802,7 +807,7 @@ export const AISpeaking = () => {
                             AI Examiner <span className="text-brand-blue-light font-mono ml-1">{formatTime(timer)}</span>
                         </h2>
                         <p className="text-[10px] text-gray-500 mt-0.5">
-                            {currentTopic?.title} • IELTS {currentTopic?.part.replace('part', 'Part ')}
+                            {currentTopic?.title} • IELTS {currentTopic?.part ? currentTopic.part.replace('part', 'Part ') : ''}
                         </p>
                     </motion.div>
                 </div>
