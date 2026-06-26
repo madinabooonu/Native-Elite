@@ -1,5 +1,5 @@
 // ── Default Super Admin Credentials ──
-// Birinchi kirish uchun foydalaning, keyin admin panelda o'zgartiring
+// Use for first login, then change in admin panel
 export const DEFAULT_SUPER_ADMIN = {
   username: 'superadmin',
   password: 'Admin@123',

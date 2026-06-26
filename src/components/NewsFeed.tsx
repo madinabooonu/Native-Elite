@@ -171,7 +171,7 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ userProfile }) => {
               onClick={() => setShowCreate(true)}
               className="flex-1 text-left text-[var(--theme-text-muted)] text-sm py-2 hover:text-[var(--theme-text)] transition-colors"
             >
-              Dars jarayonidan nimalar ulashmoqchisiz?
+              What would you like to share about the lesson?
             </button>
           </div>
           
@@ -183,13 +183,13 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ userProfile }) => {
               }}
               className="flex-1 py-2.5 bg-blue-600/10 hover:bg-blue-600/15 text-blue-500 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              📷 Rasmga Olish
+              📷 Take Photo
             </button>
             <button
               onClick={() => mainFileRef.current?.click()}
               className="flex-1 py-2.5 border border-[var(--theme-border)] hover:bg-[var(--theme-bg)] text-[var(--theme-text)] rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
             >
-              🖼️ Galereya
+              🖼️ Gallery
             </button>
           </div>
 
@@ -225,8 +225,8 @@ export const NewsFeed: React.FC<NewsFeedProps> = ({ userProfile }) => {
           {posts.length === 0 && (
             <div className="flex flex-col items-center justify-center py-20 text-center px-8">
               <div className="text-6xl mb-4">📸</div>
-              <h3 className="text-lg font-bold text-[var(--theme-text)]">Hali post yo'q</h3>
-              <p className="text-sm text-[var(--theme-text-muted)] mt-2">Birinchi bo'lib dars jarayonidan rasm ulashing!</p>
+              <h3 className="text-lg font-bold text-[var(--theme-text)]">No posts yet</h3>
+              <p className="text-sm text-[var(--theme-text-muted)] mt-2">Be the first to share a class photo!</p>
             </div>
           )}
 
@@ -295,8 +295,8 @@ const PostCard = ({
     'super-admin': 'bg-red-500/10 text-red-400',
   };
   const roleLabels: Record<string, string> = {
-    'student': 'Talaba',
-    'teacher': 'O\'qituvchi',
+    'student': 'Student',
+    'teacher': 'Teacher',
     'admin': 'Admin',
     'super-admin': 'Super Admin',
   };
@@ -437,7 +437,7 @@ const PostCard = ({
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSubmitComment()}
-                    placeholder="Izoh qo'shing..."
+                    placeholder="Add a comment..."
                     className="flex-1 bg-transparent text-xs text-[var(--theme-text)] placeholder-[var(--theme-text-muted)] outline-none"
                   />
                   <button
@@ -445,7 +445,7 @@ const PostCard = ({
                     disabled={!commentText.trim() || isSubmitting}
                     className="text-blue-500 font-bold text-xs disabled:opacity-40 transition-opacity ml-2"
                   >
-                    Jo'nat
+                    Send
                   </button>
                 </div>
               </div>
@@ -510,7 +510,7 @@ const CreatePostModal = ({
       setUploadedImageUrl(url);
     } catch (err) {
       console.error("Image upload error:", err);
-      alert("Rasmni yuklashda xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.");
+      alert("An error occurred while uploading the image. Please try again.");
     } finally {
       setIsUploadingImage(false);
     }
@@ -557,7 +557,7 @@ const CreatePostModal = ({
       }
     } catch (err) {
       console.error('Camera access error:', err);
-      alert('Kameraga ruxsat berilmadi yoki kamera topilmadi.');
+      alert('Camera permission denied or camera not found.');
       setIsCameraActive(false);
     }
   };
@@ -673,14 +673,14 @@ const CreatePostModal = ({
 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3 border-b border-[var(--theme-border)]">
-          <button onClick={onClose} className="text-[var(--theme-text-muted)] font-medium text-sm">Bekor</button>
-          <h3 className="font-bold text-[var(--theme-text)]">Yangi Post</h3>
+          <button onClick={onClose} className="text-[var(--theme-text-muted)] font-medium text-sm">Cancel</button>
+          <h3 className="font-bold text-[var(--theme-text)]">New Post</h3>
           <button
             onClick={handleSubmit}
             disabled={(!caption.trim() && !imageFile && !imageUrlInput.trim()) || isUploading || isUploadingImage}
             className="text-blue-500 font-bold text-sm disabled:opacity-40"
           >
-            {isUploading ? 'Jo\'natilmoqda...' : 'Ulashish'}
+            {isUploading ? 'Sharing...' : 'Share'}
           </button>
         </div>
 
@@ -691,7 +691,7 @@ const CreatePostModal = ({
           </div>
           <div>
             <p className="font-bold text-sm text-[var(--theme-text)]">{userProfile.displayName}</p>
-            <p className="text-xs text-[var(--theme-text-muted)]">Barcha uchun ko'rinadi</p>
+            <p className="text-xs text-[var(--theme-text-muted)]">Visible to everyone</p>
           </div>
         </div>
 
@@ -699,7 +699,7 @@ const CreatePostModal = ({
         <textarea
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
-          placeholder="Dars jarayonidan nima ulashmoqchisiz?"
+          placeholder="What would you like to share about the lesson?"
           rows={3}
           className="w-full px-5 text-[var(--theme-text)] text-sm bg-transparent placeholder-[var(--theme-text-muted)] resize-none outline-none mb-3"
         />
@@ -707,12 +707,12 @@ const CreatePostModal = ({
         {/* Direct Image URL input */}
         {!isCameraActive && (
           <div className="px-5 mb-4">
-            <label className="text-[10px] font-bold text-[var(--theme-text-muted)] uppercase tracking-wider block mb-1">Rasm URL manzili (ixtiyoriy)</label>
+            <label className="text-[10px] font-bold text-[var(--theme-text-muted)] uppercase tracking-wider block mb-1">Image URL (Optional)</label>
             <input
               type="text"
               value={imageUrlInput}
               onChange={(e) => setImageUrlInput(e.target.value)}
-              placeholder="Internetdan to'g'ridan-to'g'ri rasm linkini joylang (masalan: https://...)"
+              placeholder="Paste a direct image link from the internet (e.g. https://...)"
               className="w-full px-3 py-2 bg-[var(--theme-bg)] border border-[var(--theme-border)] rounded-xl text-[var(--theme-text)] text-xs outline-none focus:border-blue-500 transition-colors"
             />
           </div>
@@ -733,14 +733,14 @@ const CreatePostModal = ({
                 onClick={capturePhoto}
                 className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-xs shadow-md cursor-pointer transition-all active:scale-95"
               >
-                📸 Rasmga Tushirish
+                📸 Capture Photo
               </button>
               <button
                 type="button"
                 onClick={stopCamera}
                 className="px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white rounded-xl font-bold text-xs shadow-md cursor-pointer transition-all active:scale-95"
               >
-                Yopish
+                Close
               </button>
             </div>
           </div>
@@ -763,7 +763,7 @@ const CreatePostModal = ({
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
-                <span className="text-white text-xs font-semibold">Serverga yuklanmoqda...</span>
+                <span className="text-white text-xs font-semibold">Uploading to server...</span>
               </div>
             )}
 
@@ -790,21 +790,21 @@ const CreatePostModal = ({
             onClick={isCameraActive ? stopCamera : startCamera}
             className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-xs cursor-pointer transition-all active:scale-95 text-center whitespace-nowrap min-w-[120px]"
           >
-            {isCameraActive ? "📷 Kamerani O'chirish" : "📷 Sayt kamerasini yoqish"}
+            {isCameraActive ? "📷 Turn Camera Off" : "📷 Turn Camera On"}
           </button>
           <button
             type="button"
             onClick={() => nativeCameraRef.current?.click()}
             className="flex-1 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-xs cursor-pointer transition-all active:scale-95 text-center whitespace-nowrap min-w-[120px]"
           >
-            📸 Telefon kamerasi
+            📸 Phone Camera
           </button>
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
             className="flex-1 py-2.5 border border-[var(--theme-border)] hover:bg-[var(--theme-bg)] text-[var(--theme-text)] rounded-xl font-bold text-xs cursor-pointer transition-all active:scale-95 text-center whitespace-nowrap min-w-[120px]"
           >
-            🖼️ Galereyadan Tanlash
+            🖼️ Select from Gallery
           </button>
 
           <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handleImageSelect} />

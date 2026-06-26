@@ -32,10 +32,10 @@ export const AdminDashboard = ({
 
   const tabs = [
     { id: 'overview' as AdminTab, label: 'Overview', icon: '📊' },
-    ...(isAdminOrTeacher ? [{ id: 'users' as AdminTab, label: 'Foydalanuvchilar', icon: '👥' }] : []),
-    { id: 'attendance' as AdminTab, label: 'Davomat', icon: '✅' },
-    { id: 'scores' as AdminTab, label: 'Balllar', icon: '⭐' },
-    { id: 'homework' as AdminTab, label: 'Vazifalar', icon: '📚' },
+    ...(isAdminOrTeacher ? [{ id: 'users' as AdminTab, label: 'Users', icon: '👥' }] : []),
+    { id: 'attendance' as AdminTab, label: 'Attendance', icon: '✅' },
+    { id: 'scores' as AdminTab, label: 'Scores', icon: '⭐' },
+    { id: 'homework' as AdminTab, label: 'Homework', icon: '📚' },
   ];
 
   return (
@@ -91,10 +91,10 @@ const OverviewTab = ({ user, allBookings }: { user: UserProfile; allBookings: Bo
   }, []);
 
   const stats = [
-    { label: 'Jami Bookings', value: allBookings.length, color: '#3B82F6', icon: '📅' },
-    { label: 'Umumiy Daromad', value: `${totalIncome.toLocaleString('uz-UZ')} UZS`, color: '#10B981', icon: '💰' },
-    { label: 'Kelganlar (Attended)', value: allBookings.filter(b => b.status === 'attended').length, color: '#8B5CF6', icon: '🎓' },
-    { label: 'Kutayotganlar (Pending)', value: allBookings.filter(b => b.status === 'pending').length, color: '#F59E0B', icon: '⏳' },
+    { label: 'Total Bookings', value: allBookings.length, color: '#3B82F6', icon: '📅' },
+    { label: 'Total Revenue', value: `${totalIncome.toLocaleString('en-US')} UZS`, color: '#10B981', icon: '💰' },
+    { label: 'Attended', value: allBookings.filter(b => b.status === 'attended').length, color: '#8B5CF6', icon: '🎓' },
+    { label: 'Pending', value: allBookings.filter(b => b.status === 'pending').length, color: '#F59E0B', icon: '⏳' },
   ];
 
   const updateBookingStatus = async (id: string, status: BookingRecord['status']) => {
@@ -121,12 +121,12 @@ const OverviewTab = ({ user, allBookings }: { user: UserProfile; allBookings: Bo
       {/* Bookings List */}
       <div className="bg-[var(--theme-card)] rounded-2xl p-4 border border-[var(--theme-border)] space-y-3">
         <h3 className="font-bold text-sm text-[var(--theme-text)] flex items-center justify-between">
-          <span>Dars band qilish ro'yxati</span>
-          <span className="text-[11px] font-normal text-[var(--theme-text-muted)]">Jami: {allBookings.length} ta</span>
+          <span>Class Booking List</span>
+          <span className="text-[11px] font-normal text-[var(--theme-text-muted)]">Total: {allBookings.length}</span>
         </h3>
 
         {allBookings.length === 0 ? (
-          <p className="text-center py-6 text-[var(--theme-text-muted)] text-xs">Hali band qilingan darslar yo'q.</p>
+          <p className="text-center py-6 text-[var(--theme-text-muted)] text-xs">No classes booked yet.</p>
         ) : (
           <div className="space-y-3 max-h-96 overflow-y-auto pr-1 hide-scrollbar">
             {allBookings.map((b) => (
@@ -149,7 +149,7 @@ const OverviewTab = ({ user, allBookings }: { user: UserProfile; allBookings: Bo
                 
                 <div className="flex justify-between items-center text-[11px] text-[var(--theme-text-muted)] pt-1 border-t border-[var(--theme-border-light)]">
                   <p>📅 {b.day}, {b.dayDate} • {b.startTime}-{b.endTime}</p>
-                  <p className="font-semibold text-blue-500">Ustoz: {b.teacherName}</p>
+                  <p className="font-semibold text-blue-500">Teacher: {b.teacherName}</p>
                 </div>
 
                 {/* Status action buttons */}
@@ -160,7 +160,7 @@ const OverviewTab = ({ user, allBookings }: { user: UserProfile; allBookings: Bo
                         onClick={() => updateBookingStatus(b.id, 'confirmed')}
                         className="flex-1 py-1 px-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-[10px] font-bold transition-all cursor-pointer"
                       >
-                        Tasdiqlash ✓
+                        Confirm ✓
                       </button>
                     )}
                     {b.status === 'confirmed' && (
@@ -169,13 +169,13 @@ const OverviewTab = ({ user, allBookings }: { user: UserProfile; allBookings: Bo
                           onClick={() => updateBookingStatus(b.id, 'attended')}
                           className="flex-1 py-1 px-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold transition-all cursor-pointer"
                         >
-                          Keldi 🎓
+                          Attended 🎓
                         </button>
                         <button
                           onClick={() => updateBookingStatus(b.id, 'absent')}
                           className="flex-1 py-1 px-2.5 bg-red-500 hover:bg-red-600 text-white rounded-lg text-[10px] font-bold transition-all cursor-pointer"
                         >
-                          Kelmadi ✗
+                          Absent ✗
                         </button>
                       </>
                     )}
@@ -183,7 +183,7 @@ const OverviewTab = ({ user, allBookings }: { user: UserProfile; allBookings: Bo
                       onClick={() => updateBookingStatus(b.id, 'cancelled')}
                       className="py-1 px-2.5 border border-red-500/40 hover:bg-red-500/5 text-red-400 rounded-lg text-[10px] font-bold transition-all cursor-pointer"
                     >
-                      Bekor qilish
+                      Cancel Booking
                     </button>
                   </div>
                 )}
@@ -194,10 +194,10 @@ const OverviewTab = ({ user, allBookings }: { user: UserProfile; allBookings: Bo
       </div>
 
       <div className="bg-[var(--theme-card)] rounded-2xl p-4 border border-[var(--theme-border)]">
-        <h3 className="font-bold text-[var(--theme-text)] mb-1">Xush kelibsiz, {user.displayName}!</h3>
+        <h3 className="font-bold text-[var(--theme-text)] mb-1">Welcome, {user.displayName}!</h3>
         <p className="text-sm text-[var(--theme-text-muted)]">
-          {user.role === 'super-admin' ? 'Super Admin' : user.role === 'admin' ? 'Admin' : 'Teacher'} sifatida tizimga kirdingiz.
-          Yuqoridagi tablardan kerakli bo\'limni tanlang.
+          You logged in as {user.role === 'super-admin' ? 'Super Admin' : user.role === 'admin' ? 'Admin' : 'Teacher'}.
+          Please select a section from the tabs above.
         </p>
       </div>
     </div>
@@ -440,9 +440,9 @@ const StudentDetailsModal = ({
         id: s.id,
         type: 'score',
         date: s.date,
-        title: `⭐ Ball berildi: ${s.score}/${s.maxScore}`,
-        subtitle: s.note ? `Izoh: "${s.note}"` : 'Izohsiz',
-        meta: `Ustoz: ${s.teacherName}`,
+        title: `⭐ Points awarded: ${s.score}/${s.maxScore}`,
+        subtitle: s.note ? `Note: "${s.note}"` : 'No note',
+        meta: `Teacher: ${s.teacherName}`,
         isToday: isToday(s.date)
       });
     });
@@ -452,9 +452,9 @@ const StudentDetailsModal = ({
         id: a.id,
         type: 'attendance',
         date: a.date,
-        title: a.status === 'present' ? '✅ Davomat: Keldi' : '✗ Davomat: Kelmadi',
-        subtitle: a.note ? `Izoh: "${a.note}"` : 'Izohsiz',
-        meta: `Sana: ${a.date}`,
+        title: a.status === 'present' ? '✅ Attendance: Present' : '✗ Attendance: Absent',
+        subtitle: a.note ? `Note: "${a.note}"` : 'No note',
+        meta: `Date: ${a.date}`,
         isToday: isToday(a.date)
       });
     });
@@ -491,26 +491,26 @@ const StudentDetailsModal = ({
         {/* Short stats strip */}
         <div className="grid grid-cols-3 gap-2 bg-[var(--theme-bg)] rounded-2xl p-3 mb-4 text-center border border-[var(--theme-border)] flex-shrink-0">
           <div>
-            <p className="text-[9px] text-[var(--theme-text-muted)] uppercase font-bold tracking-wider">Ball</p>
+            <p className="text-[9px] text-[var(--theme-text-muted)] uppercase font-bold tracking-wider">Score</p>
             <p className="text-xs font-bold text-blue-500">{student.score || 0}/{student.totalScore || 0}</p>
           </div>
           <div>
-            <p className="text-[9px] text-[var(--theme-text-muted)] uppercase font-bold tracking-wider">Darslar</p>
-            <p className="text-xs font-bold text-purple-500">{bookings.length} ta</p>
+            <p className="text-[9px] text-[var(--theme-text-muted)] uppercase font-bold tracking-wider">Classes</p>
+            <p className="text-xs font-bold text-purple-500">{bookings.length}</p>
           </div>
           <div>
-            <p className="text-[9px] text-[var(--theme-text-muted)] uppercase font-bold tracking-wider">Davomat</p>
-            <p className="text-xs font-bold text-green-500">{student.attendanceCount || 0} ta</p>
+            <p className="text-[9px] text-[var(--theme-text-muted)] uppercase font-bold tracking-wider">Attendance</p>
+            <p className="text-xs font-bold text-green-500">{student.attendanceCount || 0}</p>
           </div>
         </div>
 
         {/* Modal tabs */}
         <div className="flex gap-1 border-b border-[var(--theme-border)] pb-2 mb-4 overflow-x-auto hide-scrollbar flex-shrink-0">
           {[
-            { id: 'activity', label: 'Faoliyat (Bugun)' },
-            { id: 'bookings', label: 'Darslar' },
-            { id: 'payments', label: 'Daromad' },
-            { id: 'homework', label: 'Vazifalar' }
+            { id: 'activity', label: 'Activity (Today)' },
+            { id: 'bookings', label: 'Classes' },
+            { id: 'payments', label: 'Payments' },
+            { id: 'homework', label: 'Homework' }
           ].map(t => (
             <button
               key={t.id}
@@ -536,13 +536,13 @@ const StudentDetailsModal = ({
               
               {/* Quick Actions Grid for Quick logs */}
               <div className="grid grid-cols-2 gap-2 bg-[var(--theme-bg)]/50 p-3 rounded-2xl border border-[var(--theme-border)]">
-                {/* 1. Quick Ball Form */}
+                {/* 1. Quick Score Form */}
                 <form onSubmit={handleGiveScore} className="space-y-2 border-r border-[var(--theme-border)] pr-2">
-                  <p className="text-[10px] font-bold text-[var(--theme-text-muted)] uppercase tracking-wider">Ball qo'shish</p>
+                  <p className="text-[10px] font-bold text-[var(--theme-text-muted)] uppercase tracking-wider">Add Score</p>
                   <div className="flex gap-1">
                     <input
                       type="number"
-                      placeholder="Ball"
+                      placeholder="Score"
                       required
                       value={newScore}
                       onChange={e => setNewScore(e.target.value)}
@@ -550,7 +550,7 @@ const StudentDetailsModal = ({
                     />
                     <input
                       type="number"
-                      placeholder="Maks"
+                      placeholder="Max"
                       value={newMaxScore}
                       onChange={e => setNewMaxScore(e.target.value)}
                       className="w-full px-1.5 py-1 bg-[var(--theme-card)] border border-[var(--theme-border)] rounded-lg text-xs outline-none text-[var(--theme-text)]"
@@ -558,7 +558,7 @@ const StudentDetailsModal = ({
                   </div>
                   <input
                     type="text"
-                    placeholder="Mavzu izohi..."
+                    placeholder="Topic details..."
                     value={newScoreNote}
                     onChange={e => setNewScoreNote(e.target.value)}
                     className="w-full px-2 py-1 bg-[var(--theme-card)] border border-[var(--theme-border)] rounded-lg text-[11px] outline-none text-[var(--theme-text)]"
@@ -568,13 +568,13 @@ const StudentDetailsModal = ({
                     type="submit"
                     className="w-full py-1 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-[10px] font-bold disabled:opacity-50"
                   >
-                    Ball Berish
+                    Award Points
                   </button>
                 </form>
 
                 {/* 2. Quick Attendance Form */}
                 <form onSubmit={handleMarkAttendance} className="space-y-2 pl-1">
-                  <p className="text-[10px] font-bold text-[var(--theme-text-muted)] uppercase tracking-wider">Davomat belgilash</p>
+                  <p className="text-[10px] font-bold text-[var(--theme-text-muted)] uppercase tracking-wider">Mark Attendance</p>
                   <div className="flex gap-1">
                     <button
                       type="button"
@@ -584,7 +584,7 @@ const StudentDetailsModal = ({
                         attStatus === 'present' ? "bg-green-500/10 text-green-500 border-green-500" : "bg-[var(--theme-card)] border-[var(--theme-border)] text-[var(--theme-text-muted)]"
                       )}
                     >
-                      Keldi
+                      Present
                     </button>
                     <button
                       type="button"
@@ -594,12 +594,12 @@ const StudentDetailsModal = ({
                         attStatus === 'absent' ? "bg-red-500/10 text-red-500 border-red-500" : "bg-[var(--theme-card)] border-[var(--theme-border)] text-[var(--theme-text-muted)]"
                       )}
                     >
-                      Kelmadi
+                      Absent
                     </button>
                   </div>
                   <input
                     type="text"
-                    placeholder="Sababi/izoh..."
+                    placeholder="Reason/note..."
                     value={attNote}
                     onChange={e => setAttNote(e.target.value)}
                     className="w-full px-2 py-1 bg-[var(--theme-card)] border border-[var(--theme-border)] rounded-lg text-[11px] outline-none text-[var(--theme-text)]"
@@ -609,16 +609,16 @@ const StudentDetailsModal = ({
                     type="submit"
                     className="w-full py-1 bg-green-600 hover:bg-green-700 text-white rounded-lg text-[10px] font-bold disabled:opacity-50"
                   >
-                    Saqlash
+                    Save
                   </button>
                 </form>
               </div>
 
               {/* Timeline list */}
               <div className="space-y-2">
-                <h4 className="text-xs font-bold text-[var(--theme-text)]">O'rganilganlar & Faoliyat jurnali</h4>
+                <h4 className="text-xs font-bold text-[var(--theme-text)]">Learning & Activity Log</h4>
                 {activityTimeline.length === 0 ? (
-                  <p className="text-center py-6 text-xs text-[var(--theme-text-muted)]">Hali hech qanday faoliyat mavjud emas.</p>
+                  <p className="text-center py-6 text-xs text-[var(--theme-text-muted)]">No activity recorded yet.</p>
                 ) : (
                   <div className="space-y-2.5 max-h-72 overflow-y-auto pr-1 hide-scrollbar">
                     {activityTimeline.map(item => (
@@ -650,15 +650,15 @@ const StudentDetailsModal = ({
           {/* TAB 2: BOOKINGS LIST */}
           {activeTab === 'bookings' && (
             <div className="space-y-3">
-              <h4 className="text-xs font-bold text-[var(--theme-text)]">Band qilingan darslar ro'yxati</h4>
+              <h4 className="text-xs font-bold text-[var(--theme-text)]">Booked Classes List</h4>
               {bookings.length === 0 ? (
-                <p className="text-center py-8 text-xs text-[var(--theme-text-muted)]">Darslar band qilinmagan.</p>
+                <p className="text-center py-8 text-xs text-[var(--theme-text-muted)]">No classes booked.</p>
               ) : (
                 <div className="space-y-2">
                   {bookings.map(b => (
                     <div key={b.id} className="p-3 bg-[var(--theme-card)] rounded-xl border border-[var(--theme-border)] space-y-1">
                       <div className="flex justify-between items-center text-xs">
-                        <span className="font-bold text-[var(--theme-text)]">Ustoz: {b.teacherName}</span>
+                        <span className="font-bold text-[var(--theme-text)]">Teacher: {b.teacherName}</span>
                         <span className={cn(
                           "text-[9px] font-extrabold px-2 py-0.5 rounded-full uppercase tracking-tighter",
                           b.status === 'confirmed' && 'bg-green-500/10 text-green-500',
@@ -684,29 +684,29 @@ const StudentDetailsModal = ({
             <div className="space-y-4">
               <div className="bg-green-500/10 border border-green-500/30 rounded-2xl p-4 flex justify-between items-center">
                 <div>
-                  <p className="text-[10px] text-green-500 uppercase tracking-widest font-black">Jami To'langan</p>
-                  <p className="text-xl font-black text-green-500 mt-1">{totalPaid.toLocaleString('uz-UZ')} UZS</p>
+                  <p className="text-[10px] text-green-500 uppercase tracking-widest font-black">Total Paid</p>
+                  <p className="text-xl font-black text-green-500 mt-1">{totalPaid.toLocaleString('en-US')} UZS</p>
                 </div>
                 <div className="text-3xl">💰</div>
               </div>
 
               <form onSubmit={handleAddPayment} className="bg-[var(--theme-card)] rounded-2xl p-4 border border-[var(--theme-border)] space-y-3">
-                <h4 className="text-xs font-bold text-[var(--theme-text)]">Yangi To'lov Qabul Qilish</h4>
+                <h4 className="text-xs font-bold text-[var(--theme-text)]">Record New Payment</h4>
                 
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-[10px] text-[var(--theme-text-muted)] font-bold block mb-1">SUMMA (UZS)</label>
+                    <label className="text-[10px] text-[var(--theme-text-muted)] font-bold block mb-1">AMOUNT (UZS)</label>
                     <input
                       type="number"
                       required
-                      placeholder="Masalan: 500000"
+                      placeholder="Example: 500000"
                       value={paymentAmount}
                       onChange={e => setPaymentAmount(e.target.value)}
                       className="w-full px-3 py-2 bg-[var(--theme-bg)] border border-[var(--theme-border)] rounded-xl text-xs outline-none text-[var(--theme-text)]"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] text-[var(--theme-text-muted)] font-bold block mb-1">SANA</label>
+                    <label className="text-[10px] text-[var(--theme-text-muted)] font-bold block mb-1">DATE</label>
                     <input
                       type="date"
                       required
@@ -718,10 +718,10 @@ const StudentDetailsModal = ({
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-[var(--theme-text-muted)] font-bold block mb-1">IZOH</label>
+                  <label className="text-[10px] text-[var(--theme-text-muted)] font-bold block mb-1">NOTE</label>
                   <input
                     type="text"
-                    placeholder="Masalan: 8 ta dars uchun to'lov"
+                    placeholder="Example: Payment for 8 classes"
                     value={paymentNote}
                     onChange={e => setPaymentNote(e.target.value)}
                     className="w-full px-3 py-2 bg-[var(--theme-bg)] border border-[var(--theme-border)] rounded-xl text-xs outline-none text-[var(--theme-text)]"
@@ -733,24 +733,24 @@ const StudentDetailsModal = ({
                   disabled={isSubmittingPayment || !paymentAmount}
                   className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50"
                 >
-                  To'lovni Saqlash
+                  Save Payment
                 </button>
               </form>
 
               <div className="space-y-2">
-                <h4 className="text-xs font-bold text-[var(--theme-text)]">To'lovlar Tarixi</h4>
+                <h4 className="text-xs font-bold text-[var(--theme-text)]">Payment History</h4>
                 {payments.length === 0 ? (
-                  <p className="text-center py-6 text-xs text-[var(--theme-text-muted)]">Hali to'lovlar qabul qilinmagan.</p>
+                  <p className="text-center py-6 text-xs text-[var(--theme-text-muted)]">No payments recorded yet.</p>
                 ) : (
                   <div className="space-y-2">
                     {payments.map(p => (
                       <div key={p.id} className="p-3 bg-[var(--theme-bg)] rounded-xl border border-[var(--theme-border)] text-xs flex justify-between items-center">
                         <div>
-                          <p className="font-bold text-[var(--theme-text)]">+{p.amount.toLocaleString('uz-UZ')} UZS</p>
+                          <p className="font-bold text-[var(--theme-text)]">+{p.amount.toLocaleString('en-US')} UZS</p>
                           {p.note && <p className="text-[10px] text-[var(--theme-text-muted)] mt-0.5">{p.note}</p>}
-                          <p className="text-[9px] text-[var(--theme-text-muted)] mt-0.5">Sana: {p.date} • Qabul qildi: {p.teacherName}</p>
+                          <p className="text-[9px] text-[var(--theme-text-muted)] mt-0.5">Date: {p.date} • Received by: {p.teacherName}</p>
                         </div>
-                        <span className="text-green-500 font-bold">Muvaffaqiyatli</span>
+                        <span className="text-green-500 font-bold">Successful</span>
                       </div>
                     ))}
                   </div>
@@ -759,18 +759,18 @@ const StudentDetailsModal = ({
             </div>
           )}
 
-          {/* TAB 4: HOMEWORK / VAZIFALAR */}
+          {/* TAB 4: HOMEWORK */}
           {activeTab === 'homework' && (
             <div className="space-y-4">
               <form onSubmit={handleAssignHomework} className="bg-[var(--theme-card)] rounded-2xl p-4 border border-[var(--theme-border)] space-y-3">
-                <h4 className="text-xs font-bold text-[var(--theme-text)]">Individual Vazifa Yuklash</h4>
+                <h4 className="text-xs font-bold text-[var(--theme-text)]">Assign Individual Homework</h4>
 
                 <div>
-                  <label className="text-[10px] text-[var(--theme-text-muted)] font-bold block mb-1">Vazifa Nomi</label>
+                  <label className="text-[10px] text-[var(--theme-text-muted)] font-bold block mb-1">Assignment Title</label>
                   <input
                     type="text"
                     required
-                    placeholder="Masalan: Essay on global warming"
+                    placeholder="Example: Essay on global warming"
                     value={hwTitle}
                     onChange={e => setHwTitle(e.target.value)}
                     className="w-full px-3 py-2 bg-[var(--theme-bg)] border border-[var(--theme-border)] rounded-xl text-xs outline-none text-[var(--theme-text)]"
@@ -778,10 +778,10 @@ const StudentDetailsModal = ({
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-[var(--theme-text-muted)] font-bold block mb-1">Vazifa Tavsifi</label>
+                  <label className="text-[10px] text-[var(--theme-text-muted)] font-bold block mb-1">Assignment Description</label>
                   <textarea
                     rows={2}
-                    placeholder="Batafsil ma'lumot kiriting..."
+                    placeholder="Enter details..."
                     value={hwDesc}
                     onChange={e => setHwDesc(e.target.value)}
                     className="w-full px-3 py-2 bg-[var(--theme-bg)] border border-[var(--theme-border)] rounded-xl text-xs outline-none text-[var(--theme-text)] resize-none"
@@ -789,7 +789,7 @@ const StudentDetailsModal = ({
                 </div>
 
                 <div>
-                  <label className="text-[10px] text-[var(--theme-text-muted)] font-bold block mb-1">Deadline (Muddat)</label>
+                  <label className="text-[10px] text-[var(--theme-text-muted)] font-bold block mb-1">Deadline</label>
                   <input
                     type="datetime-local"
                     value={hwDeadline}
@@ -803,14 +803,14 @@ const StudentDetailsModal = ({
                   disabled={isSubmittingHw || !hwTitle}
                   className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-all disabled:opacity-50"
                 >
-                  Vazifa Yuklash
+                  Assign Homework
                 </button>
               </form>
 
               <div className="space-y-2">
-                <h4 className="text-xs font-bold text-[var(--theme-text)]">Ushbu talabaga tegishli vazifalar</h4>
+                <h4 className="text-xs font-bold text-[var(--theme-text)]">Assignments for this student</h4>
                 {homeworks.length === 0 ? (
-                  <p className="text-center py-6 text-xs text-[var(--theme-text-muted)]">Vazifalar muddatlari tugagan yoki topshiriqlar yo'q.</p>
+                  <p className="text-center py-6 text-xs text-[var(--theme-text-muted)]">No active assignments or deadlines passed.</p>
                 ) : (
                   <div className="space-y-2">
                     {homeworks.map(hw => (
@@ -824,24 +824,24 @@ const StudentDetailsModal = ({
                             "text-[8px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider flex-shrink-0",
                             hw.studentId ? "bg-orange-500/10 text-orange-500" : "bg-purple-500/10 text-purple-500"
                           )}>
-                            {hw.studentId ? "Individual" : "Umumiy"}
+                            {hw.studentId ? "Individual" : "General"}
                           </span>
                         </div>
                         {hw.deadline && (
                           <p className="text-[10px] text-orange-400 font-semibold">
-                            ⏰ Muddat: {new Date(hw.deadline).toLocaleString('uz-UZ')}
+                            ⏰ Deadline: {new Date(hw.deadline).toLocaleString('en-US')}
                           </p>
                         )}
                         
                         {hw.submissions && hw.submissions.some(sub => sub.studentId === student.uid) ? (
                           <div className="mt-2 p-2 bg-green-500/5 border border-green-500/20 rounded-lg">
-                            <p className="text-[9px] font-bold text-green-500">✓ Topshirilgan:</p>
+                            <p className="text-[9px] font-bold text-green-500">✓ Submitted:</p>
                             <p className="text-[10px] text-[var(--theme-text)] mt-0.5">
                               "{hw.submissions.find(sub => sub.studentId === student.uid)?.text}"
                             </p>
                           </div>
                         ) : (
-                          <p className="text-[9px] text-red-400 font-bold italic mt-2">Hali topshirilmagan</p>
+                          <p className="text-[9px] text-red-400 font-bold italic mt-2">Not submitted yet</p>
                         )}
                       </div>
                     ))}
@@ -901,14 +901,14 @@ const UsersTab = ({ currentUser, allBookings = [] }: { currentUser: UserProfile;
   return (
     <div className="px-4 space-y-4">
       <div className="flex items-center justify-between py-1">
-        <h3 className="font-bold text-[var(--theme-text)]">Foydalanuvchilar</h3>
+        <h3 className="font-bold text-[var(--theme-text)]">Users</h3>
         {isSuperAdmin && (
           <button
             onClick={() => setShowCreate(true)}
             className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Yangi Foydalanuvchi
+            New User
           </button>
         )}
       </div>
@@ -917,7 +917,7 @@ const UsersTab = ({ currentUser, allBookings = [] }: { currentUser: UserProfile;
         <div className="relative">
           <input
             type="text"
-            placeholder="Qidirish (ism yoki username)..."
+            placeholder="Search (name or username)..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
             className="w-full pl-9 pr-4 py-2.5 bg-[var(--theme-card)] border border-[var(--theme-border)] rounded-xl text-[var(--theme-text)] text-xs outline-none focus:border-blue-500 transition-colors"
@@ -927,10 +927,10 @@ const UsersTab = ({ currentUser, allBookings = [] }: { currentUser: UserProfile;
 
         <div className="flex gap-1.5 overflow-x-auto hide-scrollbar">
           {[
-            { id: 'all', label: 'Barchasi' },
-            { id: 'student', label: 'Talabalar' },
-            { id: 'teacher', label: 'O\'qituvchilar' },
-            { id: 'admin', label: 'Adminlar' }
+            { id: 'all', label: 'All' },
+            { id: 'student', label: 'Students' },
+            { id: 'teacher', label: 'Teachers' },
+            { id: 'admin', label: 'Admins' }
           ].map(tab => (
             <button
               key={tab.id}
@@ -955,7 +955,7 @@ const UsersTab = ({ currentUser, allBookings = [] }: { currentUser: UserProfile;
       ) : (
         <div className="space-y-2">
           {filteredUsers.length === 0 ? (
-            <p className="text-center py-8 text-xs text-[var(--theme-text-muted)]">Foydalanuvchi topilmadi.</p>
+            <p className="text-center py-8 text-xs text-[var(--theme-text-muted)]">No user found.</p>
           ) : (
             filteredUsers.map(u => {
               const studentBookings = allBookings.filter(b => b.studentId === u.uid);
@@ -985,7 +985,7 @@ const UsersTab = ({ currentUser, allBookings = [] }: { currentUser: UserProfile;
                     <p className="text-xs text-[var(--theme-text-muted)] truncate">@{u.username}</p>
                     {u.role === 'student' && activeBooking && (
                       <p className="text-[10px] text-orange-400 font-extrabold mt-0.5 flex items-center gap-1">
-                        <span>📅 {activeBooking.status === 'confirmed' ? 'Tasdiqlangan' : 'Kutilmoqda'}:</span>
+                        <span>📅 {activeBooking.status === 'confirmed' ? 'Confirmed' : 'Pending'}:</span>
                         <span>{activeBooking.dayDate} ({activeBooking.startTime})</span>
                       </p>
                     )}
@@ -995,7 +995,7 @@ const UsersTab = ({ currentUser, allBookings = [] }: { currentUser: UserProfile;
                       {u.role}
                     </span>
                     {u.role === 'student' && (
-                      <span className="text-[10px] text-blue-500 font-bold hover:underline">Boshqarish ➜</span>
+                      <span className="text-[10px] text-blue-500 font-bold hover:underline">Manage ➜</span>
                     )}
                   </div>
                 </div>
@@ -1041,7 +1041,7 @@ const CreateUserModal = ({ onClose }: { onClose: () => void }) => {
 
   const handleCreate = async () => {
     if (!form.username || !form.password || !form.displayName) {
-      setError('Barcha maydonlarni to\'ldiring!');
+      setError('Please fill in all fields!');
       return;
     }
     setIsLoading(true);
@@ -1051,7 +1051,7 @@ const CreateUserModal = ({ onClose }: { onClose: () => void }) => {
       const q = query(collection(db, 'users'), where('username', '==', form.username.toLowerCase()));
       const snap = await getDocs(q);
       if (!snap.empty) {
-        setError('Bu username allaqachon mavjud!');
+        setError('This username is already taken!');
         setIsLoading(false);
         return;
       }
@@ -1070,9 +1070,9 @@ const CreateUserModal = ({ onClose }: { onClose: () => void }) => {
         isOnline: false,
         createdAt: serverTimestamp(),
       });
-      setSuccess(`✅ Foydalanuvchi yaratildi! Username: ${form.username} | Parol: ${form.password}`);
+      setSuccess(`✅ User created! Username: ${form.username} | Password: ${form.password}`);
     } catch (err) {
-      setError('Xatolik yuz berdi.');
+      setError('An error occurred.');
     } finally {
       setIsLoading(false);
     }
@@ -1094,7 +1094,7 @@ const CreateUserModal = ({ onClose }: { onClose: () => void }) => {
         className="bg-[var(--theme-card)] rounded-t-3xl w-full max-w-[480px] p-6"
       >
         <div className="flex items-center justify-between mb-5">
-          <h3 className="text-lg font-bold text-[var(--theme-text)]">Yangi Foydalanuvchi</h3>
+          <h3 className="text-lg font-bold text-[var(--theme-text)]">New User</h3>
           <button onClick={onClose} className="text-[var(--theme-text-muted)]">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
           </button>
@@ -1104,16 +1104,16 @@ const CreateUserModal = ({ onClose }: { onClose: () => void }) => {
         {success ? (
           <div className="space-y-3">
             <div className="p-4 bg-green-500/10 border border-green-500/30 rounded-xl text-green-400 text-sm font-medium">{success}</div>
-            <button onClick={onClose} className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl">Yopish</button>
+            <button onClick={onClose} className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl">Close</button>
           </div>
         ) : (
           <div className="space-y-3">
-            <FormField label="To'liq Ism" value={form.displayName} onChange={v => setForm({...form, displayName: v})} placeholder="Ism Familiya" />
+            <FormField label="Full Name" value={form.displayName} onChange={v => setForm({...form, displayName: v})} placeholder="First and Last Name" />
             <FormField label="Username" value={form.username} onChange={v => setForm({...form, username: v})} placeholder="username" />
-            <FormField label="Parol" value={form.password} onChange={v => setForm({...form, password: v})} placeholder="parol" type="password" />
+            <FormField label="Password" value={form.password} onChange={v => setForm({...form, password: v})} placeholder="password" type="password" />
 
             <div>
-              <label className="text-xs font-bold text-[var(--theme-text-muted)] uppercase tracking-wider block mb-1.5">Rol</label>
+              <label className="text-xs font-bold text-[var(--theme-text-muted)] uppercase tracking-wider block mb-1.5">Role</label>
               <select
                 value={form.role}
                 onChange={e => setForm({...form, role: e.target.value as UserRole})}
@@ -1146,7 +1146,7 @@ const CreateUserModal = ({ onClose }: { onClose: () => void }) => {
               className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2"
             >
               {isLoading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : null}
-              Yaratish
+              Create
             </button>
           </div>
         )}
@@ -1222,7 +1222,7 @@ const AttendanceTab = ({ teacher }: { teacher: UserProfile }) => {
     <div className="px-4 space-y-3">
       <div className="flex items-center gap-3">
         <div className="flex-1">
-          <label className="text-xs text-[var(--theme-text-muted)] font-bold uppercase tracking-wider block mb-1">Sana</label>
+          <label className="text-xs text-[var(--theme-text-muted)] font-bold uppercase tracking-wider block mb-1">Date</label>
           <input
             type="date"
             value={date}
@@ -1231,19 +1231,19 @@ const AttendanceTab = ({ teacher }: { teacher: UserProfile }) => {
           />
         </div>
         <div className="pt-5">
-          <span className="text-xs text-[var(--theme-text-muted)]">{markedCount} / {students.length} belgilandi</span>
+          <span className="text-xs text-[var(--theme-text-muted)]">{markedCount} / {students.length} marked</span>
         </div>
       </div>
 
       {saved && (
         <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-xl text-green-400 text-sm font-medium text-center">
-          ✅ Davomat saqlandi!
+          ✅ Attendance saved!
         </div>
       )}
 
       <div className="space-y-2">
         {students.length === 0 && (
-          <div className="text-center py-10 text-[var(--theme-text-muted)] text-sm">Talabalar topilmadi</div>
+          <div className="text-center py-10 text-[var(--theme-text-muted)] text-sm">Students not found</div>
         )}
         {students.map(s => (
           <div key={s.uid} className="bg-[var(--theme-card)] rounded-2xl p-3.5 flex items-center gap-3 border border-[var(--theme-border)]">
@@ -1285,7 +1285,7 @@ const AttendanceTab = ({ teacher }: { teacher: UserProfile }) => {
           className="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl disabled:opacity-50 flex items-center justify-center gap-2"
         >
           {isSaving && <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />}
-          Davomatni Saqlash ({markedCount} ta)
+          Save Attendance ({markedCount})
         </button>
       )}
     </div>
@@ -1356,22 +1356,22 @@ const ScoresTab = ({ teacher }: { teacher: UserProfile }) => {
   return (
     <div className="px-4 space-y-4">
       <div className="bg-[var(--theme-card)] rounded-2xl p-4 border border-[var(--theme-border)] space-y-3">
-        <h3 className="font-bold text-[var(--theme-text)]">Ball Berish</h3>
+        <h3 className="font-bold text-[var(--theme-text)]">Award Points</h3>
 
         {saved && (
           <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-xl text-green-400 text-sm font-medium text-center">
-            ✅ Ball saqlandi!
+            ✅ Points saved!
           </div>
         )}
 
         <div>
-          <label className="text-xs text-[var(--theme-text-muted)] font-bold uppercase tracking-wider block mb-1.5">Talaba</label>
+          <label className="text-xs text-[var(--theme-text-muted)] font-bold uppercase tracking-wider block mb-1.5">Student</label>
           <select
             value={selectedStudent}
             onChange={e => setSelectedStudent(e.target.value)}
             className="w-full px-3 py-2.5 bg-[var(--theme-bg)] border border-[var(--theme-border)] rounded-xl text-[var(--theme-text)] text-sm outline-none"
           >
-            <option value="">Talabani tanlang</option>
+            <option value="">Select student</option>
             {students.map(s => (
               <option key={s.uid} value={s.uid}>{s.displayName} (@{s.username})</option>
             ))}
@@ -1379,24 +1379,24 @@ const ScoresTab = ({ teacher }: { teacher: UserProfile }) => {
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <FormField label="Ball" value={score} onChange={setScore} placeholder="0" type="number" />
-          <FormField label="Maksimum" value={maxScore} onChange={setMaxScore} placeholder="10" type="number" />
+          <FormField label="Score" value={score} onChange={setScore} placeholder="0" type="number" />
+          <FormField label="Maximum" value={maxScore} onChange={setMaxScore} placeholder="10" type="number" />
         </div>
 
-        <FormField label="Izoh (ixtiyoriy)" value={note} onChange={setNote} placeholder="Dars izohi..." />
+        <FormField label="Note (optional)" value={note} onChange={setNote} placeholder="Class note..." />
 
         <button
           onClick={saveScore}
           disabled={!selectedStudent || !score || isSaving}
           className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl disabled:opacity-50"
         >
-          Ball Berish
+          Award Points
         </button>
       </div>
 
       {recentScores.length > 0 && (
         <div className="space-y-2">
-          <h4 className="font-bold text-sm text-[var(--theme-text)]">So'nggi Balllar</h4>
+          <h4 className="font-bold text-sm text-[var(--theme-text)]">Recent Scores</h4>
           {recentScores.map(s => (
             <div key={s.id} className="bg-[var(--theme-card)] rounded-xl p-3 flex items-center gap-3 border border-[var(--theme-border)]">
               <div className="w-10 h-10 rounded-xl bg-green-500/10 flex items-center justify-center">
@@ -1404,7 +1404,7 @@ const ScoresTab = ({ teacher }: { teacher: UserProfile }) => {
               </div>
               <div className="flex-1">
                 <p className="text-sm font-bold text-[var(--theme-text)]">{s.studentName}</p>
-                <p className="text-xs text-[var(--theme-text-muted)]">{s.note || 'Izohsiz'} • {new Date(s.date).toLocaleDateString('uz-UZ')}</p>
+                <p className="text-xs text-[var(--theme-text-muted)]">{s.note || 'No note'} • {new Date(s.date).toLocaleDateString('en-US')}</p>
               </div>
               <span className="text-xs font-bold px-2 py-1 rounded-full bg-blue-500/10 text-blue-400">
                 {Math.round((s.score / s.maxScore) * 100)}%
@@ -1453,7 +1453,7 @@ const HomeworkTab = ({ teacher }: { teacher: UserProfile }) => {
         teacherId: teacher.uid,
         teacherName: teacher.displayName,
         studentId: targetStudent ? targetStudent.uid : 'all',
-        studentName: targetStudent ? targetStudent.displayName : 'Barcha talabalar',
+        studentName: targetStudent ? targetStudent.displayName : 'All students',
         title: form.title,
         description: form.description,
         deadline: form.deadline,
@@ -1471,13 +1471,13 @@ const HomeworkTab = ({ teacher }: { teacher: UserProfile }) => {
   return (
     <div className="px-4 space-y-3">
       <div className="flex items-center justify-between py-1">
-        <h3 className="font-bold text-[var(--theme-text)]">Vazifalar</h3>
+        <h3 className="font-bold text-[var(--theme-text)]">Homework</h3>
         <button
           onClick={() => setShowCreate(!showCreate)}
           className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Yangi Vazifa
+          New Assignment
         </button>
       </div>
 
@@ -1490,16 +1490,16 @@ const HomeworkTab = ({ teacher }: { teacher: UserProfile }) => {
             className="overflow-hidden"
           >
             <div className="bg-[var(--theme-card)] rounded-2xl p-4 border border-[var(--theme-border)] space-y-3">
-              <FormField label="Vazifa nomi" value={form.title} onChange={(v: string) => setForm({...form, title: v})} placeholder="Masalan: IELTS Writing Task 2" />
+              <FormField label="Assignment name" value={form.title} onChange={(v: string) => setForm({...form, title: v})} placeholder="Example: IELTS Writing Task 2" />
               
               <div>
-                <label className="text-xs font-bold text-[var(--theme-text-muted)] uppercase tracking-wider block mb-1.5">Talaba (Kimgaligini tanlang)</label>
+                <label className="text-xs font-bold text-[var(--theme-text-muted)] uppercase tracking-wider block mb-1.5">Student (Select recipient)</label>
                 <select
                   value={selectedStudentId}
                   onChange={e => setSelectedStudentId(e.target.value)}
                   className="w-full px-3 py-2.5 bg-[var(--theme-bg)] border border-[var(--theme-border)] rounded-xl text-[var(--theme-text)] text-sm outline-none"
                 >
-                  <option value="all">Barcha talabalar</option>
+                  <option value="all">All students</option>
                   {students.map(s => (
                     <option key={s.uid} value={s.uid}>{s.displayName} (@{s.username})</option>
                   ))}
@@ -1507,11 +1507,11 @@ const HomeworkTab = ({ teacher }: { teacher: UserProfile }) => {
               </div>
 
               <div>
-                <label className="text-xs font-bold text-[var(--theme-text-muted)] uppercase tracking-wider block mb-1.5">Tavsif</label>
+                <label className="text-xs font-bold text-[var(--theme-text-muted)] uppercase tracking-wider block mb-1.5">Description</label>
                 <textarea
                   value={form.description}
                   onChange={e => setForm({...form, description: e.target.value})}
-                  placeholder="Vazifa tavsifi..."
+                  placeholder="Assignment details..."
                   rows={3}
                   className="w-full px-3 py-2.5 bg-[var(--theme-bg)] border border-[var(--theme-border)] rounded-xl text-[var(--theme-text)] text-sm outline-none resize-none focus:border-blue-500"
                 />
@@ -1529,12 +1529,12 @@ const HomeworkTab = ({ teacher }: { teacher: UserProfile }) => {
                 <button
                   onClick={() => setShowCreate(false)}
                   className="flex-1 py-2.5 border border-[var(--theme-border)] text-[var(--theme-text-muted)] font-bold rounded-xl text-sm"
-                >Bekor</button>
+                >Cancel</button>
                 <button
                   onClick={createHomework}
                   disabled={!form.title || isSaving}
                   className="flex-1 py-2.5 bg-blue-600 text-white font-bold rounded-xl text-sm disabled:opacity-50"
-                >Yaratish</button>
+                >Create</button>
               </div>
             </div>
           </motion.div>
@@ -1544,7 +1544,7 @@ const HomeworkTab = ({ teacher }: { teacher: UserProfile }) => {
       {homeworks.length === 0 && !showCreate && (
         <div className="text-center py-16 text-[var(--theme-text-muted)]">
           <div className="text-4xl mb-3">📚</div>
-          <p className="text-sm">Hali vazifa yo'q</p>
+          <p className="text-sm">No assignments yet</p>
         </div>
       )}
 
@@ -1559,26 +1559,26 @@ const HomeworkTab = ({ teacher }: { teacher: UserProfile }) => {
                   "text-[9px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider flex-shrink-0",
                   hw.studentId && hw.studentId !== 'all' ? "bg-orange-500/10 text-orange-500" : "bg-purple-500/10 text-purple-500"
                 )}>
-                  {hw.studentId && hw.studentId !== 'all' ? `Indiv: ${hw.studentName}` : 'Barcha talabalar'}
+                  {hw.studentId && hw.studentId !== 'all' ? `Indiv: ${hw.studentName}` : 'All students'}
                 </span>
               </div>
               {hw.description && <p className="text-xs text-[var(--theme-text-muted)] mt-0.5 line-clamp-2">{hw.description}</p>}
               {hw.deadline && (
                 <p className="text-xs text-orange-400 mt-1 font-semibold">
-                  ⏰ {new Date(hw.deadline).toLocaleString('uz-UZ')}
+                  ⏰ {new Date(hw.deadline).toLocaleString('en-US')}
                 </p>
               )}
             </div>
           </div>
           <div className="mt-3 flex items-center gap-2">
             <span className="text-xs text-[var(--theme-text-muted)]">
-              {(hw.submissions || []).length} ta topshirildi
+              {(hw.submissions || []).length} submitted
             </span>
             <button
               onClick={() => setViewSubmissions(viewSubmissions === hw.id ? null : hw.id)}
               className="ml-auto text-xs text-blue-400 font-semibold"
             >
-              {viewSubmissions === hw.id ? 'Yopish' : 'Ko\'rish'}
+              {viewSubmissions === hw.id ? 'Close' : 'View'}
             </button>
           </div>
 
@@ -1591,7 +1591,7 @@ const HomeworkTab = ({ teacher }: { teacher: UserProfile }) => {
                 className="overflow-hidden mt-3 pt-3 border-t border-[var(--theme-border)]"
               >
                 {(hw.submissions || []).length === 0 ? (
-                  <p className="text-xs text-[var(--theme-text-muted)] text-center py-3">Hali topshirilmagan</p>
+                  <p className="text-xs text-[var(--theme-text-muted)] text-center py-3">Not submitted yet</p>
                 ) : (
                   (hw.submissions || []).map(sub => (
                     <div key={sub.id} className="py-2 border-b border-[var(--theme-border)] last:border-0">

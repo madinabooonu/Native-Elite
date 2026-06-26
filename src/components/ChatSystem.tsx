@@ -107,7 +107,7 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ userProfile }) => {
       setUploadedImageUrl(url);
     } catch (err) {
       console.error("Chat image upload error:", err);
-      alert("Rasmni yuklashda xatolik yuz berdi. Qayta urinib ko'ring.");
+      alert("An error occurred while uploading the image. Please try again.");
     } finally {
       setIsUploadingImage(false);
     }
@@ -243,8 +243,8 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ userProfile }) => {
   };
 
   const roleLabels: Record<string, string> = {
-    'student': 'Talaba',
-    'teacher': 'O\'qituvchi',
+    'student': 'Student',
+    'teacher': 'Teacher',
     'admin': 'Admin',
     'super-admin': 'Super Admin',
   };
@@ -287,8 +287,8 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ userProfile }) => {
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-center">
               <div className="text-5xl mb-3">💬</div>
-              <p className="text-sm font-bold text-[var(--theme-text)]">{activeContact.displayName} bilan suhbat</p>
-              <p className="text-xs text-[var(--theme-text-muted)] mt-1">Birinchi xabar yuboring!</p>
+              <p className="text-sm font-bold text-[var(--theme-text)]">Chat with {activeContact.displayName}</p>
+              <p className="text-xs text-[var(--theme-text-muted)] mt-1">Send the first message!</p>
             </div>
           )}
 
@@ -350,7 +350,7 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ userProfile }) => {
                 )}
               </div>
               <span className="text-xs text-[var(--theme-text)] flex-1 truncate">
-                {imageFile.name} {isUploadingImage && <span className="text-blue-500 font-semibold">(Yuklanmoqda...)</span>}
+                {imageFile.name} {isUploadingImage && <span className="text-blue-500 font-semibold">(Uploading...)</span>}
               </span>
               <button 
                 onClick={() => { 
@@ -382,7 +382,7 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ userProfile }) => {
               value={inputText}
               onChange={e => setInputText(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-              placeholder="Xabar yozing..."
+              placeholder="Write a message..."
               rows={1}
               className="flex-1 bg-transparent text-sm text-[var(--theme-text)] placeholder-[var(--theme-text-muted)] resize-none outline-none max-h-24"
             />
@@ -420,7 +420,7 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ userProfile }) => {
           <input
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Foydalanuvchi qidirish..."
+            placeholder="Search user..."
             className="w-full pl-10 pr-4 py-3 bg-[var(--theme-card)] border border-[var(--theme-border)] rounded-2xl text-sm text-[var(--theme-text)] placeholder-[var(--theme-text-muted)] outline-none focus:border-blue-500 transition-colors"
           />
         </div>
@@ -431,14 +431,14 @@ export const ChatSystem: React.FC<ChatSystemProps> = ({ userProfile }) => {
         {filteredContacts.length === 0 && searchQuery && (
           <div className="text-center py-10 text-[var(--theme-text-muted)]">
             <div className="text-4xl mb-3">🔍</div>
-            <p className="text-sm">"{searchQuery}" topilmadi</p>
+            <p className="text-sm">"{searchQuery}" not found</p>
           </div>
         )}
 
         {filteredContacts.length === 0 && !searchQuery && (
           <div className="text-center py-16 text-[var(--theme-text-muted)]">
             <div className="text-5xl mb-3">👥</div>
-            <p className="text-sm font-bold text-[var(--theme-text)]">Foydalanuvchilar yuklanmoqda...</p>
+            <p className="text-sm font-bold text-[var(--theme-text)]">Loading users...</p>
           </div>
         )}
 
