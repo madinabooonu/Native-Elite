@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { AppButton } from '../components/UI';
+import logoImg from '../assets/logo.png';
 
 export const LandingPage = ({ onGetStarted }: { onGetStarted: () => void }) => {
   return (
@@ -11,10 +12,10 @@ export const LandingPage = ({ onGetStarted }: { onGetStarted: () => void }) => {
           <div className="absolute top-0 right-0 w-60 h-60 bg-brand-navy/5 rounded-full -mr-20 -mt-20 blur-3xl" />
           <div className="absolute bottom-0 left-0 w-40 h-40 bg-brand-navy/5 rounded-full -ml-10 -mb-10 blur-3xl" />
 
-          <div className="flex items-center gap-2 mb-10 relative z-10">
-            <svg width="36" height="36" viewBox="0 0 100 100" fill="none">
-              <path d="M25 75V25L75 75V25" stroke="#FFFFFF" strokeWidth="15" strokeLinecap="square" strokeLinejoin="miter" />
-            </svg>
+          <div className="flex items-center gap-3 mb-10 relative z-10">
+            <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-br from-blue-600 to-blue-900 flex items-center justify-center border border-white/10 shadow-md">
+              <img src={logoImg} alt="Logo" className="w-full h-full object-cover" />
+            </div>
             <span className="text-2xl font-bold tracking-tight">Native Elite</span>
           </div>
 

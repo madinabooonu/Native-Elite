@@ -3,6 +3,7 @@ import { db } from '../lib/firebase';
 import { collection, getDocs, query, where, doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import type { UserRole, UserProfile } from '../types';
 import { motion } from 'motion/react';
+import logoImg from '../assets/logo.png';
 
 interface AuthPageProps {
   onAuthSuccess: (profile: UserProfile) => void;
@@ -289,11 +290,9 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
             initial={{ scale: 0.8 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-            className="w-20 h-20 rounded-[28px] bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center shadow-2xl shadow-blue-500/30 mb-4"
+            className="w-24 h-24 rounded-3xl overflow-hidden flex items-center justify-center shadow-2xl mb-4 bg-gradient-to-br from-blue-600 to-blue-900 border border-blue-500/20"
           >
-            <svg width="40" height="40" viewBox="0 0 100 100" fill="none">
-              <path d="M25 75V25L75 75V25" stroke="#FFFFFF" strokeWidth="15" strokeLinecap="square" strokeLinejoin="miter" />
-            </svg>
+            <img src={logoImg} alt="Native Elite Logo" className="w-full h-full object-cover" />
           </motion.div>
           <h1 className="text-3xl font-extrabold text-[var(--theme-text)] tracking-tight">Native Elite</h1>
           <p className="text-[var(--theme-text-muted)] text-sm mt-1">IELTS Learning Platform</p>

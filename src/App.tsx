@@ -10,6 +10,7 @@ import { ChatSystem } from './components/ChatSystem';
 import { AISpeaking } from './components/AISpeaking';
 import { NewsFeed } from './components/NewsFeed';
 import { UserRole, UserProfile, BookingRecord, TimeSlot } from './types';
+import logoImg from './assets/logo.png';
 import { db } from './lib/firebase';
 import { doc, setDoc, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 
@@ -178,10 +179,8 @@ export default function App() {
           transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
           className="flex items-center gap-3"
         >
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center shadow-lg">
-            <svg width="28" height="28" viewBox="0 0 100 100" fill="none">
-              <path d="M25 75V25L75 75V25" stroke="#FFFFFF" strokeWidth="15" strokeLinecap="square" strokeLinejoin="miter" />
-            </svg>
+          <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-600 to-blue-900 flex items-center justify-center shadow-lg border border-blue-500/25">
+            <img src={logoImg} alt="Logo" className="w-full h-full object-cover" />
           </div>
           <span className="text-2xl font-bold text-[var(--theme-text)] tracking-tight">Native Elite</span>
         </motion.div>
