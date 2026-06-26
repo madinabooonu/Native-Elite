@@ -45,25 +45,25 @@ export const AppLayout = ({
 
   /* ── Tab configs by role ── */
   const studentTabs = [
-    { id: 'home', label: 'Bosh', icon: homeIcon },
-    { id: 'vocab', label: 'So\'z', icon: booksIcon },
+    { id: 'home', label: 'Home', icon: homeIcon },
+    { id: 'vocab', label: 'Vocab', icon: booksIcon },
     { id: 'feed', label: 'Feed', icon: feedIcon },
     { id: 'speaking', label: 'Speaking', icon: micIcon },
     { id: 'chat', label: 'Chat', icon: chatIcon },
-    { id: 'profile', label: 'Profil', icon: profileIcon },
+    { id: 'profile', label: 'Profile', icon: profileIcon },
   ];
   const teacherTabs = [
-    { id: 'home', label: 'Bosh', icon: homeIcon },
-    { id: 'attendance', label: 'Davomat', icon: checkIcon },
+    { id: 'home', label: 'Home', icon: homeIcon },
+    { id: 'attendance', label: 'Attendance', icon: checkIcon },
     { id: 'feed', label: 'Feed', icon: feedIcon },
     { id: 'chat', label: 'Chat', icon: chatIcon },
-    { id: 'profile', label: 'Profil', icon: profileIcon },
+    { id: 'profile', label: 'Profile', icon: profileIcon },
   ];
   const adminTabs = [
-    { id: 'home', label: 'Panel', icon: homeIcon },
+    { id: 'home', label: 'Home', icon: homeIcon },
     { id: 'feed', label: 'Feed', icon: feedIcon },
     { id: 'chat', label: 'Chat', icon: chatIcon },
-    { id: 'profile', label: 'Profil', icon: profileIcon },
+    { id: 'profile', label: 'Profile', icon: profileIcon },
   ];
 
   const tabs =
@@ -72,21 +72,21 @@ export const AppLayout = ({
     studentTabs;
 
   const titleMap: Record<string, string> = {
-    home: role === 'admin' || role === 'super-admin' ? 'Admin Panel' : role === 'teacher' ? 'Teacher Panel' : 'Bosh Sahifa',
+    home: role === 'admin' || role === 'super-admin' ? 'Admin Panel' : role === 'teacher' ? 'Teacher Panel' : 'Home',
     vocab: 'Vocabulary Stages',
-    chat: 'Xabarlar',
+    chat: 'Messages',
     feed: 'News Feed',
     speaking: 'AI Speaking',
-    profile: 'Profil',
-    attendance: 'Davomat',
+    profile: 'Profile',
+    attendance: 'Attendance',
   };
 
   const subtitleMap: Record<string, string> = {
-    home: role === 'admin' || role === 'super-admin' ? 'Tizimni boshqaring' : role === 'teacher' ? 'Talabalarni boshqaring' : 'Native Elite ga xush kelibsiz!',
-    vocab: 'Bosqichni tanlang',
-    chat: 'Barcha xabarlar',
-    feed: 'Dars jarayoni suratlari',
-    speaking: 'IELTS Speaking amaliyoti',
+    home: role === 'admin' || role === 'super-admin' ? 'Manage the system' : role === 'teacher' ? 'Manage your students' : 'Welcome to Native Elite!',
+    vocab: 'Select stage',
+    chat: 'All messages',
+    feed: 'Class session photos',
+    speaking: 'IELTS Speaking practice',
   };
 
   return (

@@ -40,11 +40,18 @@ function getCurrentWeekDays() {
   return Array.from({ length: 7 }, (_, i) => {
     const d = new Date(monday);
     d.setDate(monday.getDate() + i);
+    
+    // Timezone-safe local date YYYY-MM-DD
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const date = String(d.getDate()).padStart(2, '0');
+    const fullDate = `${year}-${month}-${date}`;
+
     return {
       day: dayNames[i],
       date: d.getDate(),
       month: monthNames[d.getMonth()],
-      fullDate: d.toISOString().split('T')[0],
+      fullDate,
       dayOfWeek: i,
     };
   });
@@ -129,7 +136,7 @@ export const BookingCalendar = ({
   allBookings = [],
   userProfile,
 }: {
-  onBookSlot?: (slot: TimeSlot) => void;
+  onBookSlot?: (slot: TimeSlot, fullName?: string, stage?: string, teacherName?: string) => void;
   activeBooking?: BookingRecord | null;
   allBookings?: BookingRecord[];
   userProfile?: any;
@@ -179,8 +186,9 @@ export const BookingCalendar = ({
 
   const isDayDisabled = (fullDate: string): boolean => {
     if (hasActiveBooking) return true;
-    const today = new Date().toISOString().split('T')[0];
-    return fullDate < today;
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+    return fullDate < todayStr;
   };
 
   const handleSelectDay = (day: string, fullDate: string) => {
@@ -330,8 +338,8 @@ export const BookingCalendar = ({
               setShowBookingForm(false);
               setSelectedSlot(null);
             }}
-            onConfirm={() => {
-              if (onBookSlot) onBookSlot(selectedSlot);
+            onConfirm={(fullName: string, stage: string, teacherName: string) => {
+              if (onBookSlot) onBookSlot(selectedSlot, fullName, stage, teacherName);
               setShowBookingForm(false);
               setSelectedSlot(null);
             }}
@@ -354,7 +362,7 @@ const BookingFormModal = ({ slot, teacher, userProfile, onClose, onConfirm }: an
     setIsSubmitting(true);
     await new Promise((r) => setTimeout(r, 1200));
     setSuccess(true);
-    setTimeout(() => onConfirm(), 1500);
+    setTimeout(() => onConfirm(fullName, stage, mainTeacher), 1500);
   };
 
   return (
@@ -439,7 +447,7 @@ const BookingFormModal = ({ slot, teacher, userProfile, onClose, onConfirm }: an
 
                 <button
                   onClick={onClose}
-                  className="w-full h-14 rounded-2xl bg-brand-navy border-2 border-blue-100 text-blue-900 font-bold flex items-center justify-center gap-3 active:bg-gray-50 transition-all"
+                  className="w-full h-14 rounded-2xl bg-transparent border-2 border-white/20 text-white font-bold flex items-center justify-center gap-3 hover:bg-white/5 active:bg-white/10 transition-all"
                 >
                   <div className="w-6 h-6 rounded-full border-2 border-blue-200 flex items-center justify-center text-blue-400">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>

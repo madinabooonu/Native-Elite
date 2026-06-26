@@ -18,7 +18,7 @@ export const StudentHome = ({
   userProfile: any,
   activeBooking?: BookingRecord | null,
   allBookings?: BookingRecord[],
-  onBookSlot?: (slot: TimeSlot) => void
+  onBookSlot?: (slot: TimeSlot, fullName?: string, stage?: string, teacherName?: string) => void
 }) => {
   const [activeSubTab, setActiveSubTab] = useState('schedule');
 
@@ -54,7 +54,7 @@ const MyBookingsView = ({ studentBookings = [] }: { studentBookings: BookingReco
     <div className="px-4 md:px-6 pt-4 space-y-3">
       <h3 className="text-sm font-bold text-white italic">Your Active Sessions</h3>
       {studentBookings.length === 0 ? (
-        <div className="text-center py-12 text-brand-text-light text-sm bg-brand-navy rounded-2xl border-2 border-dashed border-brand-blue/30">Hali darslar band qilinmagan.</div>
+        <div className="text-center py-12 text-brand-text-light text-sm bg-brand-navy rounded-2xl border-2 border-dashed border-brand-blue/30">No lessons booked yet.</div>
       ) : (
         studentBookings.map((b) => (
           <Card key={b.id} className="p-4 flex items-center gap-4 rounded-2xl border-none shadow-sm hover:shadow-md transition-shadow">

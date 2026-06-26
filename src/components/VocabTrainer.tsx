@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
 import { STAGES } from '../lib/constants';
@@ -39,12 +39,12 @@ const TOPICS: Topic[] = [
         id: 'all-about-me', name: 'All About Me', emoji: '🤩',
         words: [
             { id: 'w1', word: 'outgoing', definition: 'Friendly and socially confident', translation: "ochiq ko'ngil", example: "She's very outgoing and loves meeting new people.", topic: 'All About Me' },
-            { id: 'w2', word: 'ambitious', definition: 'Having a strong desire to succeed', translation: 'shijoatli', example: 'He is ambitious about his career goals.', topic: 'All About Me' },
+            { id: 'w2', word: 'ambitious', definition: 'Having a strong desire to succeed', translation: "shijoatli", example: 'He is ambitious about his career goals.', topic: 'All About Me' },
             { id: 'w3', word: 'introvert', definition: 'A person who prefers solitude', translation: 'ichiga yopiq odam', example: "As an introvert, I enjoy quiet evenings at home.", topic: 'All About Me' },
             { id: 'w4', word: 'personality', definition: 'The combination of characteristics', translation: 'shaxsiyat', example: 'She has a wonderful personality.', topic: 'All About Me' },
             { id: 'w5', word: 'passionate', definition: 'Having strong feelings or beliefs', translation: 'ishtiyoqli', example: "I'm passionate about learning languages.", topic: 'All About Me' },
             { id: 'w6', word: 'easygoing', definition: 'Relaxed and casual', translation: 'oson keladigan', example: 'My teacher is very easygoing.', topic: 'All About Me' },
-            { id: 'w7', word: 'determined', definition: 'Firmly decided', translation: 'qat\'iyatli', example: 'She is determined to pass the IELTS exam.', topic: 'All About Me' },
+            { id: 'w7', word: 'determined', definition: 'Firmly decided', translation: "qat'iyatli", example: 'She is determined to pass the IELTS exam.', topic: 'All About Me' },
             { id: 'w8', word: 'self-confident', definition: 'Trusting in one\'s abilities', translation: "o'ziga ishongan", example: 'Speaking practice made me more self-confident.', topic: 'All About Me' },
             { id: 'w9', word: 'open-minded', definition: 'Willing to consider new ideas', translation: "keng fikrli", example: "Being open-minded helps you learn faster.", topic: 'All About Me' },
         ]
@@ -66,7 +66,7 @@ const TOPICS: Topic[] = [
     {
         id: 'small-talk', name: 'Small Talk', emoji: '💬',
         words: [
-            { id: 'w19', word: 'break the ice', definition: 'Start a conversation in a social setting', translation: 'muzni sindirmoq', example: 'A joke can help break the ice at parties.', topic: 'Small Talk' },
+            { id: 'w19', word: 'break the ice', definition: 'Boshlash a conversation in a social setting', translation: "muzni sindirmoq", example: 'A joke can help break the ice at parties.', topic: 'Small Talk' },
             { id: 'w20', word: 'How about you?', definition: 'Asking the same question back', translation: "Sizchi?", example: "I love coffee. How about you?", topic: 'Small Talk' },
             { id: 'w21', word: 'catch up', definition: 'Exchange news with someone', translation: "gaplashib olish", example: "Let's catch up over coffee.", topic: 'Small Talk' },
             { id: 'w22', word: 'small talk', definition: 'Light, casual conversation', translation: "yengil suhbat", example: 'Making small talk is an important social skill.', topic: 'Small Talk' },
@@ -77,7 +77,7 @@ const TOPICS: Topic[] = [
     {
         id: 'people-in-my-life', name: 'People in My Life', emoji: '👫',
         words: [
-            { id: 'w25', word: 'acquaintance', definition: 'Someone you know slightly', translation: 'tanish', example: "He's an acquaintance from work.", topic: 'People in My Life' },
+            { id: 'w25', word: 'acquaintance', definition: 'Someone you know slightly', translation: "tanish", example: "He's an acquaintance from work.", topic: 'People in My Life' },
             { id: 'w26', word: 'sibling', definition: 'A brother or sister', translation: "aka-uka/opa-singil", example: 'I have two siblings.', topic: 'People in My Life' },
             { id: 'w27', word: 'colleague', definition: 'A person you work with', translation: "hamkasb", example: 'My colleague helped me with the project.', topic: 'People in My Life' },
             { id: 'w28', word: 'close-knit', definition: 'Very united as a group', translation: "juda yaqin", example: "We have a close-knit family.", topic: 'People in My Life' },
@@ -97,7 +97,7 @@ const TOPICS: Topic[] = [
             { id: 'w37', word: 'procrastinate', definition: 'Delay doing something', translation: "kechiktirmoq", example: "I tend to procrastinate before exams.", topic: 'Job & Studies' },
             { id: 'w38', word: 'scholarship', definition: 'Financial aid for students', translation: "stipendiya", example: 'She received a full scholarship.', topic: 'Job & Studies' },
             { id: 'w39', word: 'promotion', definition: 'Advancement in position', translation: "lavozim ko'tarilishi", example: 'He got a promotion last month.', topic: 'Job & Studies' },
-            { id: 'w40', word: 'resign', definition: 'Voluntarily leave a job', translation: "iste\'fo berish", example: "She decided to resign from her position.", topic: 'Job & Studies' },
+            { id: 'w40', word: 'resign', definition: 'Voluntarily leave a job', translation: "iste'fo berish", example: "She decided to resign from her position.", topic: 'Job & Studies' },
             { id: 'w41', word: 'curriculum', definition: 'The subjects in a course', translation: "o'quv dasturi", example: "The curriculum includes many practical subjects.", topic: 'Job & Studies' },
         ]
     },
@@ -141,9 +141,9 @@ const TOPICS: Topic[] = [
             { id: 'w66', word: 'tuition', definition: 'Fees for education', translation: "o'qish to'lovi", example: 'University tuition is expensive.', topic: 'Education & Career' },
             { id: 'w67', word: 'graduate', definition: 'Complete a degree', translation: "bitiruvchi", example: "I'll graduate next year.", topic: 'Education & Career' },
             { id: 'w68', word: 'dropout', definition: 'Leave school without finishing', translation: "o'qishni tashlamoq", example: 'He was a college dropout but became successful.', topic: 'Education & Career' },
-            { id: 'w69', word: 'fluent', definition: 'Able to speak a language well', translation: "ravon", example: 'She is fluent in three languages.', topic: 'Education & Career' },
-            { id: 'w70', word: 'hands-on', definition: 'Practical, involving doing', translation: "amaliy", example: 'I prefer hands-on learning.', topic: 'Education & Career' },
-            { id: 'w71', word: 'extracurricular', definition: 'Outside the regular curriculum', translation: "darsdan tashqari", example: 'I participate in extracurricular activities.', topic: 'Education & Career' },
+            { id: 'w69', word: 'fluent', definition: 'Able to speak a language well', translation: "fluent and articulate", example: 'She is fluent in three languages.', topic: 'Education & Career' },
+            { id: 'w70', word: 'hands-on', definition: 'Practical, involving doing', translation: "hands-on / practical", example: 'I prefer hands-on learning.', topic: 'Education & Career' },
+            { id: 'w71', word: 'extracurricular', definition: 'Outside the regular curriculum', translation: "extracurricular / outside class", example: 'I participate in extracurricular activities.', topic: 'Education & Career' },
             { id: 'w72', word: 'networking', definition: 'Building professional contacts', translation: "aloqalar o'rnatish", example: 'Networking is key to career success.', topic: 'Education & Career' },
             { id: 'w73', word: 'mentor', definition: 'An experienced advisor', translation: "ustoz", example: 'My mentor guided me through my first job.', topic: 'Education & Career' },
             { id: 'w74', word: 'expertise', definition: 'Expert skill or knowledge', translation: "malaka", example: "She has expertise in digital marketing.", topic: 'Education & Career' },
@@ -168,7 +168,7 @@ const TOPICS: Topic[] = [
         id: 'money-spending', name: 'Money & Spending', emoji: '💰',
         words: [
             { id: 'w85', word: 'budget', definition: 'A plan for spending money', translation: "byudjet", example: 'I need to stick to my budget.', topic: 'Money & Spending' },
-            { id: 'w86', word: 'afford', definition: 'Have enough money for', translation: "ko\'ra olish", example: "I can't afford a new car right now.", topic: 'Money & Spending' },
+            { id: 'w86', word: 'afford', definition: 'Have enough money for', translation: "ko'ra olish", example: "I can't afford a new car right now.", topic: 'Money & Spending' },
             { id: 'w87', word: 'investment', definition: 'Money put into something for profit', translation: "investitsiya", example: 'Education is the best investment.', topic: 'Money & Spending' },
             { id: 'w88', word: 'bargain', definition: 'Something bought cheaply', translation: "arzon narx", example: 'I found a great bargain at the market.', topic: 'Money & Spending' },
             { id: 'w89', word: 'expense', definition: 'The cost of something', translation: "xarajat", example: 'Living expenses in the city are high.', topic: 'Money & Spending' },
@@ -210,7 +210,7 @@ export const VocabTrainer = () => {
           Native Elite
         </span>
         <h1 className="text-2xl font-black text-[var(--theme-text)]">
-          Vocabulary <span className="text-blue-400">Stages</span>
+          Vocabulary <span className="text-blue-400">Bosqichlar</span>
         </h1>
         <p className="text-[var(--theme-text-muted)] text-xs mt-1">Bosqichni tanlang va so'z o'rganing</p>
       </div>
@@ -458,14 +458,14 @@ const VocabTrainerCore = ({ filteredTopicIds, stageLabel, onBack }: {
                     </div>
                 </div>
 
-                {/* Start Button */}
+                {/* Boshlash Button */}
                 <div className="px-4 mt-8">
                     <button
                         onClick={startTraining}
                         disabled={selectedTopics.length === 0}
                         className="w-full py-4 rounded-2xl bg-brand-blue-light text-[#0a1628] font-extrabold text-base transition-all hover:bg-brand-blue-light disabled:opacity-30 disabled:cursor-not-allowed shadow-xl shadow-brand-blue-light/20"
                     >
-                        Start Training
+                        Boshlash Training
                     </button>
                 </div>
             </div>

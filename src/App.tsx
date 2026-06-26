@@ -45,17 +45,17 @@ export default function App() {
     ? allBookings.find(b => b.studentId === userProfile.uid && (b.status === 'pending' || b.status === 'confirmed'))
     : null;
 
-  const handleBookSlot = async (slot: TimeSlot) => {
+  const handleBookSlot = async (slot: TimeSlot, fullName?: string, stage?: string, teacherName?: string) => {
     if (!userProfile) return;
     try {
       const bookingId = `book_${Date.now()}`;
       const newBooking = {
         slotId: slot.id,
         studentId: userProfile.uid,
-        studentName: userProfile.displayName,
-        studentStage: userProfile.stage || 'stage1',
+        studentName: fullName || userProfile.displayName,
+        studentStage: stage || userProfile.stage || 'stage1',
         teacherId: slot.teacherId,
-        teacherName: slot.teacherName,
+        teacherName: teacherName || slot.teacherName,
         day: slot.day,
         dayDate: slot.dayDate,
         fullDate: slot.fullDate,

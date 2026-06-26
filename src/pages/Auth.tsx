@@ -195,7 +195,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
       const snap = await getDocs(q);
 
       if (snap.empty) {
-        setError('Foydalanuvchi topilmadi. Username noto\'g\'ri.');
+        setError('User not found. Incorrect username.');
         return;
       }
 
@@ -203,7 +203,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
       const userData = userDoc.data();
 
       if (userData.password !== inputPassword) {
-        setError('Password noto\'g\'ri. Iltimos qayta urinib ko\'ring.');
+        setError('Incorrect password. Please try again.');
         return;
       }
 
@@ -230,7 +230,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
       onAuthSuccess(profile);
     } catch (err: any) {
       console.error('Login error:', err);
-      setError(`Xatolik yuz berdi: ${err.code || ''} - ${err.message || err}`);
+      setError(`An error occurred: ${err.code || ''} - ${err.message || err}`);
     } finally {
       setIsLoading(false);
     }
@@ -302,8 +302,8 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
         {/* Card */}
         <div className="bg-[var(--theme-card)] rounded-3xl shadow-2xl overflow-hidden border border-[var(--theme-border)]">
           <div className="px-8 pt-8 pb-2">
-            <h2 className="text-xl font-bold text-[var(--theme-text)]">Kirish</h2>
-            <p className="text-sm text-[var(--theme-text-muted)] mt-1">Username va parolingizni kiriting</p>
+            <h2 className="text-xl font-bold text-[var(--theme-text)]">Sign In</h2>
+            <p className="text-sm text-[var(--theme-text-muted)] mt-1">Enter your username and password</p>
           </div>
 
           <form onSubmit={handleLogin} className="px-8 pb-8 pt-4 space-y-4">
@@ -341,7 +341,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
                   type="text"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  placeholder="username kiriting"
+                  placeholder="Enter username"
                   autoCapitalize="none"
                   autoComplete="username"
                   className="w-full pl-11 pr-4 py-3.5 bg-[var(--theme-bg)] border-2 border-[var(--theme-border)] rounded-2xl text-[var(--theme-text)] placeholder-[var(--theme-text-muted)] text-sm font-medium focus:outline-none focus:border-blue-500 transition-colors"
@@ -351,7 +351,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
 
             {/* Password */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[var(--theme-text-muted)] uppercase tracking-wider">Parol</label>
+              <label className="text-xs font-bold text-[var(--theme-text-muted)] uppercase tracking-wider">Password</label>
               <div className="relative">
                 <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--theme-text-muted)]">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
@@ -360,7 +360,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="parol kiriting"
+                  placeholder="Enter password"
                   autoComplete="current-password"
                   className="w-full pl-11 pr-12 py-3.5 bg-[var(--theme-bg)] border-2 border-[var(--theme-border)] rounded-2xl text-[var(--theme-text)] placeholder-[var(--theme-text-muted)] text-sm font-medium focus:outline-none focus:border-blue-500 transition-colors"
                 />
@@ -387,24 +387,24 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
               {isLoading ? (
                 <>
                   <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Kirilmoqda...
+                  Logging in...
                 </>
               ) : (
                 <>
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
-                  Kirish
+                  Log In
                 </>
               )}
             </button>
 
             <p className="text-center text-xs text-[var(--theme-text-muted)] pt-2">
-              Ro'yxatdan o'tish faqat Admin orqali amalga oshiriladi
+              Registration is only handled by the Administrator
             </p>
           </form>
 
           {/* Quick Login Section */}
           <div className="px-8 pb-6 border-t border-[var(--theme-border)] pt-4 bg-[var(--theme-card-alt)]">
-            <p className="text-xs font-bold text-[var(--theme-text-muted)] uppercase tracking-wider mb-2.5 text-center">Tezkor kirish (Quick Login)</p>
+            <p className="text-xs font-bold text-[var(--theme-text-muted)] uppercase tracking-wider mb-2.5 text-center">Quick Login</p>
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
@@ -431,7 +431,7 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
           </div>
         </div>
 
-        <p className="text-center text-[var(--theme-text-muted)] text-xs mt-6">© 2026 Native Elite • Barcha huquqlar himoyalangan</p>
+        <p className="text-center text-[var(--theme-text-muted)] text-xs mt-6">© 2026 Native Elite • All rights reserved</p>
       </motion.div>
     </div>
   );

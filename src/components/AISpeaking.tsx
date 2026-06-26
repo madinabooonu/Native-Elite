@@ -128,33 +128,146 @@ const AI_QUESTIONS: Record<string, string[]> = {
     ],
 };
 
-// ── Feedback Generator ──
-const generateFeedback = (text: string): FeedbackData => {
-    const wordCount = text.split(/\s+/).length;
-    const hasComplex = /although|however|moreover|furthermore|nevertheless|consequently/i.test(text);
-    const hasSophisticatedVocab = /significant|considerable|fascinating|remarkable|perspective|contribute/i.test(text);
+// ── Local Fallback Feedback Generator ──
+const generateLocalFeedback = (text: string): FeedbackData => {
+    const trimmed = text.trim();
+    if (!trimmed) {
+        return {
+            grammar: 1.0,
+            vocabulary: 1.0,
+            fluency: 1.0,
+            pronunciation: 1.0,
+            band: 1.0,
+            suggestions: ['Please try to speak clearly into the microphone.']
+        };
+    }
+
+    const words = trimmed.split(/\s+/).filter(w => w.length > 0);
+    const wordCount = words.length;
+    const hasComplex = /although|however|moreover|furthermore|nevertheless|consequently|whereas|in order to|as a result/i.test(text);
+    const hasSophisticatedVocab = /significant|considerable|fascinating|remarkable|perspective|contribute|beneficial|challenge|consequence|impact|society|essential/i.test(text);
     const sentenceCount = text.split(/[.!?]+/).filter(s => s.trim()).length;
 
-    let grammar = Math.min(5 + (sentenceCount > 2 ? 1 : 0) + (hasComplex ? 1.5 : 0), 9);
-    let vocabulary = Math.min(4.5 + (wordCount > 20 ? 1 : 0) + (hasSophisticatedVocab ? 1.5 : 0) + (wordCount > 40 ? 0.5 : 0), 9);
-    let fluency = Math.min(4.5 + (wordCount > 15 ? 1 : 0) + (wordCount > 30 ? 1 : 0) + (sentenceCount > 3 ? 0.5 : 0), 9);
-    let pronunciation = Math.min(5.5 + Math.random() * 1.5, 9);
+    // Strict base scoring based on length/verbosity
+    let baseScore = 2.0;
+    if (wordCount > 45) baseScore = 6.5;
+    else if (wordCount > 30) baseScore = 5.5;
+    else if (wordCount > 18) baseScore = 4.5;
+    else if (wordCount > 8) baseScore = 3.5;
+    else if (wordCount > 3) baseScore = 2.5;
 
-    grammar = Math.round((grammar + (Math.random() * 0.5 - 0.25)) * 2) / 2;
-    vocabulary = Math.round((vocabulary + (Math.random() * 0.5 - 0.25)) * 2) / 2;
-    fluency = Math.round((fluency + (Math.random() * 0.5 - 0.25)) * 2) / 2;
-    pronunciation = Math.round(pronunciation * 2) / 2;
+    // Criteria specific additions/subtractions
+    let grammar = baseScore + (sentenceCount > 2 ? 0.5 : 0) + (hasComplex ? 1.0 : -0.5);
+    let vocabulary = baseScore + (hasSophisticatedVocab ? 1.0 : -0.5);
+    let fluency = baseScore + (wordCount > 30 ? 0.5 : -0.5) + (sentenceCount > 2 ? 0.5 : -0.5);
+    let pronunciation = baseScore + (Math.random() * 1.0 - 0.5); // Random variation within standard range
+
+    // Limit criteria to standard IELTS bounds [1.0, 9.0]
+    const clamp = (val: number) => Math.max(1, Math.min(9, Math.round(val * 2) / 2));
+
+    grammar = clamp(grammar);
+    vocabulary = clamp(vocabulary);
+    fluency = clamp(fluency);
+    pronunciation = clamp(pronunciation);
 
     const band = Math.round(((grammar + vocabulary + fluency + pronunciation) / 4) * 2) / 2;
 
     const suggestions: string[] = [];
-    if (wordCount < 20) suggestions.push('Try to elaborate more on your answers with examples.');
-    if (!hasComplex) suggestions.push('Use linking words like "however", "moreover", "although" for cohesion.');
-    if (!hasSophisticatedVocab) suggestions.push('Include more advanced vocabulary relevant to the topic.');
-    if (sentenceCount < 3) suggestions.push('Structure your response with multiple sentences for clarity.');
-    if (suggestions.length === 0) suggestions.push('Excellent response! Keep practicing to maintain consistency.');
+    if (wordCount < 15) suggestions.push('Your answer is quite short. Try to elaborate more and speak for at least 3-4 sentences.');
+    if (!hasComplex) suggestions.push('Use linking words (e.g., "however", "on the other hand", "consequently") to make your speech flow naturally.');
+    if (!hasSophisticatedVocab) suggestions.push('Try using more advanced vocabulary (e.g., "crucial" instead of "important", "beneficial" instead of "good").');
+    if (sentenceCount < 3) suggestions.push('Structure your answer with an introduction, details, and a conclusion for better cohesion.');
+    if (suggestions.length === 0) suggestions.push('Excellent answer! Keep using complex structures and precise vocabulary.');
 
     return { grammar, vocabulary, fluency, pronunciation, band, suggestions };
+};
+
+// ── Gemini API Speaking Evaluator ──
+const fetchGeminiFeedback = async (question: string, userText: string, part: SpeakingPart): Promise<FeedbackData> => {
+    const apiKey = (process.env.GEMINI_API_KEY || '').trim();
+    if (!apiKey || apiKey === 'MY_GEMINI_API_KEY') {
+        console.warn('Gemini API key is not set. Using strict local fallback.');
+        return generateLocalFeedback(userText);
+    }
+
+    try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                contents: [
+                    {
+                        parts: [
+                            {
+                                text: `You are an expert IELTS Speaking examiner.
+Evaluate this student's response to the speaking question.
+
+Speaking Part: ${part}
+Question: "${question}"
+Student Response: "${userText}"
+
+Provide a realistic, strict IELTS band score evaluation. Be critical and honest. A short response or a response with poor grammar/vocabulary should receive a low band (e.g., Band 2.0 to 4.5).
+Rate each of the following four criteria from 1.0 to 9.0 (in increments of 0.5):
+1. grammar (Grammatical Range and Accuracy)
+2. vocabulary (Lexical Resource)
+3. fluency (Fluency and Coherence)
+4. pronunciation (rate based on transcription flow, phrasing, and complexity)
+
+Also calculate the overall band score (the average of the 4 scores, rounded to the nearest 0.5 band).
+Provide 2-3 specific suggestions for improvement in English.
+
+Return ONLY a valid JSON object in this exact format, with no markdown formatting or extra text:
+{
+  "grammar": number,
+  "vocabulary": number,
+  "fluency": number,
+  "pronunciation": number,
+  "band": number,
+  "suggestions": string[]
+}`
+                            }
+                        ]
+                    }
+                ],
+                generationConfig: {
+                    responseMimeType: "application/json"
+                }
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const responseText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!responseText) {
+            throw new Error('Empty response from Gemini API');
+        }
+
+        const feedback: FeedbackData = JSON.parse(responseText.trim());
+        
+        // Ensure values are within expected IELTS range
+        const clamp = (val: any) => {
+            const num = parseFloat(val);
+            return isNaN(num) ? 5.0 : Math.max(1, Math.min(9, Math.round(num * 2) / 2));
+        };
+        
+        return {
+            grammar: clamp(feedback.grammar),
+            vocabulary: clamp(feedback.vocabulary),
+            fluency: clamp(feedback.fluency),
+            pronunciation: clamp(feedback.pronunciation),
+            band: clamp(feedback.band),
+            suggestions: Array.isArray(feedback.suggestions) ? feedback.suggestions.map(s => String(s)) : ['Try to elaborate more on your answers with examples.']
+        };
+    } catch (error) {
+        console.error('Error fetching Gemini feedback:', error);
+        return generateLocalFeedback(userText);
+    }
 };
 
 // ── Format time ──
@@ -290,6 +403,7 @@ export const AISpeaking = () => {
     const [showTranscript, setShowTranscript] = useState(false);
     const [statusText, setStatusText] = useState('Starting...');
     const [allFeedbacks, setAllFeedbacks] = useState<FeedbackData[]>([]);
+    const [isEvaluating, setIsEvaluating] = useState(false);
 
     const recognitionRef = useRef<any>(null);
     const timerRef = useRef<any>(null);
@@ -326,13 +440,15 @@ export const AISpeaking = () => {
             let finalTranscript = '';
             let interimTranscript = '';
             for (let i = 0; i < event.results.length; i++) {
+                const text = event.results[i][0].transcript;
                 if (event.results[i].isFinal) {
-                    finalTranscript += event.results[i][0].transcript + ' ';
+                    finalTranscript += text + ' ';
                 } else {
-                    interimTranscript += event.results[i][0].transcript;
+                    interimTranscript += text;
                 }
             }
-            setTranscript(finalTranscript || interimTranscript);
+            // Real-time subtitle combination of final + active words
+            setTranscript((finalTranscript + interimTranscript).trim());
         };
 
         recognition.onerror = (event: any) => {
@@ -423,7 +539,17 @@ export const AISpeaking = () => {
 
         stopListening();
         const userText = transcript.trim();
-        const feedback = generateFeedback(userText);
+        
+        setIsEvaluating(true);
+        setStatusText('AI Examiner is analyzing your response...');
+
+        const questions = AI_QUESTIONS[selectedTopic] || [];
+        const currentQuestion = questions[currentQIdx] || "IELTS Speaking Practice";
+
+        // Query Gemini API (or local fallback)
+        const feedback = await fetchGeminiFeedback(currentQuestion, userText, selectedPart);
+        
+        setIsEvaluating(false);
 
         // Add user message
         const userMsg: Message = {
@@ -437,7 +563,6 @@ export const AISpeaking = () => {
         setTranscript('');
 
         // Get next AI question
-        const questions = AI_QUESTIONS[selectedTopic] || [];
         const nextIdx = currentQIdx + 1;
 
         if (nextIdx < questions.length) {
@@ -454,7 +579,7 @@ export const AISpeaking = () => {
             setStatusText('Session complete!');
             setTimeout(() => endSession(), 1500);
         }
-    }, [transcript, selectedTopic, currentQIdx, speakText, startListening, stopListening]);
+    }, [transcript, selectedTopic, currentQIdx, selectedPart, speakText, startListening, stopListening, endSession]);
 
     // ── End session ──
     const endSession = useCallback(() => {
@@ -525,6 +650,39 @@ export const AISpeaking = () => {
                     <p className="text-gray-400 text-xs mt-1">Practice with AI examiner using your voice</p>
                 </div>
 
+                {/* ── Practice Speaking (Sesame.com) ── */}
+                <div className="px-4 mb-6">
+                    <div className="relative overflow-hidden rounded-2xl border border-brand-blue-light/30 bg-gradient-to-br from-[#0d1f38] via-[#11294a] to-[#0d1f38] p-5 shadow-lg shadow-blue-950/40">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-brand-blue-light/10 rounded-full blur-2xl animate-pulse" />
+                        <div className="relative">
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                </span>
+                                <span className="text-[10px] font-bold text-brand-blue-light uppercase tracking-wider">Live Practice</span>
+                            </div>
+                            <h3 className="text-base font-bold text-white mb-1">Practice with Sesame AI</h3>
+                            <p className="text-xs text-gray-400 mb-4 leading-relaxed">
+                                Join a real-time voice conversation with an AI examiner. Practice realistic IELTS Speaking on Sesame.com.
+                            </p>
+                            <a
+                                href="https://app.sesame.com"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-brand-blue-light to-teal-400 text-[#0a1628] text-xs font-bold rounded-xl hover:shadow-lg hover:shadow-brand-blue-light/20 transition-all active:scale-[0.97]"
+                            >
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                                    <polyline points="15 3 21 3 21 9"/>
+                                    <line x1="10" y1="14" x2="21" y2="3"/>
+                                </svg>
+                                Start Live Practice
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Part Selector */}
                 <div className="flex gap-2 px-4 mb-5">
                     {(['part1', 'part2', 'part3'] as const).map(part => (
@@ -580,36 +738,6 @@ export const AISpeaking = () => {
                         </motion.button>
                     ))}
                 </div>
-
-                {/* ── Practice Speaking (Sesame.com) ── */}
-                <div className="px-4 mt-6 mb-4">
-                  <div className="relative overflow-hidden rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-900/30 to-purple-900/20 p-5">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl" />
-                    <div className="relative">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-2xl">🎙️</span>
-                        <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">Live Practice</span>
-                      </div>
-                      <h3 className="text-base font-bold text-white mb-1">Sesame AI bilan mashq qiling</h3>
-                      <p className="text-xs text-gray-400 mb-4 leading-relaxed">
-                        Real AI examiner bilan jonli suhbat. Sesame.com saytida real-time ovozli speaking practice qiling.
-                      </p>
-                      <a
-                        href="https://app.sesame.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-500 text-white text-sm font-bold rounded-xl hover:bg-blue-400 transition-all active:scale-[0.97]"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                          <polyline points="15 3 21 3 21 9"/>
-                          <line x1="10" y1="14" x2="21" y2="3"/>
-                        </svg>
-                        Sesame.com'ni ochish
-                      </a>
-                    </div>
-                  </div>
-                </div>
             </div>
         );
     }
@@ -632,16 +760,33 @@ export const AISpeaking = () => {
                     </motion.div>
                 </div>
 
-                {/* Main area — Voice Orb */}
+                {/* Main area — Voice Orb or Evaluation spinner */}
                 <div className="flex-1 flex flex-col items-center justify-center px-4 -mt-8">
-                    <VoiceOrb isActive={true} isSpeaking={isAiSpeaking || isListening} />
+                    {isEvaluating ? (
+                        <div className="relative flex flex-col items-center justify-center">
+                            {/* Premium pulse loading rings */}
+                            <motion.div
+                                animate={{ scale: [1, 1.3, 1], opacity: [0.3, 0.6, 0.3] }}
+                                transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+                                className="absolute w-36 h-36 rounded-full bg-brand-blue-light/10 border border-brand-blue-light/30"
+                            />
+                            <div className="w-32 h-32 rounded-full bg-gradient-to-br from-brand-blue-light/20 via-blue-900/30 to-teal-500/20 flex items-center justify-center relative z-10 border border-brand-blue-light/20 backdrop-blur-md">
+                                <svg className="animate-spin h-10 w-10 text-brand-blue-light" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    ) : (
+                        <VoiceOrb isActive={true} isSpeaking={isAiSpeaking || isListening} />
+                    )}
 
                     {/* Status text */}
                     <motion.p
                         key={statusText}
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        className="mt-8 text-xs text-gray-400 font-medium"
+                        className="mt-8 text-xs text-gray-400 font-medium text-center max-w-[80%]"
                     >
                         {statusText}
                     </motion.p>
@@ -664,8 +809,8 @@ export const AISpeaking = () => {
                         )}
                     </AnimatePresence>
 
-                    {/* Submit button (visible when there's transcript) */}
-                    {transcript.trim().length > 10 && (
+                    {/* Submit button (visible when there's transcript and not evaluating) */}
+                    {transcript.trim().length > 5 && !isEvaluating && (
                         <motion.button
                             initial={{ opacity: 0, scale: 0.9 }}
                             animate={{ opacity: 1, scale: 1 }}
@@ -678,7 +823,7 @@ export const AISpeaking = () => {
                     )}
 
                     {/* Recent feedback (last response) */}
-                    {allFeedbacks.length > 0 && (
+                    {allFeedbacks.length > 0 && !isEvaluating && (
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
@@ -694,10 +839,11 @@ export const AISpeaking = () => {
 
                 {/* Bottom Controls — Sesame style pill */}
                 <div className="pb-24 pt-4 px-4">
-                    <div className="flex items-center justify-center gap-4">
+                    <div className={cn("flex items-center justify-center gap-4 transition-opacity", isEvaluating && "opacity-50 pointer-events-none")}>
                         {/* Show/hide transcript */}
                         <button
                             onClick={() => setShowTranscript(!showTranscript)}
+                            disabled={isEvaluating}
                             className={cn(
                                 'w-12 h-12 rounded-full flex items-center justify-center transition-all border',
                                 showTranscript
@@ -713,6 +859,7 @@ export const AISpeaking = () => {
                         {/* Mute */}
                         <button
                             onClick={toggleMute}
+                            disabled={isEvaluating}
                             className={cn(
                                 'w-14 h-14 rounded-full flex items-center justify-center transition-all',
                                 isMuted
@@ -741,6 +888,7 @@ export const AISpeaking = () => {
                         {/* End Call */}
                         <button
                             onClick={endSession}
+                            disabled={isEvaluating}
                             className="h-14 px-6 rounded-full bg-red-500/15 text-red-400 border border-red-500/25 flex items-center gap-2 hover:bg-red-500/25 transition-all"
                         >
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
