@@ -173,16 +173,21 @@ export default function App() {
   // ── Loading screen ──
   if (isLoading) {
     return (
-      <div className="h-screen w-screen flex flex-col items-center justify-center gap-6" style={{ background: 'var(--theme-bg)' }}>
+      <div className="h-screen w-screen flex flex-col items-center justify-center gap-4" style={{ background: 'var(--theme-bg)' }}>
         <motion.div
-          animate={{ scale: [0.95, 1.02, 0.95] }}
-          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-          className="w-56 h-auto flex flex-col items-center justify-center"
+          animate={{ scale: [1, 1.05, 1] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+          className="flex items-center gap-3"
         >
-          <img src={logoImg} alt="Native Elite" className="w-full h-auto object-contain rounded-2xl shadow-2xl border border-blue-500/10 mb-2" />
-          <p className="text-[var(--theme-text-muted)] text-[10px] uppercase tracking-widest font-black animate-pulse mt-2">Yuklanmoqda...</p>
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#001040] via-[#002060] to-[#003080] flex items-center justify-center shadow-lg border border-blue-500/25">
+            <svg width="28" height="28" viewBox="0 0 100 100" fill="none">
+              <path d="M30 70V30L42 42" stroke="#FFFFFF" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M70 30V70L58 58" stroke="#FFFFFF" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <span className="text-2xl font-bold text-[var(--theme-text)] tracking-tight">Native Elite</span>
         </motion.div>
-        <div className="w-6 h-6 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+        <div className="w-8 h-8 border-3 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
       </div>
     );
   }

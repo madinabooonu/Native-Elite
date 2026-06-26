@@ -12,8 +12,14 @@ export const LandingPage = ({ onGetStarted }: { onGetStarted: () => void }) => {
           <div className="absolute top-0 right-0 w-60 h-60 bg-brand-navy/5 rounded-full -mr-20 -mt-20 blur-3xl" />
           <div className="absolute bottom-0 left-0 w-40 h-40 bg-brand-navy/5 rounded-full -ml-10 -mb-10 blur-3xl" />
 
-          <div className="mb-10 relative z-10 flex justify-start">
-            <img src={logoImg} alt="Native Elite Logo" className="h-16 w-auto object-contain rounded-xl border border-white/10 shadow-lg" />
+          <div className="flex items-center gap-3 mb-10 relative z-10">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#001040] via-[#002060] to-[#003080] flex items-center justify-center border border-white/10 shadow-md">
+              <svg width="20" height="20" viewBox="0 0 100 100" fill="none">
+                <path d="M30 70V30L42 42" stroke="#FFFFFF" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M70 30V70L58 58" stroke="#FFFFFF" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </div>
+            <span className="text-2xl font-bold tracking-tight">Native Elite</span>
           </div>
 
           <motion.h1

@@ -285,16 +285,20 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
         className="w-full max-w-[400px] relative z-10"
       >
         {/* Logo */}
-        <div className="flex flex-col items-center mb-8">
+        <div className="flex flex-col items-center mb-10">
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 120 }}
-            className="w-48 h-auto flex items-center justify-center mb-2"
+            className="w-24 h-24 rounded-[28px] bg-gradient-to-br from-[#001040] via-[#002060] to-[#003080] flex items-center justify-center shadow-2xl shadow-blue-900/30 mb-4 border border-blue-500/20"
           >
-            <img src={logoImg} alt="Native Elite Logo" className="w-full h-auto object-contain rounded-2xl shadow-xl shadow-blue-950/40 border border-blue-500/10" />
+            <svg width="48" height="48" viewBox="0 0 100 100" fill="none">
+              <path d="M30 70V30L42 42" stroke="#FFFFFF" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M70 30V70L58 58" stroke="#FFFFFF" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </motion.div>
-          <p className="text-[var(--theme-text-muted)] text-[10px] uppercase tracking-widest font-black mt-2">IELTS Learning Platform</p>
+          <h1 className="text-3xl font-extrabold text-[var(--theme-text)] tracking-tight">Native Elite</h1>
+          <p className="text-[var(--theme-text-muted)] text-sm mt-1">IELTS Learning Platform</p>
         </div>
 
         {/* Card */}
