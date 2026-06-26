@@ -585,6 +585,15 @@ export const AISpeaking = () => {
         }
     }, [speakText, startListening]);
 
+    // ── End session ──
+    const endSession = useCallback(() => {
+        stopListening();
+        window.speechSynthesis.cancel();
+        if (timerRef.current) clearInterval(timerRef.current);
+        setSessionState('summary');
+        setIsAiSpeaking(false);
+    }, [stopListening]);
+
     // ── Submit user's spoken response ──
     const submitResponse = useCallback(async () => {
         if (!transcript.trim() || !selectedTopic) return;
@@ -632,15 +641,6 @@ export const AISpeaking = () => {
             setTimeout(() => endSession(), 1500);
         }
     }, [transcript, selectedTopic, currentQIdx, selectedPart, speakText, startListening, stopListening, endSession]);
-
-    // ── End session ──
-    const endSession = useCallback(() => {
-        stopListening();
-        window.speechSynthesis.cancel();
-        if (timerRef.current) clearInterval(timerRef.current);
-        setSessionState('summary');
-        setIsAiSpeaking(false);
-    }, [stopListening]);
 
     // ── Toggle mute ──
     const toggleMute = useCallback(() => {
