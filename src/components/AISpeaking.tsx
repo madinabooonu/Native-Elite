@@ -182,9 +182,21 @@ const generateLocalFeedback = (text: string): FeedbackData => {
     return { grammar, vocabulary, fluency, pronunciation, band, suggestions };
 };
 
+// ── Safe API Key Retrieval ──
+const getGeminiApiKey = (): string => {
+    try {
+        if (typeof process !== 'undefined' && process.env) {
+            return (process.env.GEMINI_API_KEY || '').trim();
+        }
+    } catch (e) {
+        // Safe catch-all fallback
+    }
+    return '';
+};
+
 // ── Gemini API Speaking Evaluator ──
 const fetchGeminiFeedback = async (question: string, userText: string, part: SpeakingPart): Promise<FeedbackData> => {
-    const apiKey = (process.env.GEMINI_API_KEY || '').trim();
+    const apiKey = getGeminiApiKey();
     if (!apiKey || apiKey === 'MY_GEMINI_API_KEY') {
         console.warn('Gemini API key is not set. Using strict local fallback.');
         return generateLocalFeedback(userText);
@@ -482,31 +494,66 @@ export const AISpeaking = () => {
     // ── Speech Synthesis ──
     const speakText = useCallback((text: string): Promise<void> => {
         return new Promise((resolve) => {
-            window.speechSynthesis.cancel();
+            const synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
+            if (!synth) {
+                console.warn('Speech synthesis not supported in this browser.');
+                resolve();
+                return;
+            }
+
+            try {
+                synth.cancel();
+            } catch (e) {
+                console.error('Error calling synth.cancel:', e);
+            }
+
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'en-US';
             utterance.rate = 0.9;
             utterance.pitch = 1;
 
-            // Try to get a natural English voice
-            const voices = window.speechSynthesis.getVoices();
+            let voices: SpeechSynthesisVoice[] = [];
+            try {
+                voices = synth.getVoices();
+            } catch (e) {
+                console.error('Error calling synth.getVoices:', e);
+            }
+
             const englishVoice = voices.find(v => v.lang.startsWith('en') && v.name.includes('Google')) ||
                 voices.find(v => v.lang.startsWith('en-US')) ||
                 voices.find(v => v.lang.startsWith('en'));
             if (englishVoice) utterance.voice = englishVoice;
 
-            utterance.onstart = () => setIsAiSpeaking(true);
-            utterance.onend = () => {
-                setIsAiSpeaking(false);
-                resolve();
-            };
-            utterance.onerror = () => {
-                setIsAiSpeaking(false);
-                resolve();
+            let resolved = false;
+            const done = () => {
+                if (!resolved) {
+                    resolved = true;
+                    setIsAiSpeaking(false);
+                    clearTimeout(safetyTimeout);
+                    resolve();
+                }
             };
 
+            // Estimate speech duration based on word count with safety buffer (500ms per word + 3s base)
+            const wordCount = text.split(/\s+/).length;
+            const estimatedDuration = Math.max(4000, wordCount * 500 + 3000);
+
+            const safetyTimeout = setTimeout(() => {
+                console.warn('Speech synthesis timed out or failed to fire end event. Forcing resolution.');
+                done();
+            }, estimatedDuration);
+
+            utterance.onstart = () => setIsAiSpeaking(true);
+            utterance.onend = () => done();
+            utterance.onerror = () => done();
+
             synthRef.current = utterance;
-            window.speechSynthesis.speak(utterance);
+            try {
+                synth.speak(utterance);
+            } catch (e) {
+                console.error("SpeechSynthesis speak error:", e);
+                done();
+            }
         });
     }, []);
 
