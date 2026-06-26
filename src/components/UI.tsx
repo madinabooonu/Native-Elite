@@ -83,11 +83,8 @@ export const MobileHeader = ({
             </svg>
           </button>
         )}
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-blue-600 to-blue-900 flex items-center justify-center border border-white/10 shadow-sm">
-            <img src={logoImg} alt="Logo" className="w-full h-full object-cover" />
-          </div>
-          <span className="text-lg font-bold tracking-tight">Native Elite</span>
+        <div className="flex items-center">
+          <img src={logoImg} alt="Native Elite" className="h-8 w-auto object-contain rounded-lg border border-white/10 shadow-sm" />
         </div>
       </div>
       <div className="flex items-center gap-2">

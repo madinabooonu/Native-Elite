@@ -173,18 +173,16 @@ export default function App() {
   // ── Loading screen ──
   if (isLoading) {
     return (
-      <div className="h-screen w-screen flex flex-col items-center justify-center gap-4" style={{ background: 'var(--theme-bg)' }}>
+      <div className="h-screen w-screen flex flex-col items-center justify-center gap-6" style={{ background: 'var(--theme-bg)' }}>
         <motion.div
-          animate={{ scale: [1, 1.1, 1] }}
-          transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
-          className="flex items-center gap-3"
+          animate={{ scale: [0.95, 1.02, 0.95] }}
+          transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          className="w-56 h-auto flex flex-col items-center justify-center"
         >
-          <div className="w-14 h-14 rounded-2xl overflow-hidden bg-gradient-to-br from-blue-600 to-blue-900 flex items-center justify-center shadow-lg border border-blue-500/25">
-            <img src={logoImg} alt="Logo" className="w-full h-full object-cover" />
-          </div>
-          <span className="text-2xl font-bold text-[var(--theme-text)] tracking-tight">Native Elite</span>
+          <img src={logoImg} alt="Native Elite" className="w-full h-auto object-contain rounded-2xl shadow-2xl border border-blue-500/10 mb-2" />
+          <p className="text-[var(--theme-text-muted)] text-[10px] uppercase tracking-widest font-black animate-pulse mt-2">Yuklanmoqda...</p>
         </motion.div>
-        <div className="w-8 h-8 border-3 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
       </div>
     );
   }

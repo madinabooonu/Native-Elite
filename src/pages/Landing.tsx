@@ -12,11 +12,8 @@ export const LandingPage = ({ onGetStarted }: { onGetStarted: () => void }) => {
           <div className="absolute top-0 right-0 w-60 h-60 bg-brand-navy/5 rounded-full -mr-20 -mt-20 blur-3xl" />
           <div className="absolute bottom-0 left-0 w-40 h-40 bg-brand-navy/5 rounded-full -ml-10 -mb-10 blur-3xl" />
 
-          <div className="flex items-center gap-3 mb-10 relative z-10">
-            <div className="w-10 h-10 rounded-xl overflow-hidden bg-gradient-to-br from-blue-600 to-blue-900 flex items-center justify-center border border-white/10 shadow-md">
-              <img src={logoImg} alt="Logo" className="w-full h-full object-cover" />
-            </div>
-            <span className="text-2xl font-bold tracking-tight">Native Elite</span>
+          <div className="mb-10 relative z-10 flex justify-start">
+            <img src={logoImg} alt="Native Elite Logo" className="h-16 w-auto object-contain rounded-xl border border-white/10 shadow-lg" />
           </div>
 
           <motion.h1

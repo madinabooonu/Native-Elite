@@ -285,17 +285,16 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
         className="w-full max-w-[400px] relative z-10"
       >
         {/* Logo */}
-        <div className="flex flex-col items-center mb-10">
+        <div className="flex flex-col items-center mb-8">
           <motion.div
-            initial={{ scale: 0.8 }}
-            animate={{ scale: 1 }}
-            transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
-            className="w-24 h-24 rounded-3xl overflow-hidden flex items-center justify-center shadow-2xl mb-4 bg-gradient-to-br from-blue-600 to-blue-900 border border-blue-500/20"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2, type: 'spring', stiffness: 120 }}
+            className="w-48 h-auto flex items-center justify-center mb-2"
           >
-            <img src={logoImg} alt="Native Elite Logo" className="w-full h-full object-cover" />
+            <img src={logoImg} alt="Native Elite Logo" className="w-full h-auto object-contain rounded-2xl shadow-xl shadow-blue-950/40 border border-blue-500/10" />
           </motion.div>
-          <h1 className="text-3xl font-extrabold text-[var(--theme-text)] tracking-tight">Native Elite</h1>
-          <p className="text-[var(--theme-text-muted)] text-sm mt-1">IELTS Learning Platform</p>
+          <p className="text-[var(--theme-text-muted)] text-[10px] uppercase tracking-widest font-black mt-2">IELTS Learning Platform</p>
         </div>
 
         {/* Card */}
