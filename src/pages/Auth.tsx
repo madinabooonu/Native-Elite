@@ -290,14 +290,15 @@ export const AuthPage: React.FC<AuthPageProps> = ({ onAuthSuccess }) => {
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ delay: 0.2, type: 'spring', stiffness: 120 }}
-            className="w-24 h-24 rounded-[28px] bg-gradient-to-br from-[#001040] via-[#002060] to-[#003080] flex items-center justify-center shadow-2xl shadow-blue-900/30 mb-4 border border-blue-500/20"
+            className="mb-2"
           >
-            <svg width="48" height="48" viewBox="0 0 100 100" fill="none">
-              <path d="M30 70V30L42 42" stroke="#FFFFFF" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M70 30V70L58 58" stroke="#FFFFFF" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <img
+              src={logoImg}
+              alt="Native Elite Logo"
+              className="w-48 h-auto object-contain drop-shadow-2xl"
+              style={{ filter: 'drop-shadow(0 8px 24px rgba(0,32,128,0.5))' }}
+            />
           </motion.div>
-          <h1 className="text-3xl font-extrabold text-[var(--theme-text)] tracking-tight">Native Elite</h1>
           <p className="text-[var(--theme-text-muted)] text-sm mt-1">IELTS Learning Platform</p>
         </div>
 

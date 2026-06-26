@@ -10,7 +10,6 @@ import { ChatSystem } from './components/ChatSystem';
 import { AISpeaking } from './components/AISpeaking';
 import { NewsFeed } from './components/NewsFeed';
 import { UserRole, UserProfile, BookingRecord, TimeSlot } from './types';
-import logoImg from './assets/logo.png';
 import { db } from './lib/firebase';
 import { doc, setDoc, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 
@@ -173,19 +172,19 @@ export default function App() {
   // ── Loading screen ──
   if (isLoading) {
     return (
-      <div className="h-screen w-screen flex flex-col items-center justify-center gap-4" style={{ background: 'var(--theme-bg)' }}>
+      <div className="h-screen w-screen flex flex-col items-center justify-center gap-6" style={{ background: '#0a1628' }}>
         <motion.div
           animate={{ scale: [1, 1.05, 1] }}
           transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
           className="flex items-center gap-3"
         >
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#001040] via-[#002060] to-[#003080] flex items-center justify-center shadow-lg border border-blue-500/25">
-            <svg width="28" height="28" viewBox="0 0 100 100" fill="none">
-              <path d="M30 70V30L42 42" stroke="#FFFFFF" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M70 30V70L58 58" stroke="#FFFFFF" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+          <div className="flex items-center gap-3">
+            <svg width="32" height="32" viewBox="0 0 100 100" fill="none" className="text-white">
+              <path d="M30 74V26L52 48" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M70 26V74L48 52" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
+            <span className="text-3xl font-bold tracking-tight text-white">Native Elite</span>
           </div>
-          <span className="text-2xl font-bold text-[var(--theme-text)] tracking-tight">Native Elite</span>
         </motion.div>
         <div className="w-8 h-8 border-3 border-blue-500/20 border-t-blue-500 rounded-full animate-spin" />
       </div>

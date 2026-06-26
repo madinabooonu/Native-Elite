@@ -1,6 +1,5 @@
 import React from 'react';
 import { cn } from '../lib/utils';
-import logoImg from '../assets/logo.png';
 
 /* ── Reusable Button ── */
 export const AppButton = ({
@@ -75,24 +74,22 @@ export const MobileHeader = ({
 }) => (
   <div className="status-gradient text-white px-5 pt-12 pb-6 safe-top">
     <div className="flex items-center justify-between mb-4">
-      <div className="flex items-center gap-3">
-        {onBack && (
-          <button onClick={onBack} className="p-1 -ml-1">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 18l-6-6 6-6" />
+        <div className="flex items-center gap-3">
+          {onBack && (
+            <button onClick={onBack} className="p-1 -ml-1">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+          )}
+          <div className="flex items-center gap-2.5">
+            <svg width="22" height="22" viewBox="0 0 100 100" fill="none" className="text-white">
+              <path d="M30 74V26L52 48" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
+              <path d="M70 26V74L48 52" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-          </button>
-        )}
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#001040] via-[#002060] to-[#003080] flex items-center justify-center border border-white/10 shadow-sm">
-            <svg width="16" height="16" viewBox="0 0 100 100" fill="none">
-              <path d="M30 70V30L42 42" stroke="#FFFFFF" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M70 30V70L58 58" stroke="#FFFFFF" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <span className="text-lg font-bold tracking-tight text-white">Native Elite</span>
           </div>
-          <span className="text-lg font-bold tracking-tight">Native Elite</span>
         </div>
-      </div>
       <div className="flex items-center gap-2">
         {rightContent}
         {/* Theme Toggle */}
