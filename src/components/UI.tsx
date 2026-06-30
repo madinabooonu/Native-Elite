@@ -1,5 +1,6 @@
 import React from 'react';
 import { cn } from '../lib/utils';
+import logoImg from '../assets/logo.png';
 
 /* ── Reusable Button ── */
 export const AppButton = ({
@@ -83,10 +84,7 @@ export const MobileHeader = ({
             </button>
           )}
           <div className="flex items-center gap-2.5">
-            <svg width="22" height="22" viewBox="0 0 100 100" fill="none" className="text-white">
-              <path d="M30 74V26L52 48" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M70 26V74L48 52" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <img src={logoImg} alt="Native Elite Logo" className="w-6 h-6 object-contain" />
             <span className="text-lg font-bold tracking-tight text-white">Native Elite</span>
           </div>
         </div>

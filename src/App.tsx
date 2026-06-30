@@ -12,6 +12,7 @@ import { NewsFeed } from './components/NewsFeed';
 import { UserRole, UserProfile, BookingRecord, TimeSlot } from './types';
 import { db } from './lib/firebase';
 import { doc, setDoc, collection, query, orderBy, onSnapshot } from 'firebase/firestore';
+import logoImg from './assets/logo.png';
 
 type AppState = 'landing' | 'auth' | 'app';
 
@@ -214,10 +215,7 @@ export default function App() {
           className="flex items-center gap-3"
         >
           <div className="flex items-center gap-3">
-            <svg width="32" height="32" viewBox="0 0 100 100" fill="none" className="text-white">
-              <path d="M30 74V26L52 48" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M70 26V74L48 52" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <img src={logoImg} alt="Native Elite Logo" className="w-8 h-8 object-contain" />
             <span className="text-3xl font-bold tracking-tight text-white">Native Elite</span>
           </div>
         </motion.div>
