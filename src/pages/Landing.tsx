@@ -13,10 +13,7 @@ export const LandingPage = ({ onGetStarted }: { onGetStarted: () => void }) => {
           <div className="absolute bottom-0 left-0 w-40 h-40 bg-brand-navy/5 rounded-full -ml-10 -mb-10 blur-3xl" />
 
           <div className="flex items-center gap-2.5 mb-10 relative z-10">
-            <svg width="24" height="24" viewBox="0 0 100 100" fill="none" className="text-white">
-              <path d="M30 74V26L52 48" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M70 26V74L48 52" stroke="currentColor" strokeWidth="16" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <img src={logoImg} alt="Native Elite Logo" className="w-8 h-8 object-contain" />
             <span className="text-2xl font-bold tracking-tight text-white">Native Elite</span>
           </div>
 
